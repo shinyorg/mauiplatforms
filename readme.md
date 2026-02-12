@@ -40,7 +40,7 @@ Both platforms share the same set of control handlers:
 | ContentPage | TvOSContainerView | MacOSContainerView |
 | ContentView | TvOSContainerView | MacOSContainerView |
 | BoxView | via ShapeView | via ShapeView |
-| NavigationPage | TvOSContainerView (stack) | MacOSContainerView (stack) |
+| NavigationPage | NavigationContainerView (stack navigation) | NavigationContainerView (stack navigation) |
 
 ### Infrastructure
 
@@ -193,6 +193,7 @@ open samples/SampleMac/bin/Debug/net10.0-macos/osx-arm64/MAUI\ macOS.app
 * macOS NSView has no `SizeThatFits()` — the base handler uses `IntrinsicContentSize` and `FittingSize` for native controls, and a custom `SizeThatFits` method on `MacOSContainerView`.
 * `IButton` does not have `Text` or `TextColor` directly — those are on `IText` and `ITextStyle`. Handlers cast via `if (button is IText textButton)`.
 * Sample apps use pure C# pages (no XAML) to avoid XAML compilation issues on unsupported platforms.
+* `NavigationPage` dispatches navigation requests via `Handler.Invoke()` (the MAUI command mapper pattern), not direct method calls. The handler must register a `CommandMapper` entry for `RequestNavigation` and call `NavigationFinished()` on the view after completing navigation. The initial page is pushed automatically by MAUI's `OnHandlerChangedCore`.
 
 ## Dialogs
 
