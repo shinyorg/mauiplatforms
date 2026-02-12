@@ -41,6 +41,8 @@ Both platforms share the same set of control handlers:
 | ContentView | TvOSContainerView | MacOSContainerView |
 | BoxView | via ShapeView | via ShapeView |
 | NavigationPage | NavigationContainerView (stack navigation) | NavigationContainerView (stack navigation) |
+| WebView | ❌ Not available on tvOS | WKWebView |
+| BlazorWebView | ❌ Not available on tvOS | MacOSBlazorWebView + WKWebView |
 
 ### Infrastructure
 
@@ -108,8 +110,8 @@ Both platforms share the same set of control handlers:
 * Window lifecycle (minimize, fullscreen, close)
 
 ### Broader Goals
-* WebView
-* BlazorWebView
+* ~~WebView~~ — macOS ✅ (WKWebView), tvOS ❌ (not supported by platform)
+* ~~BlazorWebView~~ — macOS ✅ (custom MacOSBlazorWebView control), tvOS ❌ (no WebView support)
 * Essentials (platform-specific API wrappers)
 * NuGet packaging
 * CI/CD pipeline
@@ -194,6 +196,35 @@ open samples/SampleMac/bin/Debug/net10.0-macos/osx-arm64/MAUI\ macOS.app
 * `IButton` does not have `Text` or `TextColor` directly — those are on `IText` and `ITextStyle`. Handlers cast via `if (button is IText textButton)`.
 * Sample apps use pure C# pages (no XAML) to avoid XAML compilation issues on unsupported platforms.
 * `NavigationPage` dispatches navigation requests via `Handler.Invoke()` (the MAUI command mapper pattern), not direct method calls. The handler must register a `CommandMapper` entry for `RequestNavigation` and call `NavigationFinished()` on the view after completing navigation. The initial page is pushed automatically by MAUI's `OnHandlerChangedCore`.
+
+## BlazorWebView (macOS only)
+
+The BlazorWebView implementation uses a custom `MacOSBlazorWebView` control instead of the MAUI package's `BlazorWebView` — the built-in control internally casts its handler to the iOS/Catalyst `BlazorWebViewHandler`, which fails on AppKit.
+
+**Architecture:**
+- `MacOSBlazorWebView` — a simple `View` subclass with `HostPage`, `StartPath`, and `RootComponents` properties
+- `BlazorWebViewHandler` — creates a WKWebView with a custom `app://` URL scheme handler and injects the Blazor interop script
+- `MacOSWebViewManager` — bridges `WebViewManager` (from `Microsoft.AspNetCore.Components.WebView`) to the native WKWebView
+- `MacOSMauiAssetFileProvider` — serves static content from the macOS app bundle's `Resources/` directory
+- `MacOSBlazorDispatcher` — bridges MAUI's `IDispatcher` to Blazor's abstract `Dispatcher`
+
+**Usage:**
+```csharp
+using Microsoft.Maui.Platform.MacOS.Controls;
+
+var blazorView = new MacOSBlazorWebView
+{
+    HostPage = "wwwroot/index.html",
+    HeightRequest = 400
+};
+blazorView.RootComponents.Add(new BlazorRootComponent
+{
+    Selector = "#app",
+    ComponentType = typeof(MyApp.Components.Counter)
+});
+```
+
+Static web assets (`wwwroot/`) must be included as `BundleResource` items in the project file, and `blazor.modules.json` (an empty `[]` array) plus `blazor.webview.js` must be present under `wwwroot/_framework/`.
 
 ## Dialogs
 
