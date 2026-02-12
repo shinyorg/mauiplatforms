@@ -28,6 +28,7 @@ public static class MauiAppBuilderExtensions
             handlers.AddHandler<ISlider, SliderHandler>();
             handlers.AddHandler<IActivityIndicator, ActivityIndicatorHandler>();
             handlers.AddHandler<IShapeView, ShapeViewHandler>();
+            handlers.AddHandler<ISwitch, SwitchHandler>();
             handlers.AddHandler(typeof(Microsoft.Maui.Controls.Image), typeof(ImageHandler));
         });
 

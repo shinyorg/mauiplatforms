@@ -133,6 +133,21 @@ public class MainPage : ContentPage
         };
         slider.ValueChanged += OnSliderChanged;
 
+        // --- Switch ---
+        var switchControl = new Switch
+        {
+            IsToggled = false,
+        };
+
+#if !TVOS
+        // --- CheckBox ---
+        var checkBox = new CheckBox
+        {
+            IsChecked = false,
+            Color = Color.FromArgb("#4A90E2"),
+        };
+#endif
+
         // --- ActivityIndicator ---
         var activityIndicator = new ActivityIndicator
         {
@@ -196,6 +211,9 @@ public class MainPage : ContentPage
                     title,
                     boxView,
 
+                    SectionHeader("Grid Layout"),
+                    CreateGridDemo(),
+
                     SectionHeader("Buttons"),
                     button1,
                     button2,
@@ -219,6 +237,14 @@ public class MainPage : ContentPage
                     slider,
                     _sliderValue,
 
+                    SectionHeader("Switch"),
+                    switchControl,
+
+#if !TVOS
+                    SectionHeader("CheckBox"),
+                    checkBox,
+#endif
+
                     SectionHeader("Images"),
                     image,
                     image2,
@@ -236,6 +262,37 @@ public class MainPage : ContentPage
                 },
             },
         };
+    }
+
+    static Grid CreateGridDemo()
+    {
+        var grid = new Grid
+        {
+            RowDefinitions =
+            {
+                new RowDefinition(GridLength.Auto),
+                new RowDefinition(GridLength.Auto),
+            },
+            ColumnDefinitions =
+            {
+                new ColumnDefinition(GridLength.Star),
+                new ColumnDefinition(GridLength.Star),
+            },
+            RowSpacing = 10,
+            ColumnSpacing = 10,
+        };
+
+        var cell1 = new Label { Text = "Row 0, Col 0", TextColor = Colors.White, BackgroundColor = Color.FromArgb("#E74C3C"), Padding = 16, HorizontalTextAlignment = TextAlignment.Center };
+        var cell2 = new Label { Text = "Row 0, Col 1", TextColor = Colors.White, BackgroundColor = Color.FromArgb("#3498DB"), Padding = 16, HorizontalTextAlignment = TextAlignment.Center };
+        var cell3 = new Label { Text = "Row 1, Col 0", TextColor = Colors.White, BackgroundColor = Color.FromArgb("#2ECC71"), Padding = 16, HorizontalTextAlignment = TextAlignment.Center };
+        var cell4 = new Label { Text = "Row 1, Col 1", TextColor = Colors.White, BackgroundColor = Color.FromArgb("#9B59B6"), Padding = 16, HorizontalTextAlignment = TextAlignment.Center };
+
+        grid.Add(cell1, 0, 0);
+        grid.Add(cell2, 1, 0);
+        grid.Add(cell3, 0, 1);
+        grid.Add(cell4, 1, 1);
+
+        return grid;
     }
 
     static Label SectionHeader(string text) => new()

@@ -29,6 +29,8 @@ Both platforms share the same set of control handlers:
 | Entry | UITextField | NSTextField (editable) |
 | Picker | UIButton + UIAlertController | NSPopUpButton |
 | Slider | Custom TvOSSliderView | NSSlider |
+| Switch | UIButton (toggle) | NSSwitch |
+| CheckBox | ❌ Not available | NSButton (checkbox style) |
 | ActivityIndicator | UIActivityIndicatorView | NSProgressIndicator |
 | Image | UIImageView | NSImageView |
 | ScrollView | UIScrollView | NSScrollView |
@@ -53,8 +55,6 @@ Both platforms share the same set of control handlers:
 ### Controls
 * Border
 * ImageButton
-* Switch
-* CheckBox
 * Editor (multiline text)
 * ProgressBar
 * Stepper
@@ -63,9 +63,6 @@ Both platforms share the same set of control handlers:
 * RadioButton
 * SearchBar
 * Dialogs (Confirm, Prompt, Alert) - macOS ✅, tvOS ❌ (see [Dialogs](#dialogs) below)
-
-### Layouts
-* Grid
 
 ### Pages
 * IndicatorView
