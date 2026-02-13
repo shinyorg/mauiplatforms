@@ -14,6 +14,8 @@ Videos are attached in the repo
 src/
   Microsoft.Maui.Platform.TvOS/     # tvOS backend library (net10.0-tvos)
   Microsoft.Maui.Platform.MacOS/    # macOS AppKit backend library (net10.0-macos)
+  Microsoft.Maui.Essentials.TvOS/   # tvOS Essentials library (AppInfo, DeviceInfo)
+  Microsoft.Maui.Essentials.MacOS/  # macOS Essentials library (AppInfo, DeviceInfo)
 samples/
   Sample/                           # Shared sample code (App.cs, MainPage.cs, Platforms/)
   SampleTv/                         # tvOS sample app (links files from Sample/)
@@ -45,6 +47,7 @@ Both platforms share the same set of control handlers:
 | ContentView | TvOSContainerView | MacOSContainerView |
 | BoxView | via ShapeView | via ShapeView |
 | NavigationPage | NavigationContainerView (stack navigation) | NavigationContainerView (stack navigation) |
+| TabbedPage | TabbedContainerView (custom tab bar) | TabbedContainerView (NSSegmentedControl) |
 | WebView | ❌ Not available on tvOS | WKWebView |
 | BlazorWebView | ❌ Not available on tvOS | MacOSBlazorWebView + WKWebView |
 
@@ -75,7 +78,6 @@ Both platforms share the same set of control handlers:
 ### Pages
 * IndicatorView
 * FlyoutPage
-* TabbedPage
 
 ### Collections
 * CarouselView
@@ -117,7 +119,7 @@ Both platforms share the same set of control handlers:
 * ~~WebView~~ — macOS ✅ (WKWebView), tvOS ❌ (not supported by platform)
 * ~~BlazorWebView~~ — macOS ✅ (custom MacOSBlazorWebView control), tvOS ❌ (no WebView support)
 * App Icons (ideally via MAUI build tools / `MauiIcon`)
-* Essentials (platform-specific API wrappers)
+* ~~Essentials (platform-specific API wrappers)~~ — AppInfo ✅, DeviceInfo ✅, Connectivity ✅, Battery ✅ (macOS only) (see [Essentials](#essentials) below)
 * NuGet packaging
 * CI/CD pipeline
 
@@ -230,6 +232,50 @@ blazorView.RootComponents.Add(new BlazorRootComponent
 ```
 
 Static web assets (`wwwroot/`) must be included as `BundleResource` items in the project file, and `blazor.modules.json` (an empty `[]` array) plus `blazor.webview.js` must be present under `wwwroot/_framework/`.
+
+## Essentials
+
+Platform-specific implementations of MAUI Essentials APIs for both tvOS and macOS.
+
+### Supported APIs
+
+| API | tvOS | macOS | Notes |
+|-----|------|-------|-------|
+| AppInfo | ✅ | ✅ | Package name, version, build, theme, layout direction |
+| DeviceInfo | ✅ | ✅ | Model, manufacturer, device name, OS version, platform, idiom, device type |
+| Connectivity | ✅ | ✅ | Network access status, connection profiles (WiFi), change events |
+| Battery | ❌ | ✅ | Charge level, state, power source, change events (IOKit). Not available on tvOS. |
+
+### Usage
+
+Call the registration method early in your app startup (before `MauiApp.CreateBuilder()`):
+
+```csharp
+// macOS
+Microsoft.Maui.Essentials.MacOS.EssentialsExtensions.UseMacOSEssentials();
+
+// tvOS
+Microsoft.Maui.Essentials.TvOS.EssentialsExtensions.UseTvOSEssentials();
+```
+
+Then use the standard MAUI Essentials APIs:
+```csharp
+var appName = AppInfo.Name;
+var version = AppInfo.VersionString;
+var theme = AppInfo.RequestedTheme;
+var model = DeviceInfo.Model;
+var platform = DeviceInfo.Platform;
+```
+
+> **Note:** MAUI's `AppInfo.SetCurrent()` and `DeviceInfo.SetCurrent()` are `internal`, so the Essentials libraries use reflection to set the backing field. This works with the `net10.0` fallback assemblies.
+
+### Essentials TODO
+* Clipboard
+* FileSystem
+* Preferences
+* SecureStorage
+* VersionTracking
+* MainThread
 
 ## Dialogs
 

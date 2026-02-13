@@ -21,6 +21,7 @@
     <ItemGroup>
         <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)"/>
         <ProjectReference Include="..\..\src\Microsoft.Maui.Platform.tvOS\Microsoft.Maui.Platform.tvOS.csproj"/>
+        <ProjectReference Include="..\..\src\Microsoft.Maui.Essentials.TvOS\Microsoft.Maui.Essentials.TvOS.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -32,6 +33,9 @@
         </Compile>
         <Compile Include="..\Sample\CollectionViewPage.cs">
             <Link>CollectionViewPage.cs</Link>
+        </Compile>
+        <Compile Include="..\Sample\EssentialsPage.cs">
+            <Link>EssentialsPage.cs</Link>
         </Compile>
         <Compile Include="..\Sample\Platforms\tvOS\Main.cs">
             <Link>Main.cs</Link>

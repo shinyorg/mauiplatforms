@@ -23,6 +23,7 @@
         <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)"/>
         <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="10.0.20"/>
         <ProjectReference Include="..\..\src\Microsoft.Maui.Platform.MacOS\Microsoft.Maui.Platform.MacOS.csproj"/>
+        <ProjectReference Include="..\..\src\Microsoft.Maui.Essentials.MacOS\Microsoft.Maui.Essentials.MacOS.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
@@ -34,6 +35,9 @@
         </Compile>
         <Compile Include="..\Sample\CollectionViewPage.cs">
             <Link>CollectionViewPage.cs</Link>
+        </Compile>
+        <Compile Include="..\Sample\EssentialsPage.cs">
+            <Link>EssentialsPage.cs</Link>
         </Compile>
         <Compile Include="..\Sample\BlazorPage.cs">
             <Link>BlazorPage.cs</Link>
