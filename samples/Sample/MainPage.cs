@@ -258,6 +258,20 @@ public class MainPage : ContentPage
                     SectionHeader("Entry"),
                     entry,
 
+#if MACAPP
+                    SectionHeader("Editor (Multiline)"),
+                    new Editor
+                    {
+                        Placeholder = "Type multiline text here...",
+                        HeightRequest = 120,
+                        TextColor = Colors.White,
+                        BackgroundColor = Color.FromArgb("#2A2A4A"),
+                    },
+
+                    SectionHeader("Date & Time Pickers"),
+                    CreateDateTimePickerDemo(),
+#endif
+
                     SectionHeader("Picker"),
                     picker,
                     _pickerStatus,
@@ -288,8 +302,50 @@ public class MainPage : ContentPage
                     SectionHeader("Activity Indicator"),
                     activityIndicator,
 
+                    SectionHeader("Progress Bar"),
+                    new ProgressBar { Progress = 0.65, ProgressColor = Color.FromArgb("#4A90E2"), HeightRequest = 8 },
+                    new ProgressBar { Progress = 0.3, ProgressColor = Color.FromArgb("#FF6B6B"), HeightRequest = 8 },
+
                     SectionHeader("Horizontal Layout"),
                     layoutRow,
+
+                    SectionHeader("Border"),
+                    CreateBorderDemo(),
+
+                    SectionHeader("Shadow"),
+                    new Label
+                    {
+                        Text = "Shadow on Label",
+                        TextColor = Colors.White,
+                        FontSize = 22,
+                        BackgroundColor = Color.FromArgb("#4A90E2"),
+                        Padding = new Thickness(20, 12),
+                        Shadow = new Shadow
+                        {
+                            Brush = Colors.Black,
+                            Offset = new Point(4, 4),
+                            Radius = 8,
+                            Opacity = 0.6f,
+                        },
+                    },
+                    new Button
+                    {
+                        Text = "Shadow on Button",
+                        BackgroundColor = Color.FromArgb("#2ECC71"),
+                        TextColor = Colors.White,
+                        Shadow = new Shadow
+                        {
+                            Brush = Color.FromArgb("#2ECC71"),
+                            Offset = new Point(0, 6),
+                            Radius = 12,
+                            Opacity = 0.5f,
+                        },
+                    },
+
+#if TVAPP
+                    SectionHeader("Carousel View"),
+                    CreateCarouselDemo(),
+#endif
 
                     SectionHeader("Status"),
                     _statusLabel,
@@ -338,6 +394,164 @@ public class MainPage : ContentPage
         FontAttributes = FontAttributes.Bold,
         TextColor = Color.FromArgb("#FF6B6B"),
     };
+
+    static View CreateBorderDemo()
+    {
+        var stack = new VerticalStackLayout { Spacing = 15 };
+
+        // Simple rounded border
+        var border1 = new Border
+        {
+            Stroke = Color.FromArgb("#4A90E2"),
+            StrokeThickness = 2,
+            StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = 12 },
+            Padding = new Thickness(16),
+            Content = new Label
+            {
+                Text = "Rounded Border",
+                TextColor = Colors.White,
+                FontSize = 18,
+                HorizontalTextAlignment = TextAlignment.Center,
+            },
+        };
+
+        // Thick dashed border
+        var border2 = new Border
+        {
+            Stroke = Color.FromArgb("#FF6B6B"),
+            StrokeThickness = 3,
+            StrokeDashArray = new Microsoft.Maui.Controls.DoubleCollection { 6, 3 },
+            StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = 8 },
+            Padding = new Thickness(16),
+            Content = new Label
+            {
+                Text = "Dashed Border",
+                TextColor = Colors.White,
+                FontSize = 18,
+                HorizontalTextAlignment = TextAlignment.Center,
+            },
+        };
+
+        // Border with background
+        var border3 = new Border
+        {
+            Stroke = Color.FromArgb("#2ECC71"),
+            StrokeThickness = 2,
+            BackgroundColor = Color.FromArgb("#2A2A4A"),
+            StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = 20 },
+            Padding = new Thickness(20),
+            Content = new VerticalStackLayout
+            {
+                Spacing = 8,
+                Children =
+                {
+                    new Label { Text = "Card Style", TextColor = Colors.White, FontSize = 20, FontAttributes = FontAttributes.Bold },
+                    new Label { Text = "Border with background and rounded corners", TextColor = Color.FromArgb("#AAAAAA"), FontSize = 14 },
+                },
+            },
+        };
+
+        stack.Children.Add(border1);
+        stack.Children.Add(border2);
+        stack.Children.Add(border3);
+        return stack;
+    }
+
+#if TVAPP
+    static View CreateCarouselDemo()
+    {
+        var colors = new[]
+        {
+            ("#E74C3C", "Slide 1 — Red"),
+            ("#3498DB", "Slide 2 — Blue"),
+            ("#2ECC71", "Slide 3 — Green"),
+            ("#9B59B6", "Slide 4 — Purple"),
+            ("#F39C12", "Slide 5 — Orange"),
+        };
+
+        var positionLabel = new Label { Text = "Position: 0", TextColor = Colors.White, FontSize = 18 };
+
+        var carousel = new CarouselView
+        {
+            HeightRequest = 200,
+            ItemsSource = colors,
+            ItemTemplate = new DataTemplate(() =>
+            {
+                var label = new Label
+                {
+                    FontSize = 28,
+                    FontAttributes = FontAttributes.Bold,
+                    TextColor = Colors.White,
+                    HorizontalTextAlignment = TextAlignment.Center,
+                    VerticalTextAlignment = TextAlignment.Center,
+                };
+                label.SetBinding(Label.TextProperty, "[Item2]");
+                label.SetBinding(Label.BackgroundColorProperty, "[Item1]",
+                    converter: new FuncConverter<string, Color>(hex => Color.FromArgb(hex)));
+
+                return label;
+            }),
+        };
+
+        carousel.PositionChanged += (s, e) => positionLabel.Text = $"Position: {e.CurrentPosition}";
+
+        return new VerticalStackLayout
+        {
+            Spacing = 10,
+            Children = { carousel, positionLabel },
+        };
+    }
+
+    class FuncConverter<TIn, TOut> : IValueConverter
+    {
+        readonly Func<TIn, TOut> _convert;
+        public FuncConverter(Func<TIn, TOut> convert) => _convert = convert;
+        public object? Convert(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
+            => value is TIn input ? _convert(input) : default;
+        public object? ConvertBack(object? value, Type targetType, object? parameter, System.Globalization.CultureInfo culture)
+            => throw new NotSupportedException();
+    }
+#endif
+
+#if MACAPP
+    static View CreateDateTimePickerDemo()
+    {
+        var dateLabel = new Label { Text = "Selected date: (none)", TextColor = Colors.White, FontSize = 16 };
+        var datePicker = new DatePicker
+        {
+            Date = DateTime.Today,
+            MinimumDate = new DateTime(2020, 1, 1),
+            MaximumDate = new DateTime(2030, 12, 31),
+        };
+        datePicker.DateSelected += (s, e) => dateLabel.Text = $"Selected date: {e.NewDate:d}";
+
+        var timeLabel = new Label { Text = "Selected time: (none)", TextColor = Colors.White, FontSize = 16 };
+        var timePicker = new TimePicker
+        {
+            Time = DateTime.Now.TimeOfDay,
+        };
+        timePicker.PropertyChanged += (s, e) =>
+        {
+            if (e.PropertyName == nameof(TimePicker.Time))
+                timeLabel.Text = $"Selected time: {timePicker.Time:hh\\:mm\\:ss}";
+        };
+
+        return new VerticalStackLayout
+        {
+            Spacing = 10,
+            Children =
+            {
+                new Label { Text = "Date Picker", TextColor = Color.FromArgb("#4A90E2"), FontSize = 18 },
+                datePicker,
+                dateLabel,
+                new BoxView { HeightRequest = 4 },
+                new Label { Text = "Time Picker", TextColor = Color.FromArgb("#4A90E2"), FontSize = 18 },
+                timePicker,
+                timeLabel,
+            },
+        };
+    }
+#endif
 
     void OnButtonClicked(object? sender, EventArgs e)
     {

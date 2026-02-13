@@ -16,12 +16,53 @@ public abstract class MacOSViewHandler<TVirtualView, TPlatformView> : ViewHandle
     where TVirtualView : class, IView
     where TPlatformView : NSView
 {
+    static MacOSViewHandler()
+    {
+        try
+        {
+            if (ViewMapper is PropertyMapper<IView, IViewHandler> mapper)
+                mapper[nameof(IView.Shadow)] = MapShadow;
+        }
+        catch
+        {
+            // Shadow mapping registration failed — non-fatal
+        }
+    }
+
     protected MacOSViewHandler(IPropertyMapper mapper) : base(mapper)
     {
     }
 
     protected MacOSViewHandler(IPropertyMapper mapper, CommandMapper? commandMapper) : base(mapper, commandMapper)
     {
+    }
+
+    public static void MapShadow(IViewHandler handler, IView view)
+    {
+        var platformView = handler.PlatformView as NSView;
+        if (platformView == null)
+            return;
+
+        // Ensure the view is layer-backed before accessing layer properties
+        platformView.WantsLayer = true;
+        if (platformView.Layer == null)
+            return;
+
+        var shadow = view.Shadow;
+        if (shadow == null)
+        {
+            platformView.Layer.ShadowOpacity = 0;
+            return;
+        }
+
+        platformView.Layer.ShadowOpacity = shadow.Opacity;
+        platformView.Layer.ShadowRadius = shadow.Radius;
+        platformView.Layer.ShadowOffset = new CGSize((float)shadow.Offset.X, (float)shadow.Offset.Y);
+
+        if (shadow.Paint is SolidPaint solidPaint && solidPaint.Color is not null)
+            platformView.Layer.ShadowColor = solidPaint.Color.ToPlatformColor().CGColor;
+        else
+            platformView.Layer.ShadowColor = CoreGraphics.CGColor.CreateSrgb(0, 0, 0, 1);
     }
 
     public override void PlatformArrange(Rect rect)

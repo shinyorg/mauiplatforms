@@ -28,10 +28,13 @@ public static class MauiAppBuilderExtensions
             handlers.AddHandler<IPicker, PickerHandler>();
             handlers.AddHandler<ISlider, SliderHandler>();
             handlers.AddHandler<IActivityIndicator, ActivityIndicatorHandler>();
+            handlers.AddHandler<IProgress, ProgressBarHandler>();
             handlers.AddHandler<IShapeView, ShapeViewHandler>();
+            handlers.AddHandler<IBorderView, BorderHandler>();
             handlers.AddHandler<ISwitch, SwitchHandler>();
             handlers.AddHandler(typeof(Microsoft.Maui.Controls.Image), typeof(ImageHandler));
             handlers.AddHandler(typeof(Microsoft.Maui.Controls.CollectionView), typeof(CollectionViewHandler));
+            handlers.AddHandler(typeof(Microsoft.Maui.Controls.CarouselView), typeof(CarouselViewHandler));
             handlers.AddHandler(typeof(Microsoft.Maui.Controls.TabbedPage), typeof(TabbedPageHandler));
         });
 

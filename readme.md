@@ -33,16 +33,23 @@ Both platforms share the same set of control handlers:
 | Label | UILabel | NSTextField (non-editable) |
 | Button | UIButton | NSButton |
 | Entry | UITextField | NSTextField (editable) |
+| Editor | ❌ Not implemented | NSTextView (multiline, in NSScrollView) |
 | Picker | UIButton + UIAlertController | NSPopUpButton |
 | Slider | Custom TvOSSliderView | NSSlider |
 | Switch | UIButton (toggle, no native UISwitch on tvOS) | NSSwitch |
 | CheckBox | ❌ Not available on tvOS | NSButton (checkbox style) |
 | ActivityIndicator | UIActivityIndicatorView | NSProgressIndicator |
+| ProgressBar | UIProgressView | NSProgressIndicator (bar mode) |
 | Image | UIImageView | NSImageView |
 | ScrollView | UIScrollView | NSScrollView |
 | ShapeView | UIView + CAShapeLayer | NSView + CAShapeLayer |
+| Border | UIView + CAShapeLayer (stroke + mask) | NSView + CAShapeLayer (stroke + mask) |
+| DatePicker | ❌ No UIDatePicker on tvOS | NSDatePicker (date mode) |
+| TimePicker | ❌ No UIDatePicker on tvOS | NSDatePicker (time mode) |
+| Shadow | CALayer shadow properties | CALayer shadow properties |
 | Layout (Stack, Grid, etc.) | TvOSContainerView | MacOSContainerView |
 | CollectionView | UIScrollView (item materialization) | NSScrollView (item materialization) |
+| CarouselView | UIScrollView (horizontal paging, snap-to-item) | ❌ Not implemented |
 | ContentPage | TvOSContainerView | MacOSContainerView |
 | ContentView | TvOSContainerView | MacOSContainerView |
 | BoxView | via ShapeView | via ShapeView |
@@ -64,13 +71,8 @@ Both platforms share the same set of control handlers:
 ## Handler TODO
 
 ### Controls
-* Border
 * ImageButton
-* Editor (multiline text)
-* ProgressBar
 * Stepper
-* DatePicker
-* TimePicker
 * RadioButton
 * SearchBar
 * Dialogs (Confirm, Prompt, Alert) - macOS ✅, tvOS ❌ (see [Dialogs](#dialogs) below)
@@ -80,7 +82,6 @@ Both platforms share the same set of control handlers:
 * FlyoutPage
 
 ### Collections
-* CarouselView
 * RefreshView
 * SwipeView
 

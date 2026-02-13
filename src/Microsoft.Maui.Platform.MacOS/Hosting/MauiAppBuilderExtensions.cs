@@ -25,11 +25,16 @@ public static class MauiAppBuilderExtensions
             handlers.AddHandler<IApplication, ApplicationHandler>();
             handlers.AddHandler<IScrollView, ScrollViewHandler>();
             handlers.AddHandler<IEntry, EntryHandler>();
+            handlers.AddHandler<IEditor, EditorHandler>();
             handlers.AddHandler<IPicker, PickerHandler>();
             handlers.AddHandler<ISlider, SliderHandler>();
             handlers.AddHandler<IActivityIndicator, ActivityIndicatorHandler>();
+            handlers.AddHandler<IProgress, ProgressBarHandler>();
             handlers.AddHandler<IShapeView, ShapeViewHandler>();
+            handlers.AddHandler<IBorderView, BorderHandler>();
             handlers.AddHandler<ISwitch, SwitchHandler>();
+            handlers.AddHandler<IDatePicker, DatePickerHandler>();
+            handlers.AddHandler<ITimePicker, TimePickerHandler>();
             handlers.AddHandler<ICheckBox, CheckBoxHandler>();
             handlers.AddHandler(typeof(Microsoft.Maui.Controls.Image), typeof(ImageHandler));
             handlers.AddHandler(typeof(Microsoft.Maui.Controls.CollectionView), typeof(CollectionViewHandler));

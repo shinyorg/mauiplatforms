@@ -16,12 +16,41 @@ public abstract class TvOSViewHandler<TVirtualView, TPlatformView> : ViewHandler
     where TVirtualView : class, IView
     where TPlatformView : UIView
 {
+    static TvOSViewHandler()
+    {
+        if (ViewMapper is PropertyMapper<IView, IViewHandler> mapper)
+            mapper[nameof(IView.Shadow)] = MapShadow;
+    }
+
     protected TvOSViewHandler(IPropertyMapper mapper) : base(mapper)
     {
     }
 
     protected TvOSViewHandler(IPropertyMapper mapper, CommandMapper? commandMapper) : base(mapper, commandMapper)
     {
+    }
+
+    public static void MapShadow(IViewHandler handler, IView view)
+    {
+        var platformView = handler.PlatformView as UIView;
+        if (platformView?.Layer == null)
+            return;
+
+        var shadow = view.Shadow;
+        if (shadow == null)
+        {
+            platformView.Layer.ShadowOpacity = 0;
+            return;
+        }
+
+        platformView.Layer.ShadowOpacity = shadow.Opacity;
+        platformView.Layer.ShadowRadius = shadow.Radius;
+        platformView.Layer.ShadowOffset = new CGSize((float)shadow.Offset.X, (float)shadow.Offset.Y);
+
+        if (shadow.Paint is SolidPaint solidPaint && solidPaint.Color is not null)
+            platformView.Layer.ShadowColor = solidPaint.Color.ToPlatformColor().CGColor;
+        else
+            platformView.Layer.ShadowColor = UIColor.Black.CGColor;
     }
 
     public override void PlatformArrange(Rect rect)
