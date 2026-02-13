@@ -4,6 +4,7 @@ using Microsoft.Maui.Graphics;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Devices;
 using Microsoft.Maui.Networking;
+using Microsoft.Maui.Storage;
 #if MACAPP
 using Microsoft.Maui.Essentials.MacOS;
 #elif TVAPP
@@ -78,6 +79,19 @@ public class EssentialsPage : ContentPage
 
         Battery.BatteryInfoChanged += OnBatteryInfoChanged;
 #endif
+
+        layout.Children.Add(CreateHeader("Device Display"));
+        layout.Children.Add(CreateRow("Width", TryGet(() => $"{DeviceDisplay.MainDisplayInfo.Width:F0} px")));
+        layout.Children.Add(CreateRow("Height", TryGet(() => $"{DeviceDisplay.MainDisplayInfo.Height:F0} px")));
+        layout.Children.Add(CreateRow("Density", TryGet(() => $"{DeviceDisplay.MainDisplayInfo.Density:F1}")));
+        layout.Children.Add(CreateRow("Orientation", TryGet(() => DeviceDisplay.MainDisplayInfo.Orientation.ToString())));
+        layout.Children.Add(CreateRow("Rotation", TryGet(() => DeviceDisplay.MainDisplayInfo.Rotation.ToString())));
+        layout.Children.Add(CreateRow("Refresh Rate", TryGet(() => $"{DeviceDisplay.MainDisplayInfo.RefreshRate:F0} Hz")));
+        layout.Children.Add(CreateRow("Keep Screen On", TryGet(() => DeviceDisplay.KeepScreenOn.ToString())));
+
+        layout.Children.Add(CreateHeader("File System"));
+        layout.Children.Add(CreateRow("Cache Dir", TryGet(() => FileSystem.CacheDirectory)));
+        layout.Children.Add(CreateRow("App Data Dir", TryGet(() => FileSystem.AppDataDirectory)));
 
         Content = new ScrollView { Content = layout };
     }

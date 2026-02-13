@@ -119,7 +119,7 @@ Both platforms share the same set of control handlers:
 * ~~WebView~~ — macOS ✅ (WKWebView), tvOS ❌ (not supported by platform)
 * ~~BlazorWebView~~ — macOS ✅ (custom MacOSBlazorWebView control), tvOS ❌ (no WebView support)
 * App Icons (ideally via MAUI build tools / `MauiIcon`)
-* ~~Essentials (platform-specific API wrappers)~~ — AppInfo ✅, DeviceInfo ✅, Connectivity ✅, Battery ✅ (macOS only) (see [Essentials](#essentials) below)
+* ~~Essentials (platform-specific API wrappers)~~ — AppInfo ✅, DeviceInfo ✅, Connectivity ✅, Battery ✅ (macOS only), DeviceDisplay ✅, FileSystem ✅ (see [Essentials](#essentials) below)
 * NuGet packaging
 * CI/CD pipeline
 
@@ -245,6 +245,8 @@ Platform-specific implementations of MAUI Essentials APIs for both tvOS and macO
 | DeviceInfo | ✅ | ✅ | Model, manufacturer, device name, OS version, platform, idiom, device type |
 | Connectivity | ✅ | ✅ | Network access status, connection profiles (WiFi), change events |
 | Battery | ❌ | ✅ | Charge level, state, power source, change events (IOKit). Not available on tvOS. |
+| DeviceDisplay | ✅ | ✅ | Screen dimensions, density, orientation, rotation, refresh rate, keep screen on |
+| FileSystem | ✅ | ✅ | Cache directory, app data directory, app package file access |
 
 ### Usage
 
@@ -271,7 +273,6 @@ var platform = DeviceInfo.Platform;
 
 ### Essentials TODO
 * Clipboard
-* FileSystem
 * Preferences
 * SecureStorage
 * VersionTracking
