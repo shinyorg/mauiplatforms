@@ -55,6 +55,7 @@ Both platforms share the same set of control handlers:
 | FlyoutPage | ❌ Not available on tvOS | FlyoutContainerView (NSSplitView sidebar) |
 | Toolbar | ❌ Not available on tvOS | NSToolbar (via Page.ToolbarItems) |
 | BoxView | via ShapeView | via ShapeView |
+| GraphicsView | ❌ Not implemented | MacOSGraphicsView (DirectRenderer + CoreGraphics) |
 | NavigationPage | NavigationContainerView (stack navigation) | NavigationContainerView (stack navigation) |
 | TabbedPage | TabbedContainerView (custom tab bar) | TabbedContainerView (NSSegmentedControl) |
 | WebView | ❌ Not available on tvOS | WKWebView |
@@ -86,9 +87,6 @@ Both platforms share the same set of control handlers:
 * RefreshView
 * SwipeView
 
-### Graphics & Media
-* GraphicsView
-
 ## Platform TODO
 
 ### General
@@ -98,6 +96,7 @@ Both platforms share the same set of control handlers:
 * Modal page presentation
 * Keyboard/focus management
 * Accessibility support
+* Light/dark mode support (theme detection and dynamic colors)
 * Font management (custom fonts, font families)
 * Gesture recognizers (Tap, Swipe, Pan, Pinch)
 

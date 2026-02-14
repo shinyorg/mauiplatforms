@@ -11,6 +11,14 @@ public class FlyoutDemoPage : FlyoutPage
         Title = "FlyoutPage Demo";
         FlyoutLayoutBehavior = FlyoutLayoutBehavior.Split;
 
+        var homeButton = CreateMenuButton("Home", Color.FromArgb("#4A90E2"));
+        var settingsButton = CreateMenuButton("Settings", Color.FromArgb("#7B68EE"));
+        var aboutButton = CreateMenuButton("About", Color.FromArgb("#2ECC71"));
+
+        homeButton.Clicked += (s, e) => Detail = new NavigationPage(CreateDetailPage("Home", "Welcome home! Browse your content here.", "#4A90E2"));
+        settingsButton.Clicked += (s, e) => Detail = new NavigationPage(CreateDetailPage("Settings", "Configure your preferences and options.", "#7B68EE"));
+        aboutButton.Clicked += (s, e) => Detail = new NavigationPage(CreateDetailPage("About", "MAUI macOS FlyoutPage demo.\nSidebar powered by NSSplitView.", "#2ECC71"));
+
         Flyout = new ContentPage
         {
             Title = "Menu",
@@ -35,45 +43,54 @@ public class FlyoutDemoPage : FlyoutPage
                             Color = Color.FromArgb("#4A90E2"),
                             HeightRequest = 2,
                         },
-                        CreateMenuButton("Home", Color.FromArgb("#4A90E2")),
-                        CreateMenuButton("Settings", Color.FromArgb("#7B68EE")),
-                        CreateMenuButton("About", Color.FromArgb("#2ECC71")),
+                        homeButton,
+                        settingsButton,
+                        aboutButton,
                     },
                 },
             },
         };
 
-        Detail = new NavigationPage(new ContentPage
+        Detail = new NavigationPage(CreateDetailPage("Home", "Welcome home! Browse your content here.", "#4A90E2"));
+    }
+
+    static ContentPage CreateDetailPage(string title, string description, string accentColor) => new()
+    {
+        Title = title,
+        BackgroundColor = Color.FromArgb("#1A1A2E"),
+        Content = new VerticalStackLayout
         {
-            Title = "Detail",
-            BackgroundColor = Color.FromArgb("#1A1A2E"),
-            Content = new VerticalStackLayout
+            Padding = new Thickness(40),
+            Spacing = 20,
+            VerticalOptions = LayoutOptions.Center,
+            HorizontalOptions = LayoutOptions.Center,
+            Children =
             {
-                Padding = new Thickness(40),
-                Spacing = 20,
-                VerticalOptions = LayoutOptions.Center,
-                HorizontalOptions = LayoutOptions.Center,
-                Children =
+                new BoxView
                 {
-                    new Label
-                    {
-                        Text = "FlyoutPage Detail Area",
-                        FontSize = 32,
-                        FontAttributes = FontAttributes.Bold,
-                        TextColor = Colors.White,
-                        HorizontalTextAlignment = TextAlignment.Center,
-                    },
-                    new Label
-                    {
-                        Text = "The sidebar is rendered using a native NSSplitView.\nResize it by dragging the divider.",
-                        FontSize = 18,
-                        TextColor = Color.FromArgb("#AAAAAA"),
-                        HorizontalTextAlignment = TextAlignment.Center,
-                    },
+                    Color = Color.FromArgb(accentColor),
+                    HeightRequest = 4,
+                    WidthRequest = 200,
+                    HorizontalOptions = LayoutOptions.Center,
+                },
+                new Label
+                {
+                    Text = title,
+                    FontSize = 32,
+                    FontAttributes = FontAttributes.Bold,
+                    TextColor = Colors.White,
+                    HorizontalTextAlignment = TextAlignment.Center,
+                },
+                new Label
+                {
+                    Text = description,
+                    FontSize = 18,
+                    TextColor = Color.FromArgb("#AAAAAA"),
+                    HorizontalTextAlignment = TextAlignment.Center,
                 },
             },
-        });
-    }
+        },
+    };
 
     static Button CreateMenuButton(string text, Color color) => new()
     {

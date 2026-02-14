@@ -96,6 +96,14 @@ public class MainPage : ContentPage
             TextColor = Colors.White,
         };
         blazorButton.Clicked += async (s, e) => await Navigation.PushAsync(new BlazorPage());
+
+        var graphicsButton = new Button
+        {
+            Text = "Go to GraphicsView Page →",
+            BackgroundColor = Color.FromArgb("#F39C12"),
+            TextColor = Colors.White,
+        };
+        graphicsButton.Clicked += async (s, e) => await Navigation.PushAsync(new GraphicsViewPage());
 #endif
 
 #if !TVOS
@@ -246,6 +254,7 @@ public class MainPage : ContentPage
 
 #if MACAPP
                     blazorButton,
+                    graphicsButton,
 #endif
 #if !TVOS
                     SectionHeader("Dialogs"),

@@ -41,6 +41,7 @@ public static class MauiAppBuilderExtensions
             handlers.AddHandler(typeof(Microsoft.Maui.Controls.TabbedPage), typeof(TabbedPageHandler));
             handlers.AddHandler(typeof(Microsoft.Maui.Controls.FlyoutPage), typeof(FlyoutPageHandler));
             handlers.AddHandler<IWebView, WebViewHandler>();
+            handlers.AddHandler<IGraphicsView, GraphicsViewHandler>();
             handlers.AddHandler<Controls.MacOSBlazorWebView, BlazorWebViewHandler>();
         });
 
