@@ -8,7 +8,7 @@ public class CollectionViewPage : ContentPage
 {
     public CollectionViewPage()
     {
-        BackgroundColor = Color.FromArgb("#1A1A2E");
+        this.WithPageBackground();
 
         var items = new List<string>();
         for (int i = 1; i <= 50; i++)
@@ -17,7 +17,7 @@ public class CollectionViewPage : ContentPage
         var backButton = new Button
         {
             Text = "← Back",
-            BackgroundColor = Color.FromArgb("#4A90E2"),
+            BackgroundColor = AppColors.AccentBlue,
             TextColor = Colors.White,
         };
         backButton.Clicked += async (s, e) => await Navigation.PopAsync();
@@ -31,10 +31,8 @@ public class CollectionViewPage : ContentPage
                 var label = new Label
                 {
                     FontSize = 22,
-                    TextColor = Colors.White,
                     Padding = new Thickness(20, 14),
-                    BackgroundColor = Color.FromArgb("#2A2A4A"),
-                };
+                }.WithPrimaryText().WithSurfaceBackground();
                 label.SetBinding(Label.TextProperty, ".");
                 return label;
             }),
@@ -51,9 +49,8 @@ public class CollectionViewPage : ContentPage
                     Text = "CollectionView Page",
                     FontSize = 44,
                     FontAttributes = FontAttributes.Bold,
-                    TextColor = Colors.White,
                     HorizontalTextAlignment = TextAlignment.Center,
-                },
+                }.WithPrimaryText(),
                 backButton,
                 cv,
             },

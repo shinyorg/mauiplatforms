@@ -9,12 +9,12 @@ public class GraphicsViewPage : ContentPage
     public GraphicsViewPage()
     {
         Title = "GraphicsView";
-        BackgroundColor = Color.FromArgb("#1A1A2E");
+        this.WithPageBackground();
 
         var backButton = new Button
         {
             Text = "← Back",
-            BackgroundColor = Color.FromArgb("#4A90E2"),
+            BackgroundColor = AppColors.AccentBlue,
             TextColor = Colors.White,
         };
         backButton.Clicked += async (s, e) => await Navigation.PopAsync();
@@ -34,40 +34,35 @@ public class GraphicsViewPage : ContentPage
                         Text = "GraphicsView Demo",
                         FontSize = 32,
                         FontAttributes = FontAttributes.Bold,
-                        TextColor = Colors.White,
                         HorizontalTextAlignment = TextAlignment.Center,
-                    },
+                    }.WithPrimaryText(),
                     new Label
                     {
                         Text = "Custom drawing via IDrawable + CoreGraphics",
                         FontSize = 16,
-                        TextColor = Color.FromArgb("#AAAAAA"),
                         HorizontalTextAlignment = TextAlignment.Center,
-                    },
+                    }.WithSecondaryText(),
 
-                    new Label { Text = "Bar Chart", FontSize = 22, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#F39C12") },
+                    new Label { Text = "Bar Chart", FontSize = 22, FontAttributes = FontAttributes.Bold }.WithSectionStyle(),
                     new GraphicsView
                     {
                         Drawable = new BarChartDrawable(),
                         HeightRequest = 220,
-                        BackgroundColor = Color.FromArgb("#2A2A4A"),
-                    },
+                    }.WithSurfaceBackground(),
 
-                    new Label { Text = "Shapes", FontSize = 22, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#4A90E2") },
+                    new Label { Text = "Shapes", FontSize = 22, FontAttributes = FontAttributes.Bold }.WithSectionStyle(),
                     new GraphicsView
                     {
                         Drawable = new ShapesDrawable(),
                         HeightRequest = 200,
-                        BackgroundColor = Color.FromArgb("#2A2A4A"),
-                    },
+                    }.WithSurfaceBackground(),
 
-                    new Label { Text = "Gradient Rings", FontSize = 22, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#2ECC71") },
+                    new Label { Text = "Gradient Rings", FontSize = 22, FontAttributes = FontAttributes.Bold }.WithSectionStyle(),
                     new GraphicsView
                     {
                         Drawable = new RingsDrawable(),
                         HeightRequest = 200,
-                        BackgroundColor = Color.FromArgb("#2A2A4A"),
-                    },
+                    }.WithSurfaceBackground(),
                 },
             },
         };

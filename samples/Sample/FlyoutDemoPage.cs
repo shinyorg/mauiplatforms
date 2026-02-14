@@ -11,18 +11,17 @@ public class FlyoutDemoPage : FlyoutPage
         Title = "FlyoutPage Demo";
         FlyoutLayoutBehavior = FlyoutLayoutBehavior.Split;
 
-        var homeButton = CreateMenuButton("Home", Color.FromArgb("#4A90E2"));
-        var settingsButton = CreateMenuButton("Settings", Color.FromArgb("#7B68EE"));
-        var aboutButton = CreateMenuButton("About", Color.FromArgb("#2ECC71"));
+        var homeButton = CreateMenuButton("Home", AppColors.AccentBlue);
+        var settingsButton = CreateMenuButton("Settings", AppColors.AccentPurple);
+        var aboutButton = CreateMenuButton("About", AppColors.AccentGreen);
 
         homeButton.Clicked += (s, e) => Detail = new NavigationPage(CreateDetailPage("Home", "Welcome home! Browse your content here.", "#4A90E2"));
         settingsButton.Clicked += (s, e) => Detail = new NavigationPage(CreateDetailPage("Settings", "Configure your preferences and options.", "#7B68EE"));
         aboutButton.Clicked += (s, e) => Detail = new NavigationPage(CreateDetailPage("About", "MAUI macOS FlyoutPage demo.\nSidebar powered by NSSplitView.", "#2ECC71"));
 
-        Flyout = new ContentPage
+        var flyoutPage = new ContentPage
         {
             Title = "Menu",
-            BackgroundColor = Color.FromArgb("#1E1E3A"),
             Content = new ScrollView
             {
                 Content = new VerticalStackLayout
@@ -36,11 +35,10 @@ public class FlyoutDemoPage : FlyoutPage
                             Text = "Sidebar",
                             FontSize = 24,
                             FontAttributes = FontAttributes.Bold,
-                            TextColor = Colors.White,
-                        },
+                        }.WithPrimaryText(),
                         new BoxView
                         {
-                            Color = Color.FromArgb("#4A90E2"),
+                            Color = AppColors.AccentBlue,
                             HeightRequest = 2,
                         },
                         homeButton,
@@ -50,47 +48,50 @@ public class FlyoutDemoPage : FlyoutPage
                 },
             },
         };
+        flyoutPage.WithSidebarBackground();
+        Flyout = flyoutPage;
 
         Detail = new NavigationPage(CreateDetailPage("Home", "Welcome home! Browse your content here.", "#4A90E2"));
     }
 
-    static ContentPage CreateDetailPage(string title, string description, string accentColor) => new()
+    static ContentPage CreateDetailPage(string title, string description, string accentColor)
     {
-        Title = title,
-        BackgroundColor = Color.FromArgb("#1A1A2E"),
-        Content = new VerticalStackLayout
+        var page = new ContentPage
         {
-            Padding = new Thickness(40),
-            Spacing = 20,
-            VerticalOptions = LayoutOptions.Center,
-            HorizontalOptions = LayoutOptions.Center,
-            Children =
+            Title = title,
+            Content = new VerticalStackLayout
             {
-                new BoxView
+                Padding = new Thickness(40),
+                Spacing = 20,
+                VerticalOptions = LayoutOptions.Center,
+                HorizontalOptions = LayoutOptions.Center,
+                Children =
                 {
-                    Color = Color.FromArgb(accentColor),
-                    HeightRequest = 4,
-                    WidthRequest = 200,
-                    HorizontalOptions = LayoutOptions.Center,
-                },
-                new Label
-                {
-                    Text = title,
-                    FontSize = 32,
-                    FontAttributes = FontAttributes.Bold,
-                    TextColor = Colors.White,
-                    HorizontalTextAlignment = TextAlignment.Center,
-                },
-                new Label
-                {
-                    Text = description,
-                    FontSize = 18,
-                    TextColor = Color.FromArgb("#AAAAAA"),
-                    HorizontalTextAlignment = TextAlignment.Center,
+                    new BoxView
+                    {
+                        Color = Color.FromArgb(accentColor),
+                        HeightRequest = 4,
+                        WidthRequest = 200,
+                        HorizontalOptions = LayoutOptions.Center,
+                    },
+                    new Label
+                    {
+                        Text = title,
+                        FontSize = 32,
+                        FontAttributes = FontAttributes.Bold,
+                        HorizontalTextAlignment = TextAlignment.Center,
+                    }.WithPrimaryText(),
+                    new Label
+                    {
+                        Text = description,
+                        FontSize = 18,
+                        HorizontalTextAlignment = TextAlignment.Center,
+                    }.WithSecondaryText(),
                 },
             },
-        },
-    };
+        };
+        return page.WithPageBackground();
+    }
 
     static Button CreateMenuButton(string text, Color color) => new()
     {

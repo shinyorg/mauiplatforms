@@ -29,7 +29,7 @@ public class EssentialsPage : ContentPage
 
     public EssentialsPage()
     {
-        BackgroundColor = Color.FromArgb("#1A1A2E");
+        this.WithPageBackground();
 
         var layout = new VerticalStackLayout
         {
@@ -102,7 +102,7 @@ public class EssentialsPage : ContentPage
         layout.Children.Add(CreateFocusGuide());
 
         layout.Children.Add(CreateHeader("Text-to-Speech"));
-        var ttsEntry = new Entry { Placeholder = "Enter text to speak", TextColor = Colors.White, Text = "Hello from MAUI!" };
+        var ttsEntry = new Entry { Placeholder = "Enter text to speak", Text = "Hello from MAUI!" }.WithEntryTheme();
         layout.Children.Add(ttsEntry);
         var ttsBtn = new Button { Text = "Speak" };
         ttsBtn.Clicked += async (s, e) =>
@@ -120,7 +120,7 @@ public class EssentialsPage : ContentPage
         };
         layout.Children.Add(ttsBtn);
         var ttsLocalesBtn = new Button { Text = "List Voices" };
-        var ttsLocalesLabel = new Label { FontSize = 14, TextColor = Colors.White, Text = "" };
+        var ttsLocalesLabel = new Label { FontSize = 14, Text = "" }.WithPrimaryText();
         ttsLocalesBtn.Clicked += async (s, e) =>
         {
             try
@@ -169,21 +169,19 @@ public class EssentialsPage : ContentPage
         catch (Exception ex) { return $"Error: {ex.Message}"; }
     }
 
-    static Label CreateValueLabel(string text) => new()
+    static Label CreateValueLabel(string text) => new Label
     {
         Text = text,
         FontSize = 16,
-        TextColor = Colors.White
-    };
+    }.WithPrimaryText();
 
-    static Label CreateHeader(string text) => new()
+    static Label CreateHeader(string text) => new Label
     {
         Text = text,
         FontSize = 24,
         FontAttributes = FontAttributes.Bold,
-        TextColor = Color.FromArgb("#E94560"),
         Margin = new Thickness(0, 10, 0, 5)
-    };
+    }.WithSectionStyle();
 
     static HorizontalStackLayout CreateRow(string label, string value) => new()
     {
@@ -195,15 +193,13 @@ public class EssentialsPage : ContentPage
                 Text = $"{label}:",
                 FontSize = 16,
                 FontAttributes = FontAttributes.Bold,
-                TextColor = Color.FromArgb("#A8E6CF"),
                 WidthRequest = 200
-            },
+            }.WithStatusText(),
             new Label
             {
                 Text = value,
                 FontSize = 16,
-                TextColor = Colors.White
-            }
+            }.WithPrimaryText()
         }
     };
 
@@ -217,9 +213,8 @@ public class EssentialsPage : ContentPage
                 Text = $"{label}:",
                 FontSize = 16,
                 FontAttributes = FontAttributes.Bold,
-                TextColor = Color.FromArgb("#A8E6CF"),
                 WidthRequest = 200
-            },
+            }.WithStatusText(),
             valueLabel
         }
     };

@@ -1,8 +1,26 @@
 using CoreGraphics;
+using Microsoft.Maui.ApplicationModel;
+using Microsoft.Maui.Controls;
 using Microsoft.Maui.Handlers;
 using UIKit;
 
 namespace Microsoft.Maui.Platform.TvOS.Handlers;
+
+/// <summary>
+/// UIViewController that observes trait collection changes to notify MAUI of theme switches.
+/// </summary>
+class ThemeAwareViewController : UIViewController
+{
+    public Action? OnThemeChanged { get; set; }
+
+    public override void TraitCollectionDidChange(UITraitCollection? previousTraitCollection)
+    {
+        base.TraitCollectionDidChange(previousTraitCollection);
+
+        if (previousTraitCollection?.UserInterfaceStyle != TraitCollection.UserInterfaceStyle)
+            OnThemeChanged?.Invoke();
+    }
+}
 
 public partial class WindowHandler : ElementHandler<IWindow, UIWindow>
 {
@@ -13,7 +31,7 @@ public partial class WindowHandler : ElementHandler<IWindow, UIWindow>
             [nameof(IWindow.Content)] = MapContent,
         };
 
-    UIViewController? _rootViewController;
+    ThemeAwareViewController? _rootViewController;
 
     public WindowHandler() : base(Mapper)
     {
@@ -23,12 +41,35 @@ public partial class WindowHandler : ElementHandler<IWindow, UIWindow>
     protected override UIWindow CreatePlatformElement()
     {
         var window = new UIWindow(UIScreen.MainScreen.Bounds);
-        _rootViewController = new UIViewController();
+        _rootViewController = new ThemeAwareViewController();
+        _rootViewController.OnThemeChanged = () =>
+        {
+            SyncUserAppTheme();
+            (Application.Current as IApplication)?.ThemeChanged();
+        };
+
+        // Set the initial theme
+        SyncUserAppTheme();
+
         window.RootViewController = _rootViewController;
         window.MakeKeyAndVisible();
         return window;
     }
 #pragma warning restore CA1422
+
+    static void SyncUserAppTheme()
+    {
+        if (Application.Current is null)
+            return;
+
+        var style = UIScreen.MainScreen.TraitCollection.UserInterfaceStyle;
+        Application.Current.UserAppTheme = style switch
+        {
+            UIUserInterfaceStyle.Dark => AppTheme.Dark,
+            UIUserInterfaceStyle.Light => AppTheme.Light,
+            _ => AppTheme.Unspecified
+        };
+    }
 
     public static void MapTitle(WindowHandler handler, IWindow window)
     {

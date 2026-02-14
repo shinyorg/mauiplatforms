@@ -30,6 +30,9 @@
         <Compile Include="..\Sample\App.cs">
             <Link>App.cs</Link>
         </Compile>
+        <Compile Include="..\Sample\AppColors.cs">
+            <Link>AppColors.cs</Link>
+        </Compile>
         <Compile Include="..\Sample\MainPage.cs">
             <Link>MainPage.cs</Link>
         </Compile>

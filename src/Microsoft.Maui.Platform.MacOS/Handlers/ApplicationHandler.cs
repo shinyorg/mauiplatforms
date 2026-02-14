@@ -1,5 +1,6 @@
 using Foundation;
 using Microsoft.Maui.Handlers;
+using AppKit;
 
 namespace Microsoft.Maui.Platform.MacOS.Handlers;
 

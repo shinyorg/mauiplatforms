@@ -96,7 +96,7 @@ Both platforms share the same set of control handlers:
 * Modal page presentation
 * Keyboard/focus management
 * Accessibility support
-* Light/dark mode support (theme detection and dynamic colors)
+* Light/dark mode support (theme detection and dynamic colors) ✅
 * Font management (custom fonts, font families)
 * Gesture recognizers (Tap, Swipe, Pan, Pinch)
 

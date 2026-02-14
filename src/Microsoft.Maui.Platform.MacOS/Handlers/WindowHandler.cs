@@ -1,4 +1,5 @@
 using CoreGraphics;
+using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Handlers;
 using AppKit;
@@ -7,6 +8,7 @@ namespace Microsoft.Maui.Platform.MacOS.Handlers;
 
 /// <summary>
 /// Flipped NSView used as NSWindow.ContentView so MAUI's top-left coordinate system works.
+/// Also observes effective appearance changes to drive light/dark mode switching.
 /// </summary>
 internal class FlippedNSView : NSView
 {
@@ -16,6 +18,30 @@ internal class FlippedNSView : NSView
     }
 
     public override bool IsFlipped => true;
+
+    public override void ViewDidChangeEffectiveAppearance()
+    {
+        base.ViewDidChangeEffectiveAppearance();
+        SyncUserAppTheme(EffectiveAppearance);
+    }
+
+    internal static void SyncUserAppTheme(NSAppearance appearance)
+    {
+        if (Application.Current is null)
+            return;
+
+        var best = appearance.FindBestMatch(new string[]
+        {
+            NSAppearance.NameAqua.ToString(),
+            NSAppearance.NameDarkAqua.ToString()
+        });
+
+        Application.Current.UserAppTheme = best == NSAppearance.NameDarkAqua.ToString()
+            ? AppTheme.Dark
+            : AppTheme.Light;
+
+        (Application.Current as IApplication)?.ThemeChanged();
+    }
 }
 
 public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
@@ -54,6 +80,9 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
         _toolbarManager.AttachToWindow(window);
 
         window.MakeKeyAndOrderFront(null);
+
+        // Set the initial theme from the window's effective appearance
+        FlippedNSView.SyncUserAppTheme(window.EffectiveAppearance);
 
         return window;
     }

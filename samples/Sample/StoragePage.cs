@@ -35,12 +35,12 @@ public class StoragePage : ContentPage
 
         _prefValueLabel = new Label
         {
-            FontSize = 16, TextColor = Colors.White,
+            FontSize = 16,
             Text = $"Stored: {TryGet(() => Preferences.Get(PrefKey, "(not set)"))}"
-        };
+        }.WithPrimaryText();
         layout.Children.Add(_prefValueLabel);
 
-        _prefEntry = new Entry { Placeholder = "Enter a value", TextColor = Colors.White };
+        _prefEntry = new Entry { Placeholder = "Enter a value" }.WithEntryTheme();
         layout.Children.Add(_prefEntry);
 
         var prefSaveBtn = new Button { Text = "Save Preference" };
@@ -60,13 +60,13 @@ public class StoragePage : ContentPage
 
         _secureValueLabel = new Label
         {
-            FontSize = 16, TextColor = Colors.White,
+            FontSize = 16,
             Text = "Stored: (loading...)"
-        };
+        }.WithPrimaryText();
         layout.Children.Add(_secureValueLabel);
         _ = LoadSecureValue();
 
-        _secureEntry = new Entry { Placeholder = "Enter a secret", TextColor = Colors.White };
+        _secureEntry = new Entry { Placeholder = "Enter a secret" }.WithEntryTheme();
         layout.Children.Add(_secureEntry);
 
         var secureSaveBtn = new Button { Text = "Save Secret" };
@@ -90,9 +90,9 @@ public class StoragePage : ContentPage
 
         _pickerResultLabel = new Label
         {
-            FontSize = 16, TextColor = Colors.White,
+            FontSize = 16,
             Text = "No file selected"
-        };
+        }.WithPrimaryText();
         layout.Children.Add(_pickerResultLabel);
 
         var pickFileBtn = new Button { Text = "Pick File" };
@@ -193,14 +193,13 @@ public class StoragePage : ContentPage
         }
     }
 
-    static Label CreateHeader(string text) => new()
+    static Label CreateHeader(string text) => new Label
     {
         Text = text,
         FontSize = 22,
         FontAttributes = FontAttributes.Bold,
-        TextColor = Color.FromArgb("#4FC3F7"),
         Margin = new Thickness(0, 15, 0, 5)
-    };
+    }.WithSectionStyle();
 
     static string TryGet(Func<string> getter)
     {

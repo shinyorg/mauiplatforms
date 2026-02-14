@@ -16,36 +16,32 @@ public class MainPage : ContentPage
 
     public MainPage()
     {
-        BackgroundColor = Color.FromArgb("#1A1A2E");
+        this.WithPageBackground();
 
         _statusLabel = new Label
         {
             Text = "Ready - interact with the controls!",
             FontSize = 18,
-            TextColor = Color.FromArgb("#A8E6CF"),
-        };
+        }.WithStatusText();
 
         _sliderValue = new Label
         {
             Text = "Value: 50",
             FontSize = 18,
-            TextColor = Colors.White,
-        };
+        }.WithPrimaryText();
 
         _pickerStatus = new Label
         {
             Text = "No selection",
             FontSize = 18,
-            TextColor = Colors.White,
-        };
+        }.WithPrimaryText();
 
 #if !TVOS
         _dialogResult = new Label
         {
             Text = "No dialog shown yet",
             FontSize = 18,
-            TextColor = Color.FromArgb("#A8E6CF"),
-        };
+        }.WithStatusText();
 #endif
 
         // --- Title ---
@@ -58,15 +54,14 @@ public class MainPage : ContentPage
 #endif
             FontSize = 44,
             FontAttributes = FontAttributes.Bold,
-            TextColor = Colors.White,
             HorizontalTextAlignment = TextAlignment.Center,
-        };
+        }.WithPrimaryText();
 
         // --- Buttons ---
         var button1 = new Button
         {
             Text = "Primary Button",
-            BackgroundColor = Color.FromArgb("#4A90E2"),
+            BackgroundColor = AppColors.AccentBlue,
             TextColor = Colors.White,
         };
         button1.Clicked += OnButtonClicked;
@@ -74,7 +69,7 @@ public class MainPage : ContentPage
         var button2 = new Button
         {
             Text = "Secondary Button",
-            BackgroundColor = Color.FromArgb("#7B68EE"),
+            BackgroundColor = AppColors.AccentPurple,
             TextColor = Colors.White,
         };
         button2.Clicked += OnButtonClicked;
@@ -83,7 +78,7 @@ public class MainPage : ContentPage
         var navButton = new Button
         {
             Text = "Go to CollectionView Page →",
-            BackgroundColor = Color.FromArgb("#2ECC71"),
+            BackgroundColor = AppColors.AccentGreen,
             TextColor = Colors.White,
         };
         navButton.Clicked += async (s, e) => await Navigation.PushAsync(new CollectionViewPage());
@@ -92,7 +87,7 @@ public class MainPage : ContentPage
         var blazorButton = new Button
         {
             Text = "Go to Blazor Page →",
-            BackgroundColor = Color.FromArgb("#9B59B6"),
+            BackgroundColor = AppColors.AccentPurple,
             TextColor = Colors.White,
         };
         blazorButton.Clicked += async (s, e) => await Navigation.PushAsync(new BlazorPage());
@@ -100,7 +95,7 @@ public class MainPage : ContentPage
         var graphicsButton = new Button
         {
             Text = "Go to GraphicsView Page →",
-            BackgroundColor = Color.FromArgb("#F39C12"),
+            BackgroundColor = AppColors.AccentOrange,
             TextColor = Colors.White,
         };
         graphicsButton.Clicked += async (s, e) => await Navigation.PushAsync(new GraphicsViewPage());
@@ -111,7 +106,7 @@ public class MainPage : ContentPage
         var alertButton = new Button
         {
             Text = "Show Alert",
-            BackgroundColor = Color.FromArgb("#FF6B6B"),
+            BackgroundColor = AppColors.AccentPink,
             TextColor = Colors.White,
         };
         alertButton.Clicked += OnAlertClicked;
@@ -119,7 +114,7 @@ public class MainPage : ContentPage
         var confirmButton = new Button
         {
             Text = "Show Confirm",
-            BackgroundColor = Color.FromArgb("#FFD93D"),
+            BackgroundColor = AppColors.AccentOrange,
             TextColor = Colors.Black,
         };
         confirmButton.Clicked += OnConfirmClicked;
@@ -127,7 +122,7 @@ public class MainPage : ContentPage
         var promptButton = new Button
         {
             Text = "Show Prompt",
-            BackgroundColor = Color.FromArgb("#6BCB77"),
+            BackgroundColor = AppColors.AccentGreen,
             TextColor = Colors.White,
         };
         promptButton.Clicked += OnPromptClicked;
@@ -137,18 +132,13 @@ public class MainPage : ContentPage
         var entry = new Entry
         {
             Placeholder = "Type something...",
-            BackgroundColor = Colors.White,
-            TextColor = Colors.Black,
-            PlaceholderColor = Color.FromArgb("#888888"),
-        };
+        }.WithEntryTheme();
 
         // --- Picker ---
         var picker = new Picker
         {
             Title = "Pick a color...",
-            TextColor = Colors.White,
-            BackgroundColor = Color.FromArgb("#333333"),
-        };
+        }.WithPickerTheme();
         picker.Items.Add("Red");
         picker.Items.Add("Green");
         picker.Items.Add("Blue");
@@ -175,7 +165,7 @@ public class MainPage : ContentPage
         var checkBox = new CheckBox
         {
             IsChecked = false,
-            Color = Color.FromArgb("#4A90E2"),
+            Color = AppColors.AccentBlue,
         };
 #endif
 
@@ -183,7 +173,7 @@ public class MainPage : ContentPage
         var activityIndicator = new ActivityIndicator
         {
             IsRunning = true,
-            Color = Color.FromArgb("#4A90E2"),
+            Color = AppColors.AccentBlue,
         };
 
         // --- Image (from URI) ---
@@ -212,7 +202,7 @@ public class MainPage : ContentPage
         // --- BoxView ---
         var boxView = new BoxView
         {
-            Color = Color.FromArgb("#FF6B6B"),
+            Color = AppColors.AccentPink,
             HeightRequest = 6,
             CornerRadius = 3,
         };
@@ -224,9 +214,9 @@ public class MainPage : ContentPage
             HorizontalOptions = LayoutOptions.Center,
             Children =
             {
-                new Label { Text = "Item A", TextColor = Colors.White, BackgroundColor = Color.FromArgb("#FF6B6B"), Padding = 12 },
-                new Label { Text = "Item B", TextColor = Colors.White, BackgroundColor = Color.FromArgb("#4A90E2"), Padding = 12 },
-                new Label { Text = "Item C", TextColor = Colors.White, BackgroundColor = Color.FromArgb("#7B68EE"), Padding = 12 },
+                new Label { Text = "Item A", TextColor = Colors.White, BackgroundColor = AppColors.AccentPink, Padding = 12 },
+                new Label { Text = "Item B", TextColor = Colors.White, BackgroundColor = AppColors.AccentBlue, Padding = 12 },
+                new Label { Text = "Item C", TextColor = Colors.White, BackgroundColor = AppColors.AccentPurple, Padding = 12 },
             },
         };
 
@@ -273,9 +263,7 @@ public class MainPage : ContentPage
                     {
                         Placeholder = "Type multiline text here...",
                         HeightRequest = 120,
-                        TextColor = Colors.White,
-                        BackgroundColor = Color.FromArgb("#2A2A4A"),
-                    },
+                    }.WithSurfaceBackground(),
 
                     SectionHeader("Date & Time Pickers"),
                     CreateDateTimePickerDemo(),
@@ -312,8 +300,8 @@ public class MainPage : ContentPage
                     activityIndicator,
 
                     SectionHeader("Progress Bar"),
-                    new ProgressBar { Progress = 0.65, ProgressColor = Color.FromArgb("#4A90E2"), HeightRequest = 8 },
-                    new ProgressBar { Progress = 0.3, ProgressColor = Color.FromArgb("#FF6B6B"), HeightRequest = 8 },
+                    new ProgressBar { Progress = 0.65, ProgressColor = AppColors.AccentBlue, HeightRequest = 8 },
+                    new ProgressBar { Progress = 0.3, ProgressColor = AppColors.AccentPink, HeightRequest = 8 },
 
                     SectionHeader("Horizontal Layout"),
                     layoutRow,
@@ -327,7 +315,7 @@ public class MainPage : ContentPage
                         Text = "Shadow on Label",
                         TextColor = Colors.White,
                         FontSize = 22,
-                        BackgroundColor = Color.FromArgb("#4A90E2"),
+                        BackgroundColor = AppColors.AccentBlue,
                         Padding = new Thickness(20, 12),
                         Shadow = new Shadow
                         {
@@ -340,11 +328,11 @@ public class MainPage : ContentPage
                     new Button
                     {
                         Text = "Shadow on Button",
-                        BackgroundColor = Color.FromArgb("#2ECC71"),
+                        BackgroundColor = AppColors.AccentGreen,
                         TextColor = Colors.White,
                         Shadow = new Shadow
                         {
-                            Brush = Color.FromArgb("#2ECC71"),
+                            Brush = AppColors.AccentGreen,
                             Offset = new Point(0, 6),
                             Radius = 12,
                             Opacity = 0.5f,
@@ -383,10 +371,10 @@ public class MainPage : ContentPage
             ColumnSpacing = 10,
         };
 
-        var cell1 = new Label { Text = "Row 0, Col 0", TextColor = Colors.White, BackgroundColor = Color.FromArgb("#E74C3C"), Padding = 16, HorizontalTextAlignment = TextAlignment.Center };
-        var cell2 = new Label { Text = "Row 0, Col 1", TextColor = Colors.White, BackgroundColor = Color.FromArgb("#3498DB"), Padding = 16, HorizontalTextAlignment = TextAlignment.Center };
-        var cell3 = new Label { Text = "Row 1, Col 0", TextColor = Colors.White, BackgroundColor = Color.FromArgb("#2ECC71"), Padding = 16, HorizontalTextAlignment = TextAlignment.Center };
-        var cell4 = new Label { Text = "Row 1, Col 1", TextColor = Colors.White, BackgroundColor = Color.FromArgb("#9B59B6"), Padding = 16, HorizontalTextAlignment = TextAlignment.Center };
+        var cell1 = new Label { Text = "Row 0, Col 0", TextColor = Colors.White, BackgroundColor = AppColors.AccentRed, Padding = 16, HorizontalTextAlignment = TextAlignment.Center };
+        var cell2 = new Label { Text = "Row 0, Col 1", TextColor = Colors.White, BackgroundColor = AppColors.AccentBlue, Padding = 16, HorizontalTextAlignment = TextAlignment.Center };
+        var cell3 = new Label { Text = "Row 1, Col 0", TextColor = Colors.White, BackgroundColor = AppColors.AccentGreen, Padding = 16, HorizontalTextAlignment = TextAlignment.Center };
+        var cell4 = new Label { Text = "Row 1, Col 1", TextColor = Colors.White, BackgroundColor = AppColors.AccentPurple, Padding = 16, HorizontalTextAlignment = TextAlignment.Center };
 
         grid.Add(cell1, 0, 0);
         grid.Add(cell2, 1, 0);
@@ -396,13 +384,12 @@ public class MainPage : ContentPage
         return grid;
     }
 
-    static Label SectionHeader(string text) => new()
+    static Label SectionHeader(string text) => new Label
     {
         Text = text,
         FontSize = 28,
         FontAttributes = FontAttributes.Bold,
-        TextColor = Color.FromArgb("#FF6B6B"),
-    };
+    }.WithSectionStyle();
 
     static View CreateBorderDemo()
     {
@@ -411,23 +398,22 @@ public class MainPage : ContentPage
         // Simple rounded border
         var border1 = new Border
         {
-            Stroke = Color.FromArgb("#4A90E2"),
+            Stroke = AppColors.AccentBlue,
             StrokeThickness = 2,
             StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = 12 },
             Padding = new Thickness(16),
             Content = new Label
             {
                 Text = "Rounded Border",
-                TextColor = Colors.White,
                 FontSize = 18,
                 HorizontalTextAlignment = TextAlignment.Center,
-            },
+            }.WithPrimaryText(),
         };
 
         // Thick dashed border
         var border2 = new Border
         {
-            Stroke = Color.FromArgb("#FF6B6B"),
+            Stroke = AppColors.AccentPink,
             StrokeThickness = 3,
             StrokeDashArray = new Microsoft.Maui.Controls.DoubleCollection { 6, 3 },
             StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = 8 },
@@ -435,18 +421,16 @@ public class MainPage : ContentPage
             Content = new Label
             {
                 Text = "Dashed Border",
-                TextColor = Colors.White,
                 FontSize = 18,
                 HorizontalTextAlignment = TextAlignment.Center,
-            },
+            }.WithPrimaryText(),
         };
 
         // Border with background
         var border3 = new Border
         {
-            Stroke = Color.FromArgb("#2ECC71"),
+            Stroke = AppColors.AccentGreen,
             StrokeThickness = 2,
-            BackgroundColor = Color.FromArgb("#2A2A4A"),
             StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = 20 },
             Padding = new Thickness(20),
             Content = new VerticalStackLayout
@@ -454,11 +438,11 @@ public class MainPage : ContentPage
                 Spacing = 8,
                 Children =
                 {
-                    new Label { Text = "Card Style", TextColor = Colors.White, FontSize = 20, FontAttributes = FontAttributes.Bold },
-                    new Label { Text = "Border with background and rounded corners", TextColor = Color.FromArgb("#AAAAAA"), FontSize = 14 },
+                    new Label { Text = "Card Style", FontSize = 20, FontAttributes = FontAttributes.Bold }.WithPrimaryText(),
+                    new Label { Text = "Border with background and rounded corners", FontSize = 14 }.WithSecondaryText(),
                 },
             },
-        };
+        }.WithSurfaceBackground();
 
         stack.Children.Add(border1);
         stack.Children.Add(border2);
@@ -478,7 +462,7 @@ public class MainPage : ContentPage
             ("#F39C12", "Slide 5 — Orange"),
         };
 
-        var positionLabel = new Label { Text = "Position: 0", TextColor = Colors.White, FontSize = 18 };
+        var positionLabel = new Label { Text = "Position: 0", FontSize = 18 }.WithPrimaryText();
 
         var carousel = new CarouselView
         {
@@ -525,7 +509,7 @@ public class MainPage : ContentPage
 #if MACAPP
     static View CreateDateTimePickerDemo()
     {
-        var dateLabel = new Label { Text = "Selected date: (none)", TextColor = Colors.White, FontSize = 16 };
+        var dateLabel = new Label { Text = "Selected date: (none)", FontSize = 16 }.WithPrimaryText();
         var datePicker = new DatePicker
         {
             Date = DateTime.Today,
@@ -534,7 +518,7 @@ public class MainPage : ContentPage
         };
         datePicker.DateSelected += (s, e) => dateLabel.Text = $"Selected date: {e.NewDate:d}";
 
-        var timeLabel = new Label { Text = "Selected time: (none)", TextColor = Colors.White, FontSize = 16 };
+        var timeLabel = new Label { Text = "Selected time: (none)", FontSize = 16 }.WithPrimaryText();
         var timePicker = new TimePicker
         {
             Time = DateTime.Now.TimeOfDay,
@@ -550,11 +534,11 @@ public class MainPage : ContentPage
             Spacing = 10,
             Children =
             {
-                new Label { Text = "Date Picker", TextColor = Color.FromArgb("#4A90E2"), FontSize = 18 },
+                new Label { Text = "Date Picker", TextColor = AppColors.AccentBlue, FontSize = 18 },
                 datePicker,
                 dateLabel,
                 new BoxView { HeightRequest = 4 },
-                new Label { Text = "Time Picker", TextColor = Color.FromArgb("#4A90E2"), FontSize = 18 },
+                new Label { Text = "Time Picker", TextColor = AppColors.AccentBlue, FontSize = 18 },
                 timePicker,
                 timeLabel,
             },
