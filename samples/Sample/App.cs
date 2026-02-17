@@ -26,6 +26,14 @@ public class App : Microsoft.Maui.Controls.Application
 #if MACAPP
         tabbedPage.Children.Add(new NavigationPage(new FlyoutDemoPage { Title = "FlyoutPage" }) { Title = "FlyoutPage" });
 #endif
-        return new Window(tabbedPage);
+        var window = new Window(tabbedPage);
+        window.Created += (s, e) => Console.WriteLine("[Lifecycle] Window Created");
+        window.Activated += (s, e) => Console.WriteLine("[Lifecycle] Window Activated");
+        window.Deactivated += (s, e) => Console.WriteLine("[Lifecycle] Window Deactivated");
+        window.Stopped += (s, e) => Console.WriteLine("[Lifecycle] Window Stopped");
+        window.Resumed += (s, e) => Console.WriteLine("[Lifecycle] Window Resumed");
+        window.Destroying += (s, e) => Console.WriteLine("[Lifecycle] Window Destroying");
+        window.Backgrounding += (s, e) => Console.WriteLine("[Lifecycle] Window Backgrounding");
+        return window;
     }
 }

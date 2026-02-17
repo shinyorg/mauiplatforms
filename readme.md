@@ -115,7 +115,7 @@ Both platforms share the same set of control handlers:
 * File dialogs (Open/Save panels)
 * Drag and drop
 * Multiple windows
-* Window lifecycle (minimize, fullscreen, close)
+* ~~Window lifecycle (minimize, fullscreen, close)~~ ✅ (active, resign active, hide, unhide, terminate)
 
 ### Broader Goals
 * ~~WebView~~ — macOS ✅ (WKWebView), tvOS ❌ (not supported by platform)
@@ -205,6 +205,68 @@ open samples/SampleMac/bin/Debug/net10.0-macos/osx-arm64/MAUI\ macOS.app
 * `IButton` does not have `Text` or `TextColor` directly — those are on `IText` and `ITextStyle`. Handlers cast via `if (button is IText textButton)`.
 * Sample apps use pure C# pages (no XAML) to avoid XAML compilation issues on unsupported platforms.
 * `NavigationPage` dispatches navigation requests via `Handler.Invoke()` (the MAUI command mapper pattern), not direct method calls. The handler must register a `CommandMapper` entry for `RequestNavigation` and call `NavigationFinished()` on the view after completing navigation. The initial page is pushed automatically by MAUI's `OnHandlerChangedCore`.
+
+## Lifecycle Events
+
+Both platforms fire `IWindow` lifecycle methods and support MAUI's `ConfigureLifecycleEvents` builder pattern for platform-specific event hooks.
+
+### IWindow Lifecycle
+
+The base app delegates (`MacOSMauiApplication`, `TvOSMauiApplication`) automatically call the standard `IWindow` lifecycle methods:
+
+| IWindow Method | macOS Trigger | tvOS Trigger |
+|---|---|---|
+| `Created()` | App launch | App launch |
+| `Activated()` | App becomes active | App becomes active |
+| `Deactivated()` | App loses active status | App resigns activation |
+| `Stopped()` | App hidden (Cmd+H) | App enters background |
+| `Resumed()` | App unhidden | App enters foreground |
+| `Destroying()` | App terminating | App terminating |
+
+Subscribe to these via MAUI's standard `Window` events:
+```csharp
+protected override Window CreateWindow(IActivationState? activationState)
+{
+    var window = new Window(new MainPage());
+    window.Activated += (s, e) => Console.WriteLine("Window Activated");
+    window.Stopped += (s, e) => Console.WriteLine("Window Stopped");
+    return window;
+}
+```
+
+### ConfigureLifecycleEvents (Platform-Specific)
+
+For platform-specific lifecycle hooks with access to native arguments, use the `ConfigureLifecycleEvents` builder pattern:
+
+**macOS:**
+```csharp
+builder.ConfigureLifecycleEvents(events =>
+{
+    events.AddMacOS(macOS => macOS
+        .DidFinishLaunching(notification => { /* NSNotification */ })
+        .DidBecomeActive(notification => { })
+        .DidResignActive(notification => { })
+        .DidHide(notification => { })
+        .DidUnhide(notification => { })
+        .WillTerminate(notification => { })
+    );
+});
+```
+
+**tvOS:**
+```csharp
+builder.ConfigureLifecycleEvents(events =>
+{
+    events.AddTvOS(tvOS => tvOS
+        .FinishedLaunching(app => { /* UIApplication */ })
+        .OnActivated(app => { })
+        .OnResignActivation(app => { })
+        .DidEnterBackground(app => { })
+        .WillEnterForeground(app => { })
+        .WillTerminate(app => { })
+    );
+});
+```
 
 ## BlazorWebView (macOS only)
 

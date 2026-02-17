@@ -8,7 +8,15 @@ class MacOSApp : Application
 {
 	protected override Window CreateWindow(IActivationState? activationState)
 	{
-		return new Window(new MainShell());
+		var window = new Window(new MainShell());
+		window.Created += (s, e) => Console.WriteLine("[Lifecycle] Window Created");
+		window.Activated += (s, e) => Console.WriteLine("[Lifecycle] Window Activated");
+		window.Deactivated += (s, e) => Console.WriteLine("[Lifecycle] Window Deactivated");
+		window.Stopped += (s, e) => Console.WriteLine("[Lifecycle] Window Stopped");
+		window.Resumed += (s, e) => Console.WriteLine("[Lifecycle] Window Resumed");
+		window.Destroying += (s, e) => Console.WriteLine("[Lifecycle] Window Destroying");
+		window.Backgrounding += (s, e) => Console.WriteLine("[Lifecycle] Window Backgrounding");
+		return window;
 	}
 }
 
