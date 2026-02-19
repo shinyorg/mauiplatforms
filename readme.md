@@ -1,5 +1,10 @@
 # .NET MAUI Backends for Apple TV & macOS (AppKit)
 
+[![NuGet](https://img.shields.io/nuget/v/Platform.Maui.TvOS.svg?label=Platform.Maui.TvOS)](https://www.nuget.org/packages/Platform.Maui.TvOS/)
+[![NuGet](https://img.shields.io/nuget/v/Platform.Maui.MacOS.svg?label=Platform.Maui.MacOS)](https://www.nuget.org/packages/Platform.Maui.MacOS/)
+[![NuGet](https://img.shields.io/nuget/v/Platform.Maui.Essentials.TvOS.svg?label=Platform.Maui.Essentials.TvOS)](https://www.nuget.org/packages/Platform.Maui.Essentials.TvOS/)
+[![NuGet](https://img.shields.io/nuget/v/Platform.Maui.Essentials.MacOS.svg?label=Platform.Maui.Essentials.MacOS)](https://www.nuget.org/packages/Platform.Maui.Essentials.MacOS/)
+
 Custom .NET MAUI backends targeting platforms not officially supported by MAUI — Apple TV (tvOS via UIKit) and macOS (native AppKit, not Mac Catalyst).
 
 Both backends use the platform-agnostic MAUI NuGet packages (`net10.0` fallback assemblies) and provide custom handler implementations that bridge MAUI's layout/rendering system to the native platform UI frameworks.
