@@ -18,6 +18,7 @@ public class FlyoutContainerView : MacOSContainerView, INSSplitViewDelegate
     NSView? _currentFlyoutView;
     NSView? _currentDetailView;
     bool _initialDividerSet;
+    NSLayoutConstraint? _flyoutWidthConstraint;
 
     public Action<CGRect>? OnFlyoutLayout { get; set; }
     public Action<CGRect>? OnDetailLayout { get; set; }
@@ -29,13 +30,15 @@ public class FlyoutContainerView : MacOSContainerView, INSSplitViewDelegate
         set
         {
             _flyoutWidth = value;
+            if (_flyoutWidthConstraint != null)
+                _flyoutWidthConstraint.Constant = (nfloat)value;
             _splitView.SetPositionOfDivider((nfloat)value, 0);
         }
     }
 
     public FlyoutContainerView()
     {
-        _flyoutContainer = new NSView { WantsLayer = true };
+        _flyoutContainer = new NSView { WantsLayer = true, TranslatesAutoresizingMaskIntoConstraints = false };
         _detailContainer = new NSView { WantsLayer = true };
 
         _splitView = new NSSplitView
@@ -49,9 +52,14 @@ public class FlyoutContainerView : MacOSContainerView, INSSplitViewDelegate
         _splitView.AddArrangedSubview(_flyoutContainer);
         _splitView.AddArrangedSubview(_detailContainer);
 
+        // Pin flyout width with a high-priority constraint
+        _flyoutWidthConstraint = _flyoutContainer.WidthAnchor.ConstraintEqualTo((nfloat)_flyoutWidth);
+        _flyoutWidthConstraint.Priority = (float)NSLayoutPriority.DefaultHigh; // 750
+        _flyoutWidthConstraint.Active = true;
+
         // Flyout keeps its width; detail absorbs all resize
-        _splitView.SetHoldingPriority(251, 0); // flyout: high priority = doesn't resize
-        _splitView.SetHoldingPriority(249, 1); // detail: low priority = resizes
+        _splitView.SetHoldingPriority(251, 0);
+        _splitView.SetHoldingPriority(249, 1);
 
         AddSubview(_splitView);
 
@@ -131,6 +139,14 @@ public class FlyoutContainerView : MacOSContainerView, INSSplitViewDelegate
     public nfloat SetMaxCoordinate(NSSplitView splitView, nfloat proposedMaximumPosition, nint dividerIndex)
     {
         return (nfloat)FlyoutWidth;
+    }
+
+    // Prevent NSSplitView from proportionally resizing the flyout pane during window resize
+    [Foundation.Export("splitView:shouldAdjustSizeOfSubview:")]
+    public bool ShouldAdjustSizeOfSubview(NSSplitView splitView, NSView view)
+    {
+        // Only the detail pane should resize; flyout stays fixed
+        return view != _flyoutContainer;
     }
 }
 
