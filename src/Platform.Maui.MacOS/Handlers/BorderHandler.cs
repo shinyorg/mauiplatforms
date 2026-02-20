@@ -19,11 +19,26 @@ public class BorderNSView : NSView
     public Func<double, double, Size>? CrossPlatformMeasure { get; set; }
     public Func<Rect, Size>? CrossPlatformArrange { get; set; }
 
-    public Size SizeThatFits(CGSize size)
+    public CGSize SizeThatFits(CGSize size)
     {
         if (CrossPlatformMeasure is not null)
-            return CrossPlatformMeasure((double)size.Width, (double)size.Height);
-        return new Size((double)size.Width, (double)size.Height);
+        {
+            var result = CrossPlatformMeasure((double)size.Width, (double)size.Height);
+            return new CGSize(result.Width, result.Height);
+        }
+        return new CGSize(size.Width, size.Height);
+    }
+
+    public override void Layout()
+    {
+        base.Layout();
+
+        var bounds = Bounds;
+        if (bounds.Width <= 0 || bounds.Height <= 0)
+            return;
+
+        CrossPlatformMeasure?.Invoke((double)bounds.Width, (double)bounds.Height);
+        CrossPlatformArrange?.Invoke(new Rect(0, 0, (double)bounds.Width, (double)bounds.Height));
     }
 }
 

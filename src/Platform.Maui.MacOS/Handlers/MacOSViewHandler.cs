@@ -247,6 +247,13 @@ public abstract class MacOSViewHandler<TVirtualView, TPlatformView> : ViewHandle
                     widthConstrained ? widthConstraint : nfloat.MaxValue,
                     heightConstrained ? heightConstraint : nfloat.MaxValue));
         }
+        else if (platformView is BorderNSView borderView)
+        {
+            sizeThatFits = borderView.SizeThatFits(
+                new CGSize(
+                    widthConstrained ? widthConstraint : nfloat.MaxValue,
+                    heightConstrained ? heightConstraint : nfloat.MaxValue));
+        }
         else
         {
             // For native AppKit controls, try IntrinsicContentSize first, then FittingSize
