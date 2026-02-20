@@ -29,6 +29,7 @@ public partial class LayoutHandler : MacOSViewHandler<ILayout, MacOSContainerVie
         base.ConnectHandler(platformView);
         platformView.CrossPlatformMeasure = VirtualViewCrossPlatformMeasure;
         platformView.CrossPlatformArrange = VirtualViewCrossPlatformArrange;
+        platformView.View = VirtualView;
 
         // Add existing children
         foreach (var child in VirtualView)
@@ -45,6 +46,7 @@ public partial class LayoutHandler : MacOSViewHandler<ILayout, MacOSContainerVie
     {
         platformView.CrossPlatformMeasure = null;
         platformView.CrossPlatformArrange = null;
+        platformView.View = null;
         base.DisconnectHandler(platformView);
     }
 

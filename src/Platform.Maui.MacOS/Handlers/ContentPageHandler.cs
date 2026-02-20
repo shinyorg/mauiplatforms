@@ -32,12 +32,14 @@ public partial class ContentPageHandler : MacOSViewHandler<IContentView, MacOSCo
         base.ConnectHandler(platformView);
         platformView.CrossPlatformMeasure = VirtualViewCrossPlatformMeasure;
         platformView.CrossPlatformArrange = VirtualViewCrossPlatformArrange;
+        platformView.View = VirtualView;
     }
 
     protected override void DisconnectHandler(MacOSContainerView platformView)
     {
         platformView.CrossPlatformMeasure = null;
         platformView.CrossPlatformArrange = null;
+        platformView.View = null;
         base.DisconnectHandler(platformView);
     }
 

@@ -16,6 +16,17 @@ public class MacOSContainerView : NSView
     /// delivers events to the gesture recognizer's own view, not ancestors).
     public bool InterceptChildHitTesting { get; set; }
 
+    WeakReference<IView>? _viewReference;
+
+    /// <summary>
+    /// The cross-platform IView this container represents, used for safe area checks.
+    /// </summary>
+    public IView? View
+    {
+        get => _viewReference != null && _viewReference.TryGetTarget(out var v) ? v : null;
+        set => _viewReference = value == null ? null : new(value);
+    }
+
     public MacOSContainerView()
     {
         WantsLayer = true;
@@ -37,6 +48,18 @@ public class MacOSContainerView : NSView
         return base.HitTest(point);
     }
 
+    bool ShouldApplySafeArea()
+    {
+        if (View is ISafeAreaView sav)
+            return !sav.IgnoreSafeArea;
+        return false;
+    }
+
+    NSEdgeInsets GetSafeAreaInsets()
+    {
+        return SafeAreaInsets;
+    }
+
     /// <summary>
     /// NSView has no SizeThatFits — we provide our own for the base handler to call.
     /// </summary>
@@ -52,7 +75,23 @@ public class MacOSContainerView : NSView
             ? double.PositiveInfinity
             : (double)size.Height;
 
+        if (ShouldApplySafeArea())
+        {
+            var insets = GetSafeAreaInsets();
+            width -= (double)(insets.Left + insets.Right);
+            height -= (double)(insets.Top + insets.Bottom);
+        }
+
         var result = CrossPlatformMeasure(width, height);
+
+        if (ShouldApplySafeArea())
+        {
+            var insets = GetSafeAreaInsets();
+            result = new Graphics.Size(
+                result.Width + (double)(insets.Left + insets.Right),
+                result.Height + (double)(insets.Top + insets.Bottom));
+        }
+
         return new CGSize(result.Width, result.Height);
     }
 
@@ -64,15 +103,36 @@ public class MacOSContainerView : NSView
         if (bounds.Width <= 0 || bounds.Height <= 0)
             return;
 
+        var applySafeArea = ShouldApplySafeArea();
+        var measureWidth = (double)bounds.Width;
+        var measureHeight = (double)bounds.Height;
+
+        if (applySafeArea)
+        {
+            var insets = GetSafeAreaInsets();
+            measureWidth -= (double)(insets.Left + insets.Right);
+            measureHeight -= (double)(insets.Top + insets.Bottom);
+        }
+
         // Measure pass must happen before arrange — MAUI's layout engine
         // requires IView.Measure() to be called (which sets DesiredSize) before
         // IView.Arrange() can produce correct results.
-        CrossPlatformMeasure?.Invoke((double)bounds.Width, (double)bounds.Height);
+        CrossPlatformMeasure?.Invoke(measureWidth, measureHeight);
 
-        CrossPlatformArrange?.Invoke(new Graphics.Rect(
-            0, 0,
-            bounds.Width,
-            bounds.Height));
+        if (applySafeArea)
+        {
+            var insets = GetSafeAreaInsets();
+            CrossPlatformArrange?.Invoke(new Graphics.Rect(
+                (double)insets.Left, (double)insets.Top,
+                measureWidth, measureHeight));
+        }
+        else
+        {
+            CrossPlatformArrange?.Invoke(new Graphics.Rect(
+                0, 0,
+                bounds.Width,
+                bounds.Height));
+        }
     }
 
     public override CGSize IntrinsicContentSize => new CGSize(NSView.NoIntrinsicMetric, NSView.NoIntrinsicMetric);
