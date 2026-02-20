@@ -42,22 +42,29 @@ internal class MacOSModalManager
 		var platformView = ((IView)page).ToMacOSPlatform(mauiContext);
 
 		// Modal pages are already positioned within safe bounds — skip safe area insets
+		// Also prevent MAUI's PlatformArrange from overriding our frame
 		if (platformView is MacOSContainerView container)
+		{
 			container.IgnorePlatformSafeArea = true;
+			container.ExternalFrameManagement = true;
+		}
 
-		// Inset from window edges to create a "sheet" appearance
+		// Inset from visible area to create a "sheet" appearance
 		var inset = GetModalInset();
+		var safeRect = _contentContainer.SafeAreaRect;
+
 		var pageFrame = new CGRect(
-			inset, inset,
-			_contentContainer.Bounds.Width - inset * 2,
-			_contentContainer.Bounds.Height - inset * 2);
+			safeRect.X + inset,
+			safeRect.Y + inset,
+			safeRect.Width - inset * 2,
+			safeRect.Height - inset * 2);
 
 		platformView.Frame = pageFrame;
 		platformView.WantsLayer = true;
 		platformView.Layer!.CornerRadius = 10;
 		platformView.Layer.MasksToBounds = true;
 		platformView.Layer.BackgroundColor = NSColor.WindowBackground.CGColor;
-		platformView.AutoresizingMask = NSViewResizingMask.WidthSizable | NSViewResizingMask.HeightSizable;
+		// Don't auto-resize — we control positioning via LayoutModal
 		_contentContainer.AddSubview(platformView);
 
 		var entry = new ModalEntry(page, backdrop, platformView, mauiContext);
@@ -96,17 +103,20 @@ internal class MacOSModalManager
 	{
 		var inset = GetModalInset();
 		var bounds = _contentContainer.Bounds;
+		var safeRect = _contentContainer.SafeAreaRect;
+
 		var pageFrame = new CGRect(
-			inset, inset,
-			bounds.Width - inset * 2,
-			bounds.Height - inset * 2);
+			safeRect.X + inset,
+			safeRect.Y + inset,
+			safeRect.Width - inset * 2,
+			safeRect.Height - inset * 2);
 
 		entry.BackdropView.Frame = bounds;
 		entry.PageView.Frame = pageFrame;
 
-		var page = entry.Page;
-		page.Measure((double)pageFrame.Width, (double)pageFrame.Height);
-		page.Arrange(new Rect(0, 0, (double)pageFrame.Width, (double)pageFrame.Height));
+		// Trigger layout on the container — don't call page.Arrange directly
+		// because PlatformArrange would reset our frame to (0,0)
+		entry.PageView.NeedsLayout = true;
 	}
 
 	static nfloat GetModalInset() => 20;

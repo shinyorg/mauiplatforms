@@ -22,6 +22,12 @@ public class MacOSContainerView : NSView
     /// </summary>
     public bool IgnorePlatformSafeArea { get; set; }
 
+    /// <summary>
+    /// When true, PlatformArrange won't override the frame set externally.
+    /// Used for modal pages whose frame is managed by MacOSModalManager.
+    /// </summary>
+    public bool ExternalFrameManagement { get; set; }
+
     WeakReference<IView>? _viewReference;
 
     /// <summary>

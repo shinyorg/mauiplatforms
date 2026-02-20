@@ -335,6 +335,10 @@ public abstract class MacOSViewHandler<TVirtualView, TPlatformView> : ViewHandle
         if (platformView == null)
             return;
 
+        // Modal pages have their frame managed externally — don't override
+        if (platformView is MacOSContainerView container && container.ExternalFrameManagement)
+            return;
+
         // Guard against NaN values which crash CALayer
         var x = Sanitize(rect.X);
         var y = Sanitize(rect.Y);
