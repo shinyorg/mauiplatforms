@@ -261,7 +261,7 @@ public partial class NativeSidebarFlyoutPageHandler : MacOSViewHandler<IFlyoutVi
 
 	NSScrollView? _scrollView;
 	NSOutlineView? _outlineView;
-	NSView? _sidebarContainer;
+	NSVisualEffectView? _sidebarEffectView;
 	NSView? _detailContainer;
 	NSView? _currentDetailView;
 	NSLayoutConstraint? _sidebarWidthConstraint;
@@ -283,14 +283,15 @@ public partial class NativeSidebarFlyoutPageHandler : MacOSViewHandler<IFlyoutVi
 			DividerStyle = NSSplitViewDividerStyle.Thin,
 		};
 
-		// Sidebar container
-		_sidebarContainer = new NSView
+		// Use NSVisualEffectView with sidebar material for Liquid Glass appearance
+		_sidebarEffectView = new NSVisualEffectView
 		{
-			WantsLayer = true,
+			Material = NSVisualEffectMaterial.Sidebar,
+			State = NSVisualEffectState.Active,
+			BlendingMode = NSVisualEffectBlendingMode.BehindWindow,
 			TranslatesAutoresizingMaskIntoConstraints = false,
 		};
 
-		// Create outline view configured as source list
 		_outlineView = new NSOutlineView
 		{
 			Style = NSTableViewStyle.SourceList,
@@ -316,25 +317,24 @@ public partial class NativeSidebarFlyoutPageHandler : MacOSViewHandler<IFlyoutVi
 			TranslatesAutoresizingMaskIntoConstraints = false,
 		};
 
-		_sidebarContainer.AddSubview(_scrollView);
+		_sidebarEffectView.AddSubview(_scrollView);
 
-		// Pin scroll view to sidebar container
 		NSLayoutConstraint.ActivateConstraints(new[]
 		{
-			_scrollView.TopAnchor.ConstraintEqualTo(_sidebarContainer.TopAnchor),
-			_scrollView.LeadingAnchor.ConstraintEqualTo(_sidebarContainer.LeadingAnchor),
-			_scrollView.TrailingAnchor.ConstraintEqualTo(_sidebarContainer.TrailingAnchor),
-			_scrollView.BottomAnchor.ConstraintEqualTo(_sidebarContainer.BottomAnchor),
+			_scrollView.TopAnchor.ConstraintEqualTo(_sidebarEffectView.TopAnchor),
+			_scrollView.LeadingAnchor.ConstraintEqualTo(_sidebarEffectView.LeadingAnchor),
+			_scrollView.TrailingAnchor.ConstraintEqualTo(_sidebarEffectView.TrailingAnchor),
+			_scrollView.BottomAnchor.ConstraintEqualTo(_sidebarEffectView.BottomAnchor),
 		});
 
 		// Detail container
 		_detailContainer = new NSView { WantsLayer = true };
 
-		splitView.AddArrangedSubview(_sidebarContainer);
+		splitView.AddArrangedSubview(_sidebarEffectView);
 		splitView.AddArrangedSubview(_detailContainer);
 
 		// Sidebar width constraint
-		_sidebarWidthConstraint = _sidebarContainer.WidthAnchor.ConstraintEqualTo((nfloat)_flyoutWidth);
+		_sidebarWidthConstraint = _sidebarEffectView.WidthAnchor.ConstraintEqualTo((nfloat)_flyoutWidth);
 		_sidebarWidthConstraint.Priority = (float)NSLayoutPriority.DefaultHigh;
 		_sidebarWidthConstraint.Active = true;
 
@@ -510,27 +510,27 @@ public partial class NativeSidebarFlyoutPageHandler : MacOSViewHandler<IFlyoutVi
 
 	public static void MapIsPresented(NativeSidebarFlyoutPageHandler handler, IFlyoutView view)
 	{
-		if (handler._sidebarContainer == null)
+		if (handler._sidebarEffectView == null)
 			return;
 
-		handler._sidebarContainer.Hidden = !view.IsPresented;
+		handler._sidebarEffectView.Hidden = !view.IsPresented;
 	}
 
 	public static void MapFlyoutBehavior(NativeSidebarFlyoutPageHandler handler, IFlyoutView view)
 	{
-		if (handler._sidebarContainer == null)
+		if (handler._sidebarEffectView == null)
 			return;
 
 		switch (view.FlyoutBehavior)
 		{
 			case FlyoutBehavior.Disabled:
-				handler._sidebarContainer.Hidden = true;
+				handler._sidebarEffectView.Hidden = true;
 				break;
 			case FlyoutBehavior.Locked:
-				handler._sidebarContainer.Hidden = false;
+				handler._sidebarEffectView.Hidden = false;
 				break;
 			case FlyoutBehavior.Flyout:
-				handler._sidebarContainer.Hidden = !view.IsPresented;
+				handler._sidebarEffectView.Hidden = !view.IsPresented;
 				break;
 		}
 	}
