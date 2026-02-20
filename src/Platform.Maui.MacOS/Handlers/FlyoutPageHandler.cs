@@ -49,6 +49,10 @@ public class FlyoutContainerView : MacOSContainerView, INSSplitViewDelegate
         _splitView.AddArrangedSubview(_flyoutContainer);
         _splitView.AddArrangedSubview(_detailContainer);
 
+        // Flyout keeps its width; detail absorbs all resize
+        _splitView.SetHoldingPriority(251, 0); // flyout: high priority = doesn't resize
+        _splitView.SetHoldingPriority(249, 1); // detail: low priority = resizes
+
         AddSubview(_splitView);
 
         NSLayoutConstraint.ActivateConstraints(new[]
@@ -116,17 +120,17 @@ public class FlyoutContainerView : MacOSContainerView, INSSplitViewDelegate
         }
     }
 
-    // NSSplitViewDelegate — constrain the flyout (sidebar) width
+    // NSSplitViewDelegate — lock the flyout (sidebar) width
     [Foundation.Export("splitView:constrainMinCoordinate:ofSubviewAt:")]
     public nfloat SetMinCoordinate(NSSplitView splitView, nfloat proposedMinimumPosition, nint dividerIndex)
     {
-        return (nfloat)(FlyoutWidth * 0.5);
+        return (nfloat)FlyoutWidth;
     }
 
     [Foundation.Export("splitView:constrainMaxCoordinate:ofSubviewAt:")]
     public nfloat SetMaxCoordinate(NSSplitView splitView, nfloat proposedMaximumPosition, nint dividerIndex)
     {
-        return (nfloat)(FlyoutWidth * 1.5);
+        return (nfloat)FlyoutWidth;
     }
 }
 
