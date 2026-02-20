@@ -79,6 +79,8 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
             false);
 
         window.Center();
+        window.ToolbarStyle = NSWindowToolbarStyle.Unified;
+        window.TitleVisibility = NSWindowTitleVisibility.Hidden;
 
         // Use a flipped NSView as ContentView so subviews use top-left origin
         _contentContainer = new FlippedNSView();

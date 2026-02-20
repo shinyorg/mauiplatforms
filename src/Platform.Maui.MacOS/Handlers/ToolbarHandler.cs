@@ -16,6 +16,7 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
     const string FlexibleSpaceId = "NSToolbarFlexibleSpaceItem";
     const string SidebarToggleId = "MauiSidebarToggle";
     const string BackButtonId = "MauiBackButton";
+    const string TitleId = "MauiTitle";
 
     NSWindow? _window;
     NSToolbar? _toolbar;
@@ -31,7 +32,7 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
         _toolbar = new NSToolbar(ToolbarId)
         {
             Delegate = this,
-            DisplayMode = NSToolbarDisplayMode.IconAndLabel,
+            DisplayMode = NSToolbarDisplayMode.Icon,
             AllowsUserCustomization = false,
         };
         _window.Toolbar = _toolbar;
@@ -123,13 +124,21 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
         _items.Clear();
         _itemIdentifiers.Clear();
 
-        // Add sidebar toggle if there's a FlyoutPage
+        // Left side: sidebar toggle, then back button
         if (_flyoutPage != null)
             _itemIdentifiers.Add(SidebarToggleId);
 
-        // Add back button if NavigationPage has depth > 1
         if (ShouldShowBackButton())
             _itemIdentifiers.Add(BackButtonId);
+
+        // Flexible space between left nav items and centered title
+        _itemIdentifiers.Add(FlexibleSpaceId);
+
+        // Centered title (since window title is hidden)
+        _itemIdentifiers.Add(TitleId);
+
+        // Flexible space between title and right-side toolbar items
+        _itemIdentifiers.Add(FlexibleSpaceId);
 
         if (toolbarItems != null)
         {
@@ -137,7 +146,7 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
             foreach (var item in toolbarItems)
             {
                 if (item.Order == ToolbarItemOrder.Secondary)
-                    continue; // Only primary items in the NSToolbar
+                    continue;
 
                 var id = $"{ItemIdPrefix}{index}";
                 _items.Add(item);
@@ -207,13 +216,51 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
 
             var button = new NSButton
             {
-                Title = $"‹ {backTitle}",
                 BezelStyle = NSBezelStyle.TexturedRounded,
                 Target = this,
                 Action = new ObjCRuntime.Selector("backButtonClicked:"),
             };
             button.SetButtonType(NSButtonType.MomentaryPushIn);
+
+            // Use SF Symbol chevron for a native Finder-like look
+            var chevronImage = NSImage.GetSystemSymbol("chevron.left", null);
+            if (chevronImage != null)
+            {
+                button.Image = chevronImage;
+                button.Title = backTitle;
+                button.ImagePosition = NSCellImagePosition.ImageLeading;
+            }
+            else
+            {
+                button.Title = $"‹ {backTitle}";
+            }
+
             nsItem.View = button;
+            return nsItem;
+        }
+
+        // Centered page title
+        if (itemIdentifier == TitleId)
+        {
+            var title = _currentPage?.Title ?? string.Empty;
+            var nsItem = new NSToolbarItem(TitleId)
+            {
+                Label = "",
+                PaletteLabel = "Title",
+            };
+
+            var label = new NSTextField
+            {
+                StringValue = title,
+                Editable = false,
+                Bordered = false,
+                DrawsBackground = false,
+                Font = NSFont.BoldSystemFontOfSize(13),
+                TextColor = NSColor.Label,
+                Alignment = NSTextAlignment.Center,
+            };
+            label.SizeToFit();
+            nsItem.View = label;
             return nsItem;
         }
 
