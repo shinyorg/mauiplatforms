@@ -56,9 +56,17 @@ public static partial class AppHostBuilderExtensions
         handlersCollection.AddHandler<WebView, WebViewHandler>();
 
 #pragma warning disable CS0618
-        handlersCollection.AddHandler(typeof(Microsoft.Maui.IShapeView), typeof(ShapeViewHandler));
+        handlersCollection.AddHandler(typeof(Microsoft.Maui.IShapeView), typeof(Microsoft.Maui.Platform.MacOS.Handlers.ShapeViewHandler));
 #pragma warning restore CS0618
-        handlersCollection.AddHandler<BoxView, ShapeViewHandler>();
+        handlersCollection.AddHandler<BoxView, Microsoft.Maui.Platform.MacOS.Handlers.ShapeViewHandler>();
+
+        // Register concrete Shape types to ensure our handler is used (not MAUI's built-in stub)
+        handlersCollection.AddHandler<Microsoft.Maui.Controls.Shapes.Rectangle, Microsoft.Maui.Platform.MacOS.Handlers.ShapeViewHandler>();
+        handlersCollection.AddHandler<Microsoft.Maui.Controls.Shapes.Ellipse, Microsoft.Maui.Platform.MacOS.Handlers.ShapeViewHandler>();
+        handlersCollection.AddHandler<Microsoft.Maui.Controls.Shapes.Line, Microsoft.Maui.Platform.MacOS.Handlers.ShapeViewHandler>();
+        handlersCollection.AddHandler<Microsoft.Maui.Controls.Shapes.Polyline, Microsoft.Maui.Platform.MacOS.Handlers.ShapeViewHandler>();
+        handlersCollection.AddHandler<Microsoft.Maui.Controls.Shapes.Polygon, Microsoft.Maui.Platform.MacOS.Handlers.ShapeViewHandler>();
+        handlersCollection.AddHandler<Microsoft.Maui.Controls.Shapes.Path, Microsoft.Maui.Platform.MacOS.Handlers.ShapeViewHandler>();
 
         handlersCollection.AddHandler<Controls.MapView, MapViewHandler>();
 

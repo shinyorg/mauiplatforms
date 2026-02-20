@@ -66,6 +66,18 @@
         <Compile Include="..\Sample\Pages\GraphicsPage.cs">
             <Link>Pages\GraphicsPage.cs</Link>
         </Compile>
+        <Compile Include="..\Sample\Pages\GesturesPage.cs">
+            <Link>Pages\GesturesPage.cs</Link>
+        </Compile>
+        <Compile Include="..\Sample\Pages\ShapesPage.cs">
+            <Link>Pages\ShapesPage.cs</Link>
+        </Compile>
+        <Compile Include="..\Sample\Pages\TransformsPage.cs">
+            <Link>Pages\TransformsPage.cs</Link>
+        </Compile>
+        <Compile Include="..\Sample\Pages\WebViewPage.cs">
+            <Link>Pages\WebViewPage.cs</Link>
+        </Compile>
         <Compile Include="..\Sample\Pages\DeviceInfoPage.cs">
             <Link>Pages\DeviceInfoPage.cs</Link>
         </Compile>

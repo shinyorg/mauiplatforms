@@ -1,6 +1,7 @@
 using System.Linq;
 using CoreAnimation;
 using CoreGraphics;
+using Foundation;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Handlers;
 using AppKit;
@@ -28,6 +29,11 @@ public partial class ShapeViewHandler : MacOSViewHandler<IShapeView, NSView>
             [nameof(IShapeView.Shape)] = MapShape,
             [nameof(IShapeView.Fill)] = MapFill,
             [nameof(IShapeView.Aspect)] = MapAspect,
+            [nameof(IShapeView.Stroke)] = MapStroke,
+            [nameof(IShapeView.StrokeThickness)] = MapStrokeThickness,
+            [nameof(IShapeView.StrokeDashPattern)] = MapStrokeDashPattern,
+            [nameof(IShapeView.StrokeLineCap)] = MapStrokeLineCap,
+            [nameof(IShapeView.StrokeLineJoin)] = MapStrokeLineJoin,
         };
 
     CAShapeLayer? _shapeLayer;
@@ -109,7 +115,49 @@ public partial class ShapeViewHandler : MacOSViewHandler<IShapeView, NSView>
             _shapeLayer.FillColor = solidPaint.Color.ToPlatformColor().CGColor;
         else
             _shapeLayer.FillColor = NSColor.Clear.CGColor;
+
+        // Apply stroke
+        if (shapeView.Stroke is SolidPaint strokePaint && strokePaint.Color != null)
+            _shapeLayer.StrokeColor = strokePaint.Color.ToPlatformColor().CGColor;
+        else
+            _shapeLayer.StrokeColor = NSColor.Clear.CGColor;
+
+        _shapeLayer.LineWidth = (nfloat)shapeView.StrokeThickness;
+
+        // Dash pattern
+        if (shapeView.StrokeDashPattern is { Length: > 0 } dashPattern)
+        {
+            _shapeLayer.LineDashPattern = dashPattern
+                .Select(d => NSNumber.FromFloat((float)(d * shapeView.StrokeThickness)))
+                .ToArray();
+        }
+        else
+        {
+            _shapeLayer.LineDashPattern = null;
+        }
+
+        // Line cap
+        _shapeLayer.LineCap = shapeView.StrokeLineCap switch
+        {
+            LineCap.Round => CAShapeLayer.CapRound,
+            LineCap.Square => CAShapeLayer.CapSquare,
+            _ => CAShapeLayer.CapButt,
+        };
+
+        // Line join
+        _shapeLayer.LineJoin = shapeView.StrokeLineJoin switch
+        {
+            LineJoin.Round => CAShapeLayer.JoinRound,
+            LineJoin.Bevel => CAShapeLayer.JoinBevel,
+            _ => CAShapeLayer.JoinMiter,
+        };
     }
+
+    public static void MapStroke(ShapeViewHandler handler, IShapeView shapeView) => handler.UpdateShape(shapeView);
+    public static void MapStrokeThickness(ShapeViewHandler handler, IShapeView shapeView) => handler.UpdateShape(shapeView);
+    public static void MapStrokeDashPattern(ShapeViewHandler handler, IShapeView shapeView) => handler.UpdateShape(shapeView);
+    public static void MapStrokeLineCap(ShapeViewHandler handler, IShapeView shapeView) => handler.UpdateShape(shapeView);
+    public static void MapStrokeLineJoin(ShapeViewHandler handler, IShapeView shapeView) => handler.UpdateShape(shapeView);
 
     static CGPath PathFToCGPath(PathF pathF)
     {
