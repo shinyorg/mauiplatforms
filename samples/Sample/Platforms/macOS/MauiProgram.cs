@@ -15,7 +15,8 @@ public static class MauiProgram
         var builder = MauiApp
             .CreateBuilder()
             .UseMauiAppMacOS<MacOSApp>()
-            .AddMacOSEssentials();
+            .AddMacOSEssentials()
+            .AddMacOSBlazorWebView();
 
         builder.Services.AddMauiBlazorWebView();
 

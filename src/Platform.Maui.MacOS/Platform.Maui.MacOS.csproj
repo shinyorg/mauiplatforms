@@ -8,7 +8,6 @@
 
     <ItemGroup>
         <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)"/>
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebView" Version="10.0.0"/>
     </ItemGroup>
 
 </Project>
