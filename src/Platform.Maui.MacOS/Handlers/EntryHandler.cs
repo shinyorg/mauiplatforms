@@ -20,6 +20,9 @@ public partial class EntryHandler : MacOSViewHandler<IEntry, NSTextField>
             [nameof(ITextInput.IsReadOnly)] = MapIsReadOnly,
             [nameof(ITextAlignment.HorizontalTextAlignment)] = MapHorizontalTextAlignment,
             [nameof(ITextInput.MaxLength)] = MapMaxLength,
+            [nameof(IEntry.CursorPosition)] = MapCursorPosition,
+            [nameof(IEntry.SelectionLength)] = MapSelectionLength,
+            [nameof(IEntry.IsTextPredictionEnabled)] = MapIsTextPredictionEnabled,
         };
 
     bool _updating;
@@ -52,7 +55,15 @@ public partial class EntryHandler : MacOSViewHandler<IEntry, NSTextField>
         base.DisconnectHandler(platformView);
     }
 
-    void OnTextChanged(object? sender, EventArgs e)
+    internal void SetPlatformView(NSTextField newView)
+    {
+        // Use reflection to update the handler's PlatformView reference
+        // since ViewHandler doesn't expose a public setter
+        var prop = typeof(ViewHandler).GetProperty("PlatformView");
+        prop?.SetValue(this, newView);
+    }
+
+    internal void OnTextChanged(object? sender, EventArgs e)
     {
         if (_updating || VirtualView == null)
             return;
@@ -69,7 +80,7 @@ public partial class EntryHandler : MacOSViewHandler<IEntry, NSTextField>
         }
     }
 
-    void OnEditingEnded(object? sender, EventArgs e)
+    internal void OnEditingEnded(object? sender, EventArgs e)
     {
         VirtualView?.Completed();
     }
@@ -117,12 +128,59 @@ public partial class EntryHandler : MacOSViewHandler<IEntry, NSTextField>
 
     public static void MapIsPassword(EntryHandler handler, IEntry entry)
     {
-        // NSSecureTextField is a separate class on macOS — we can't toggle it on an existing NSTextField.
-        // Instead, we use the UsesSingleLineMode + cell replacement approach isn't available either.
-        // The practical approach: rebuild the platform view when IsPassword changes.
-        // For now, apply secure text entry via the field editor when it becomes the first responder.
-        // A full implementation would require swapping between NSTextField and NSSecureTextField.
-        // TODO: Consider implementing platform view swap for IsPassword toggle
+        // NSSecureTextField is a separate class on macOS.
+        // We swap between NSTextField and NSSecureTextField by rebuilding the platform view.
+        var currentView = handler.PlatformView;
+        bool isCurrentlySecure = currentView is NSSecureTextField;
+
+        if (entry.IsPassword == isCurrentlySecure)
+            return;
+
+        // Preserve state before swap
+        var text = currentView.StringValue;
+        var frame = currentView.Frame;
+
+        // Disconnect old view
+        currentView.Changed -= handler.OnTextChanged;
+        currentView.EditingEnded -= handler.OnEditingEnded;
+
+        NSTextField newView;
+        if (entry.IsPassword)
+        {
+            newView = new NSSecureTextField
+            {
+                Bordered = true,
+                Bezeled = true,
+                BezelStyle = NSTextFieldBezelStyle.Rounded,
+                Frame = frame,
+                StringValue = text ?? string.Empty,
+            };
+        }
+        else
+        {
+            newView = new NSTextField
+            {
+                Bordered = true,
+                Bezeled = true,
+                BezelStyle = NSTextFieldBezelStyle.Rounded,
+                Frame = frame,
+                StringValue = text ?? string.Empty,
+            };
+        }
+
+        // Replace in view hierarchy
+        var superview = currentView.Superview;
+        if (superview != null)
+        {
+            superview.ReplaceSubviewWith(currentView, newView);
+        }
+
+        // Connect new view
+        newView.Changed += handler.OnTextChanged;
+        newView.EditingEnded += handler.OnEditingEnded;
+
+        // Update handler's platform view reference
+        handler.SetPlatformView(newView);
     }
 
     public static void MapIsReadOnly(EntryHandler handler, IEntry entry)
@@ -170,5 +228,34 @@ public partial class EntryHandler : MacOSViewHandler<IEntry, NSTextField>
     {
         // macOS NSTextField doesn't have a ReturnType concept like iOS keyboard return key.
         // The return key always submits the field on macOS.
+    }
+
+    public static void MapCursorPosition(EntryHandler handler, IEntry entry)
+    {
+        if (handler.PlatformView.CurrentEditor is NSTextView editor)
+        {
+            var position = Math.Min(entry.CursorPosition, (handler.PlatformView.StringValue ?? string.Empty).Length);
+            editor.SetSelectedRange(new NSRange(position, 0));
+        }
+    }
+
+    public static void MapSelectionLength(EntryHandler handler, IEntry entry)
+    {
+        if (handler.PlatformView.CurrentEditor is NSTextView editor)
+        {
+            var text = handler.PlatformView.StringValue ?? string.Empty;
+            var start = Math.Min(entry.CursorPosition, text.Length);
+            var length = Math.Min(entry.SelectionLength, text.Length - start);
+            editor.SetSelectedRange(new NSRange(start, length));
+        }
+    }
+
+    public static void MapIsTextPredictionEnabled(EntryHandler handler, IEntry entry)
+    {
+        // macOS text prediction/autocomplete can be controlled via NSTextView settings
+        if (handler.PlatformView.CurrentEditor is NSTextView editor)
+        {
+            editor.AutomaticTextCompletionEnabled = entry.IsTextPredictionEnabled;
+        }
     }
 }

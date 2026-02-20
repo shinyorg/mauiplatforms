@@ -112,6 +112,10 @@ public partial class ImageHandler : MacOSViewHandler<IImage, NSImageView>
                 imageSourcePart.UpdateIsLoading(false);
             }
         }
+        else if (source is IStreamImageSource streamImageSource)
+        {
+            LoadFromStream(streamImageSource, imageSourcePart);
+        }
         else
         {
             PlatformView.Image = null;
@@ -134,6 +138,34 @@ public partial class ImageHandler : MacOSViewHandler<IImage, NSImageView>
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Failed to load image from URI: {ex.Message}");
+        }
+        finally
+        {
+            imageSourcePart.UpdateIsLoading(false);
+        }
+    }
+
+    async void LoadFromStream(IStreamImageSource streamSource, IImageSourcePart imageSourcePart)
+    {
+        try
+        {
+            var stream = await streamSource.GetStreamAsync(CancellationToken.None);
+            if (stream != null)
+            {
+                using var ms = new MemoryStream();
+                await stream.CopyToAsync(ms);
+                var nsData = NSData.FromArray(ms.ToArray());
+                var nsImage = new NSImage(nsData);
+
+                if (PlatformView != null)
+                    PlatformView.Image = nsImage;
+
+                stream.Dispose();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Failed to load image from stream: {ex.Message}");
         }
         finally
         {

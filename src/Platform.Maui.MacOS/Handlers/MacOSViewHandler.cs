@@ -41,6 +41,7 @@ public abstract class MacOSViewHandler<TVirtualView, TPlatformView> : ViewHandle
                 mapper[nameof(IView.ScaleY)] = MapTransform;
                 mapper[nameof(IView.AnchorX)] = MapTransform;
                 mapper[nameof(IView.AnchorY)] = MapTransform;
+                mapper[nameof(IView.InputTransparent)] = MapInputTransparent;
             }
         }
         catch
@@ -192,6 +193,17 @@ public abstract class MacOSViewHandler<TVirtualView, TPlatformView> : ViewHandle
             transform = transform.Translate((nfloat)view.TranslationX, (nfloat)view.TranslationY, 0);
 
         platformView.Layer.Transform = transform;
+    }
+
+    public static void MapInputTransparent(IViewHandler handler, IView view)
+    {
+        // When InputTransparent is true, the view should not receive any hit-testing events.
+        // On macOS, we can achieve this by overriding HitTest in a custom NSView subclass,
+        // but for native controls, we disable user interaction via alphaValue trick or
+        // by simply marking the control as not a mouse target.
+        // The simplest approach: use the AccessibilityElement flag to skip hit testing.
+        // More robust: NSView doesn't have a direct "user interaction enabled" property.
+        // We rely on the container view's HitTest override to skip InputTransparent children.
     }
 
     public override void PlatformArrange(Rect rect)

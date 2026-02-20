@@ -78,9 +78,9 @@ Items marked `[x]` have a handler or implementation present; items marked `[~]` 
 | Control | Status | Notes |
 |---------|--------|-------|
 | [x] **Label** | ✅ | Text, TextColor, Font (family/size/bold), HorizontalTextAlignment, LineBreakMode, MaxLines, TextDecorations, CharacterSpacing, FormattedText/Spans (via `NSAttributedString`) |
-| [~] **Button** | Partial | Maps Text, TextColor, Background, Clicked event (via `Activated`); missing BorderColor, BorderWidth, CornerRadius, CharacterSpacing, ImageSource |
+| [~] **Button** | Partial | Maps Text, TextColor, Font, CharacterSpacing, Background, CornerRadius, StrokeColor, StrokeThickness, Padding, ImageSource, Clicked event |
 | [ ] **ImageButton** | ❌ | Not implemented — no ImageButtonHandler |
-| [~] **Entry** | Partial | Maps Text, TextColor, Font (family/size/bold), Placeholder, PlaceholderColor, IsReadOnly, HorizontalTextAlignment, MaxLength, CharacterSpacing, ReturnType; IsPassword still requires NSSecureTextField swap |
+| [~] **Entry** | Partial | Maps Text, TextColor, Font, CharacterSpacing, Placeholder, PlaceholderColor, IsPassword (NSSecureTextField swap), IsReadOnly, HorizontalTextAlignment, MaxLength, ReturnType, CursorPosition, SelectionLength, IsTextPredictionEnabled |
 | [~] **Editor** | Partial | Maps Text, TextColor, Font (family/size/bold), IsReadOnly, HorizontalTextAlignment, MaxLength, CharacterSpacing, Placeholder (accessibility); missing AutoSize |
 | [~] **Switch** | Partial | Maps IsOn via `NSSwitch`; TrackColor/ThumbColor limited by AppKit control |
 | [x] **CheckBox** | ✅ | Maps IsChecked, Foreground via `NSButton` with checkbox style |
@@ -90,7 +90,7 @@ Items marked `[x]` have a handler or implementation present; items marked `[~]` 
 | [~] **ProgressBar** | Partial | Maps Progress via `NSProgressIndicator`; missing ProgressColor |
 | [~] **ActivityIndicator** | Partial | Maps IsRunning (StartAnimation/StopAnimation) via `NSProgressIndicator`; missing Color |
 | [x] **BoxView** | ✅ | Mapped via `ShapeViewHandler` |
-| [~] **Image** | Partial | Maps Source (file/URI), Aspect, IsOpaque via `NSImageView`; missing StreamImageSource handling, error/loading states |
+| [~] **Image** | Partial | Maps Source (file/URI/stream), Aspect, IsOpaque via `NSImageView`; missing error/loading callback handling |
 
 ---
 
@@ -181,7 +181,7 @@ Every handler must support these properties mapped from the base `IView` in `Mac
 - [x] Opacity → `NSView.AlphaValue`
 - [x] IsVisible → `NSView.Hidden`
 - [x] IsEnabled → `NSControl.Enabled`
-- [ ] InputTransparent → hit-test override in `NSView`
+- [~] InputTransparent → mapped but needs hit-test override in container `NSView`
 
 ### Sizing
 - [x] WidthRequest / HeightRequest — respected during `GetDesiredSize` measurement
@@ -240,7 +240,7 @@ Every handler must support these properties mapped from the base `IView` in `Mac
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| [ ] **IFontManager** | ❌ | Resolve font family names → `NSFont`, apply font properties to controls |
+| [x] **IFontManager** | ✅ | `MacOSFontManager` resolves `Font` → `NSFont` with family, size, weight (Bold/Light), slant (Italic/Oblique). Registered as singleton via `Services.Replace()` |
 | [ ] **IFontRegistrar** | ❌ | Register embedded fonts with aliases |
 | [ ] **IEmbeddedFontLoader** | ❌ | Extract fonts from assembly resources, register via `CTFontManager` |
 | [ ] **Native Font Loading** | ❌ | Register fonts with CoreText (`CTFontManagerRegisterFontsForURL`) |
@@ -281,8 +281,8 @@ Every handler must support these properties mapped from the base `IView` in `Mac
 | Feature | Status | Notes |
 |---------|--------|-------|
 | [~] **Border style mapping** | Partial | `BorderHandler` maps Stroke/StrokeShape/StrokeThickness via CoreGraphics |
-| [ ] **View state mapping** | ❌ | IsVisible → `Hidden`, IsEnabled → `Enabled`, Opacity → `AlphaValue` — not wired in base handler |
-| [ ] **Automation mapping** | ❌ | AutomationId → `AccessibilityIdentifier` |
+| [x] **View state mapping** | ✅ | IsVisible → `Hidden`, IsEnabled → `Enabled`, Opacity → `AlphaValue` — all mapped in base `MacOSViewHandler` |
+| [x] **Automation mapping** | ✅ | AutomationId → `AccessibilityIdentifier` mapped in base `MacOSViewHandler` |
 
 ---
 
@@ -333,14 +333,19 @@ FormattedText requires special handling as a compound property using `NSAttribut
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| [ ] **TranslateTo** | ❌ | Animate via `NSAnimationContext` or `CABasicAnimation` on layer transform/position |
-| [ ] **FadeTo** | ❌ | Animate `AlphaValue` via `NSAnimationContext.RunAnimation` (animator proxy) |
-| [ ] **ScaleTo** | ❌ | Animate scale via `CATransform3D` on layer |
-| [ ] **RotateTo** | ❌ | Animate rotation via `CATransform3D` on layer |
-| [ ] **LayoutTo** | ❌ | Animate frame changes via `NSAnimationContext` animator proxy |
-| [ ] **Easing functions** | ❌ | Map MAUI Easing types to `CAMediaTimingFunction` (kCAMediaTimingFunctionEaseIn, etc.) or custom `CAMediaTimingFunction(controlPoints:)` |
-| [ ] **Animation class** | ❌ | `new Animation(...)` with child animations, `Commit()` to run, `AbortAnimation()` to cancel |
-| [ ] **AnimationExtensions** | ❌ | Extension methods on `VisualElement` (TranslateTo, FadeTo, etc.) |
+| [x] **MacOSTicker** | ✅ | Custom `ITicker` using `NSTimer` on main run loop; replaces default `System.Timers.Timer` which fires on threadpool (unsafe for AppKit) |
+| [x] **TranslateTo** | ✅ | Works via MAUI's built-in animation system — `MacOSTicker` drives frames, property mapper applies `CATransform3D` |
+| [x] **FadeTo** | ✅ | Works via MAUI's built-in animation system — `MacOSTicker` drives frames, `MapOpacity` applies `AlphaValue` |
+| [x] **ScaleTo** | ✅ | Works via MAUI's built-in animation system — `MacOSTicker` drives frames, `MapTransform` applies scale |
+| [x] **RotateTo** | ✅ | Works via MAUI's built-in animation system — `MacOSTicker` drives frames, `MapTransform` applies rotation |
+| [x] **LayoutTo** | ✅ | Works via MAUI's built-in animation system |
+| [x] **Easing functions** | ✅ | Handled by MAUI's `Animation` class — easing is applied during value interpolation, not at platform level |
+| [x] **Animation class** | ✅ | `new Animation(...)` with child animations, `Commit()`, `AbortAnimation()` — all cross-platform in MAUI Controls |
+| [x] **AnimationExtensions** | ✅ | Extension methods on `VisualElement` — cross-platform in MAUI Controls |
+
+> **Note:** MAUI's animation system is fully cross-platform. It uses `IAnimationManager` + `ITicker` to drive frame updates
+> that set virtual view properties (e.g., `Opacity`, `TranslationX`). The handler property mappers then apply changes to native views.
+> The only platform-specific requirement is providing a main-thread-safe `ITicker` — our `MacOSTicker` uses `NSTimer` on the main run loop.
 
 ---
 
@@ -369,8 +374,8 @@ FormattedText requires special handling as a compound property using `NSAttribut
 | **Shapes** | 1 handler | 6 types | Single ShapeViewHandler covers all shape types |
 | **Essentials** | 15 of 20 | 20 | Missing: Geolocation, Map, SemanticScreenReader, VersionTracking, Vibration |
 | **Dialog Types** | 3 of 3 | 3 | All implemented via NSAlert |
-| **Font Services** | 1 of 5 | 5 | IFontNamedSizeService implemented; missing IFontManager, IFontRegistrar, IEmbeddedFontLoader |
-| **Animations** | 0 of 8 | 8 | None implemented |
+| **Font Services** | 2 of 5 | 5 | IFontNamedSizeService + IFontManager implemented; missing IFontRegistrar, IEmbeddedFontLoader |
+| **Animations** | 9 of 9 | 9 | ✅ Full: MacOSTicker + MAUI's cross-platform animation system handles all animation types |
 | **MenuBar** | 4 of 4 | 4 | ✅ Full: MenuBarItem, MenuFlyoutItem, MenuFlyoutSeparator, MenuFlyoutSubItem |
 | **FormattedText** | 9 of 9 | 9 | ✅ Full: All span properties mapped via NSAttributedString |
 | **Base View Properties** | ~15 of 20+ | 20+ | Opacity, IsVisible, IsEnabled, Background, FlowDirection, AutomationId, Transforms, Clip, Shadow, MaxWidth/MaxHeight |

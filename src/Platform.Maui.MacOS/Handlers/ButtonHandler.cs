@@ -15,6 +15,8 @@ public partial class ButtonHandler : MacOSViewHandler<IButton, NSButton>
             [nameof(ITextStyle.CharacterSpacing)] = MapCharacterSpacing,
             [nameof(IView.Background)] = MapBackground,
             [nameof(IButtonStroke.CornerRadius)] = MapCornerRadius,
+            [nameof(IButtonStroke.StrokeColor)] = MapStrokeColor,
+            [nameof(IButtonStroke.StrokeThickness)] = MapStrokeThickness,
             [nameof(IPadding.Padding)] = MapPadding,
             [nameof(IImage.Source)] = MapImageSource,
         };
@@ -106,6 +108,24 @@ public partial class ButtonHandler : MacOSViewHandler<IButton, NSButton>
         {
             handler.PlatformView.WantsLayer = true;
             handler.PlatformView.Layer!.CornerRadius = (nfloat)stroke.CornerRadius;
+        }
+    }
+
+    public static void MapStrokeColor(ButtonHandler handler, IButton button)
+    {
+        if (button is IButtonStroke stroke && stroke.StrokeColor != null)
+        {
+            handler.PlatformView.WantsLayer = true;
+            handler.PlatformView.Layer!.BorderColor = stroke.StrokeColor.ToPlatformColor().CGColor;
+        }
+    }
+
+    public static void MapStrokeThickness(ButtonHandler handler, IButton button)
+    {
+        if (button is IButtonStroke stroke && stroke.StrokeThickness >= 0)
+        {
+            handler.PlatformView.WantsLayer = true;
+            handler.PlatformView.Layer!.BorderWidth = (nfloat)stroke.StrokeThickness;
         }
     }
 

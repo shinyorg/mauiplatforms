@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Microsoft.Maui.Animations;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Dispatching;
 using Microsoft.Maui.Hosting;
@@ -66,6 +67,14 @@ public static partial class AppHostBuilderExtensions
     static MauiAppBuilder SetupDefaults(this MauiAppBuilder builder)
     {
         builder.Services.AddSingleton<IDispatcherProvider>(svc => new MacOSDispatcherProvider());
+
+        // Replace the default System.Timers.Timer-based ticker with one using NSTimer on the main run loop.
+        // This ensures animation property updates happen on the main thread (required for AppKit).
+        builder.Services.Replace(ServiceDescriptor.Scoped<ITicker>(svc => new MacOSTicker()));
+
+        // Register macOS font manager for proper font resolution
+        builder.Services.Replace(ServiceDescriptor.Singleton<IFontManager>(svc =>
+            new MacOSFontManager(svc.GetRequiredService<IFontRegistrar>())));
 
         AlertManagerSubscription.Register(builder.Services);
 
