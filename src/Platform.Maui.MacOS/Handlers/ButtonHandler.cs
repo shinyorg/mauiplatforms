@@ -1,5 +1,6 @@
 using Microsoft.Maui.Handlers;
 using AppKit;
+using Foundation;
 
 namespace Microsoft.Maui.Platform.MacOS.Handlers;
 
@@ -10,7 +11,12 @@ public partial class ButtonHandler : MacOSViewHandler<IButton, NSButton>
         {
             [nameof(IText.Text)] = MapText,
             [nameof(ITextStyle.TextColor)] = MapTextColor,
+            [nameof(ITextStyle.Font)] = MapFont,
+            [nameof(ITextStyle.CharacterSpacing)] = MapCharacterSpacing,
             [nameof(IView.Background)] = MapBackground,
+            [nameof(IButtonStroke.CornerRadius)] = MapCornerRadius,
+            [nameof(IPadding.Padding)] = MapPadding,
+            [nameof(IImage.Source)] = MapImageSource,
         };
 
     public ButtonHandler() : base(Mapper)
@@ -56,12 +62,65 @@ public partial class ButtonHandler : MacOSViewHandler<IButton, NSButton>
             handler.PlatformView.ContentTintColor = textStyle.TextColor.ToPlatformColor();
     }
 
+    public static void MapFont(ButtonHandler handler, IButton button)
+    {
+        if (button is ITextStyle textStyle)
+            handler.PlatformView.Font = textStyle.Font.ToNSFont();
+    }
+
+    public static void MapCharacterSpacing(ButtonHandler handler, IButton button)
+    {
+        if (button is ITextStyle textStyle)
+        {
+            var title = handler.PlatformView.Title ?? string.Empty;
+            var attributedTitle = new NSMutableAttributedString(title);
+            if (title.Length > 0)
+            {
+                var range = new NSRange(0, title.Length);
+                attributedTitle.AddAttribute(NSStringAttributeKey.KerningAdjustment,
+                    new NSNumber(textStyle.CharacterSpacing), range);
+
+                if (textStyle.TextColor != null)
+                    attributedTitle.AddAttribute(NSStringAttributeKey.ForegroundColor,
+                        textStyle.TextColor.ToPlatformColor(), range);
+
+                attributedTitle.AddAttribute(NSStringAttributeKey.Font,
+                    handler.PlatformView.Font, range);
+            }
+            handler.PlatformView.AttributedTitle = attributedTitle;
+        }
+    }
+
     public static void MapBackground(ButtonHandler handler, IButton button)
     {
         if (button.Background is Graphics.SolidPaint solidPaint && solidPaint.Color != null)
         {
             handler.PlatformView.WantsLayer = true;
             handler.PlatformView.Layer!.BackgroundColor = solidPaint.Color.ToPlatformColor().CGColor;
+        }
+    }
+
+    public static void MapCornerRadius(ButtonHandler handler, IButton button)
+    {
+        if (button is IButtonStroke stroke && stroke.CornerRadius >= 0)
+        {
+            handler.PlatformView.WantsLayer = true;
+            handler.PlatformView.Layer!.CornerRadius = (nfloat)stroke.CornerRadius;
+        }
+    }
+
+    public static void MapPadding(ButtonHandler handler, IButton button)
+    {
+        // NSButton doesn't expose direct padding — handled via bezel insets or attributed title
+    }
+
+    public static void MapImageSource(ButtonHandler handler, IButton button)
+    {
+        if (button is IImage imageButton && imageButton.Source is IFileImageSource fileSource)
+        {
+            var image = new AppKit.NSImage(fileSource.File);
+            handler.PlatformView.Image = image;
+            handler.PlatformView.ImagePosition = NSCellImagePosition.ImageLeft;
         }
     }
 }

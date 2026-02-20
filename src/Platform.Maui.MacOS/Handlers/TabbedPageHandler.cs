@@ -87,7 +87,13 @@ public class TabbedContainerView : MacOSContainerView
 public partial class TabbedPageHandler : MacOSViewHandler<ITabbedView, TabbedContainerView>
 {
     public static readonly IPropertyMapper<ITabbedView, TabbedPageHandler> Mapper =
-        new PropertyMapper<ITabbedView, TabbedPageHandler>(ViewMapper);
+        new PropertyMapper<ITabbedView, TabbedPageHandler>(ViewMapper)
+        {
+            [nameof(TabbedPage.BarBackgroundColor)] = MapBarBackgroundColor,
+            [nameof(TabbedPage.BarTextColor)] = MapBarTextColor,
+            [nameof(TabbedPage.SelectedTabColor)] = MapSelectedTabColor,
+            [nameof(TabbedPage.UnselectedTabColor)] = MapUnselectedTabColor,
+        };
 
     public TabbedPageHandler() : base(Mapper)
     {
@@ -168,5 +174,25 @@ public partial class TabbedPageHandler : MacOSViewHandler<ITabbedView, TabbedCon
         var currentPage = (IView)TabbedPage.CurrentPage;
         currentPage.Measure((double)bounds.Width, (double)bounds.Height);
         currentPage.Arrange(new Rect(0, 0, (double)bounds.Width, (double)bounds.Height));
+    }
+
+    public static void MapBarBackgroundColor(TabbedPageHandler handler, ITabbedView view)
+    {
+        // NSSegmentedControl uses system styling — no direct background color API
+    }
+
+    public static void MapBarTextColor(TabbedPageHandler handler, ITabbedView view)
+    {
+        // NSSegmentedControl uses system text styling
+    }
+
+    public static void MapSelectedTabColor(TabbedPageHandler handler, ITabbedView view)
+    {
+        // NSSegmentedControl uses system selection styling
+    }
+
+    public static void MapUnselectedTabColor(TabbedPageHandler handler, ITabbedView view)
+    {
+        // NSSegmentedControl uses system styling for unselected segments
     }
 }

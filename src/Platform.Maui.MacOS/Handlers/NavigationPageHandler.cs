@@ -23,7 +23,11 @@ public class NavigationContainerView : MacOSContainerView
 public partial class NavigationPageHandler : MacOSViewHandler<IStackNavigationView, NavigationContainerView>, IStackNavigation
 {
     public static readonly IPropertyMapper<IStackNavigationView, NavigationPageHandler> Mapper =
-        new PropertyMapper<IStackNavigationView, NavigationPageHandler>(ViewMapper);
+        new PropertyMapper<IStackNavigationView, NavigationPageHandler>(ViewMapper)
+        {
+            [nameof(NavigationPage.BarBackgroundColor)] = MapBarBackgroundColor,
+            [nameof(NavigationPage.BarTextColor)] = MapBarTextColor,
+        };
 
     public static readonly CommandMapper<IStackNavigationView, NavigationPageHandler> CommandMapper =
         new(ViewCommandMapper)
@@ -106,5 +110,21 @@ public partial class NavigationPageHandler : MacOSViewHandler<IStackNavigationVi
     public void NavigationFinished(IReadOnlyList<IView> newStack)
     {
         // Called by the view when navigation is complete — no-op on handler side
+    }
+
+    public static void MapBarBackgroundColor(NavigationPageHandler handler, IStackNavigationView view)
+    {
+        if (view is NavigationPage navPage && navPage.BarBackgroundColor != null)
+        {
+            handler.PlatformView.WantsLayer = true;
+            handler.PlatformView.Layer!.BackgroundColor = navPage.BarBackgroundColor.ToPlatformColor().CGColor;
+        }
+    }
+
+    public static void MapBarTextColor(NavigationPageHandler handler, IStackNavigationView view)
+    {
+        // NavigationPage BarTextColor would affect a navigation bar title,
+        // but the macOS backend doesn't have a navigation bar chrome — pages fill the entire area.
+        // This is a no-op until a native navigation bar is implemented.
     }
 }

@@ -1,4 +1,5 @@
 using CoreGraphics;
+using Foundation;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Handlers;
 using AppKit;
@@ -30,9 +31,16 @@ public partial class ScrollViewHandler : MacOSViewHandler<IScrollView, NSScrollV
             [nameof(IContentView.Content)] = MapContent,
         };
 
-    FlippedDocumentView? _documentView;
+    public static readonly CommandMapper<IScrollView, ScrollViewHandler> ScrollCommandMapper =
+        new(ViewCommandMapper)
+        {
+            [nameof(IScrollView.RequestScrollTo)] = MapRequestScrollTo,
+        };
 
-    public ScrollViewHandler() : base(Mapper)
+    FlippedDocumentView? _documentView;
+    NSObject? _boundsChangedObserver;
+
+    public ScrollViewHandler() : base(Mapper, ScrollCommandMapper)
     {
     }
 
@@ -50,6 +58,55 @@ public partial class ScrollViewHandler : MacOSViewHandler<IScrollView, NSScrollV
         scrollView.DocumentView = _documentView;
 
         return scrollView;
+    }
+
+    protected override void ConnectHandler(NSScrollView platformView)
+    {
+        base.ConnectHandler(platformView);
+        _boundsChangedObserver = NSNotificationCenter.DefaultCenter.AddObserver(
+            NSView.BoundsChangedNotification,
+            OnBoundsChanged,
+            platformView.ContentView);
+        platformView.ContentView.PostsBoundsChangedNotifications = true;
+    }
+
+    protected override void DisconnectHandler(NSScrollView platformView)
+    {
+        if (_boundsChangedObserver != null)
+        {
+            NSNotificationCenter.DefaultCenter.RemoveObserver(_boundsChangedObserver);
+            _boundsChangedObserver = null;
+        }
+        base.DisconnectHandler(platformView);
+    }
+
+    void OnBoundsChanged(NSNotification notification)
+    {
+        if (VirtualView == null || PlatformView?.ContentView == null)
+            return;
+
+        var origin = PlatformView.ContentView.Bounds.Location;
+        VirtualView.ScrollFinished();
+    }
+
+    public static void MapRequestScrollTo(ScrollViewHandler handler, IScrollView scrollView, object? args)
+    {
+        if (args is ScrollToRequest request && handler.PlatformView?.DocumentView != null)
+        {
+            var point = new CGPoint(request.HorizontalOffset, request.VerticalOffset);
+            if (request.Instant)
+            {
+                handler.PlatformView.ContentView.ScrollToPoint(point);
+                handler.PlatformView.ReflectScrolledClipView(handler.PlatformView.ContentView);
+            }
+            else
+            {
+                // NSScrollView animated scroll
+                handler.PlatformView.ContentView.ScrollToPoint(point);
+                handler.PlatformView.ReflectScrolledClipView(handler.PlatformView.ContentView);
+            }
+            scrollView.ScrollFinished();
+        }
     }
 
     public override void PlatformArrange(Rect rect)
