@@ -1,5 +1,7 @@
 using CoreGraphics;
+using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
+using Microsoft.Maui.Platform.MacOS.Handlers;
 using AppKit;
 
 namespace Microsoft.Maui.Platform.MacOS;
@@ -74,4 +76,40 @@ public class MacOSContainerView : NSView
     }
 
     public override CGSize IntrinsicContentSize => new CGSize(NSView.NoIntrinsicMetric, NSView.NoIntrinsicMetric);
+
+    public override void MouseEntered(NSEvent theEvent)
+    {
+        foreach (var area in TrackingAreas())
+        {
+            if (area is MacOSPointerTrackingArea pointerArea)
+            {
+                var method = typeof(PointerGestureRecognizer).GetMethod(
+                    "SendPointerEntered", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                if (method != null)
+                {
+                    var parent = (pointerArea.Recognizer as IElement)?.FindParentOfType<View>();
+                    try { method.Invoke(pointerArea.Recognizer, new object?[] { parent, null }); } catch { }
+                }
+            }
+        }
+        base.MouseEntered(theEvent);
+    }
+
+    public override void MouseExited(NSEvent theEvent)
+    {
+        foreach (var area in TrackingAreas())
+        {
+            if (area is MacOSPointerTrackingArea pointerArea)
+            {
+                var method = typeof(PointerGestureRecognizer).GetMethod(
+                    "SendPointerExited", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                if (method != null)
+                {
+                    var parent = (pointerArea.Recognizer as IElement)?.FindParentOfType<View>();
+                    try { method.Invoke(pointerArea.Recognizer, new object?[] { parent, null }); } catch { }
+                }
+            }
+        }
+        base.MouseExited(theEvent);
+    }
 }

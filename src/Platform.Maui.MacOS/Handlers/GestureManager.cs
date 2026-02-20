@@ -294,14 +294,8 @@ internal class MacOSSwipeGestureRecognizer : NSPanGestureRecognizer
                     {
                         if (gesture.Direction.HasFlag(detectedDir.Value))
                         {
-                            gesture.Command?.Execute(gesture.CommandParameter);
-                            var sendSwiped = typeof(SwipeGestureRecognizer).GetMethod(
-                                "SendSwiped", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-                            if (sendSwiped != null)
-                            {
-                                var parent = (gesture as IElement)?.FindParentOfType<View>();
-                                try { sendSwiped.Invoke(gesture, new object?[] { parent, detectedDir.Value }); } catch { }
-                            }
+                            var parent = (gesture as IElement)?.FindParentOfType<View>();
+                            ((ISwipeGestureController)gesture).SendSwipe(parent as Element, dx, dy);
                         }
                     }
                 }

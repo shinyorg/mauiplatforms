@@ -2,6 +2,7 @@ using System.Linq;
 using CoreAnimation;
 using CoreGraphics;
 using Foundation;
+using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Handlers;
 using AppKit;
@@ -10,6 +11,7 @@ namespace Microsoft.Maui.Platform.MacOS.Handlers;
 
 /// <summary>
 /// NSView subclass for shape rendering that enables layer-backing and flipped coordinates.
+/// Overrides mouse event methods to ensure gesture recognizers receive events.
 /// </summary>
 internal class ShapeNSView : NSView
 {
@@ -19,6 +21,50 @@ internal class ShapeNSView : NSView
     }
 
     public override bool IsFlipped => true;
+
+    public override bool AcceptsFirstResponder() => true;
+
+    public override void MouseDown(NSEvent theEvent) => base.MouseDown(theEvent);
+    public override void MouseDragged(NSEvent theEvent) => base.MouseDragged(theEvent);
+    public override void MouseUp(NSEvent theEvent) => base.MouseUp(theEvent);
+
+    public override void MouseEntered(NSEvent theEvent)
+    {
+        foreach (var area in TrackingAreas())
+        {
+            if (area is MacOSPointerTrackingArea pointerArea)
+            {
+                var method = typeof(PointerGestureRecognizer).GetMethod(
+                    "SendPointerEntered", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                if (method != null)
+                {
+                    var parent = (pointerArea.Recognizer as IElement)?.FindParentOfType<View>();
+                    try { method.Invoke(pointerArea.Recognizer, new object?[] { parent, null }); } catch { }
+                }
+            }
+        }
+        base.MouseEntered(theEvent);
+    }
+
+    public override void MouseExited(NSEvent theEvent)
+    {
+        foreach (var area in TrackingAreas())
+        {
+            if (area is MacOSPointerTrackingArea pointerArea)
+            {
+                var method = typeof(PointerGestureRecognizer).GetMethod(
+                    "SendPointerExited", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                if (method != null)
+                {
+                    var parent = (pointerArea.Recognizer as IElement)?.FindParentOfType<View>();
+                    try { method.Invoke(pointerArea.Recognizer, new object?[] { parent, null }); } catch { }
+                }
+            }
+        }
+        base.MouseExited(theEvent);
+    }
+
+    public override void MouseMoved(NSEvent theEvent) => base.MouseMoved(theEvent);
 }
 
 public partial class ShapeViewHandler : MacOSViewHandler<IShapeView, NSView>
