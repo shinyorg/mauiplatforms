@@ -36,8 +36,8 @@ public class NavigationDemoPage : ContentPage
 		var pushButton = new Button
 		{
 			Text = $"Push Page (→ Depth {depth + 1})",
-			BackgroundColor = Colors.DodgerBlue,
-			TextColor = Colors.White,
+			Padding = new Thickness(16, 8),
+			HorizontalOptions = LayoutOptions.Start,
 		};
 		pushButton.Clicked += async (s, e) =>
 		{
@@ -47,8 +47,8 @@ public class NavigationDemoPage : ContentPage
 		var popButton = new Button
 		{
 			Text = "Pop Page (← Go Back)",
-			BackgroundColor = depth > 1 ? Colors.Coral : Colors.Gray,
-			TextColor = Colors.White,
+			Padding = new Thickness(16, 8),
+			HorizontalOptions = LayoutOptions.Start,
 			IsEnabled = depth > 1,
 		};
 		popButton.Clicked += async (s, e) =>
@@ -60,8 +60,8 @@ public class NavigationDemoPage : ContentPage
 		var pushModalButton = new Button
 		{
 			Text = "Push Modal Page",
-			BackgroundColor = Colors.MediumPurple,
-			TextColor = Colors.White,
+			Padding = new Thickness(16, 8),
+			HorizontalOptions = LayoutOptions.Start,
 		};
 		pushModalButton.Clicked += async (s, e) =>
 		{
@@ -82,8 +82,7 @@ public class NavigationDemoPage : ContentPage
 						new Button
 						{
 							Text = "Dismiss Modal",
-							BackgroundColor = Colors.Coral,
-							TextColor = Colors.White,
+							Padding = new Thickness(16, 8),
 							Command = new Command(async () => await Navigation.PopModalAsync()),
 						}
 					}
@@ -95,8 +94,8 @@ public class NavigationDemoPage : ContentPage
 		var pushNoNavBarButton = new Button
 		{
 			Text = "Push Page (No NavBar)",
-			BackgroundColor = Colors.Teal,
-			TextColor = Colors.White,
+			Padding = new Thickness(16, 8),
+			HorizontalOptions = LayoutOptions.Start,
 		};
 		pushNoNavBarButton.Clicked += async (s, e) =>
 		{

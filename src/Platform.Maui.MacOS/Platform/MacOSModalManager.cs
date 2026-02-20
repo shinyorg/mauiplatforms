@@ -41,6 +41,10 @@ internal class MacOSModalManager
 		// Create the modal page view
 		var platformView = ((IView)page).ToMacOSPlatform(mauiContext);
 
+		// Modal pages are already positioned within safe bounds — skip safe area insets
+		if (platformView is MacOSContainerView container)
+			container.IgnorePlatformSafeArea = true;
+
 		// Inset from window edges to create a "sheet" appearance
 		var inset = GetModalInset();
 		var pageFrame = new CGRect(

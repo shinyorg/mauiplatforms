@@ -16,6 +16,12 @@ public class MacOSContainerView : NSView
     /// delivers events to the gesture recognizer's own view, not ancestors).
     public bool InterceptChildHitTesting { get; set; }
 
+    /// <summary>
+    /// When true, safe area insets are never applied regardless of ISafeAreaView.
+    /// Used for modal pages that are already positioned within safe bounds.
+    /// </summary>
+    public bool IgnorePlatformSafeArea { get; set; }
+
     WeakReference<IView>? _viewReference;
 
     /// <summary>
@@ -50,6 +56,8 @@ public class MacOSContainerView : NSView
 
     bool ShouldApplySafeArea()
     {
+        if (IgnorePlatformSafeArea)
+            return false;
         if (View is ISafeAreaView sav)
             return !sav.IgnoreSafeArea;
         return false;
