@@ -34,13 +34,8 @@ internal class ShapeNSView : NSView
         {
             if (area is MacOSPointerTrackingArea pointerArea)
             {
-                var method = typeof(PointerGestureRecognizer).GetMethod(
-                    "SendPointerEntered", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-                if (method != null)
-                {
-                    var parent = (pointerArea.Recognizer as IElement)?.FindParentOfType<View>();
-                    try { method.Invoke(pointerArea.Recognizer, new object?[] { parent, null }); } catch { }
-                }
+                var parent = (pointerArea.Recognizer as IElement)?.FindParentOfType<View>();
+                pointerArea.FireEntered(parent);
             }
         }
         base.MouseEntered(theEvent);
@@ -52,19 +47,25 @@ internal class ShapeNSView : NSView
         {
             if (area is MacOSPointerTrackingArea pointerArea)
             {
-                var method = typeof(PointerGestureRecognizer).GetMethod(
-                    "SendPointerExited", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
-                if (method != null)
-                {
-                    var parent = (pointerArea.Recognizer as IElement)?.FindParentOfType<View>();
-                    try { method.Invoke(pointerArea.Recognizer, new object?[] { parent, null }); } catch { }
-                }
+                var parent = (pointerArea.Recognizer as IElement)?.FindParentOfType<View>();
+                pointerArea.FireExited(parent);
             }
         }
         base.MouseExited(theEvent);
     }
 
-    public override void MouseMoved(NSEvent theEvent) => base.MouseMoved(theEvent);
+    public override void MouseMoved(NSEvent theEvent)
+    {
+        foreach (var area in TrackingAreas())
+        {
+            if (area is MacOSPointerTrackingArea pointerArea)
+            {
+                var parent = (pointerArea.Recognizer as IElement)?.FindParentOfType<View>();
+                pointerArea.FireMoved(parent);
+            }
+        }
+        base.MouseMoved(theEvent);
+    }
 }
 
 public partial class ShapeViewHandler : MacOSViewHandler<IShapeView, NSView>
