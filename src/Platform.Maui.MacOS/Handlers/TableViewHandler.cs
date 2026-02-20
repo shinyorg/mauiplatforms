@@ -256,26 +256,45 @@ public partial class TableViewHandler : MacOSViewHandler<TableView, NSScrollView
 
 		if (cell is EntryCell entryCell)
 		{
-			var hStack = new HorizontalStackLayout { Padding = new Thickness(12, 8), Spacing = 10 };
+			var grid = new Grid
+			{
+				Padding = new Thickness(12, 8),
+				ColumnSpacing = 10,
+			};
 			if (!string.IsNullOrEmpty(entryCell.Label))
 			{
-				hStack.Children.Add(new Label
+				grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+				grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+				var label = new Label
 				{
 					Text = entryCell.Label,
 					FontSize = 14,
 					VerticalOptions = LayoutOptions.Center,
-				});
+				};
+				grid.Children.Add(label);
+				var entry = new Entry
+				{
+					Text = entryCell.Text ?? string.Empty,
+					Placeholder = entryCell.Placeholder ?? string.Empty,
+					VerticalOptions = LayoutOptions.Center,
+				};
+				Grid.SetColumn(entry, 1);
+				entry.TextChanged += (s, e) => entryCell.Text = e.NewTextValue;
+				grid.Children.Add(entry);
 			}
-			var entry = new Entry
+			else
 			{
-				Text = entryCell.Text ?? string.Empty,
-				Placeholder = entryCell.Placeholder ?? string.Empty,
-				VerticalOptions = LayoutOptions.Center,
-				HorizontalOptions = LayoutOptions.Fill,
-			};
-			entry.TextChanged += (s, e) => entryCell.Text = e.NewTextValue;
-			hStack.Children.Add(entry);
-			return hStack;
+				grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+				var entry = new Entry
+				{
+					Text = entryCell.Text ?? string.Empty,
+					Placeholder = entryCell.Placeholder ?? string.Empty,
+					VerticalOptions = LayoutOptions.Center,
+				};
+				entry.TextChanged += (s, e) => entryCell.Text = e.NewTextValue;
+				grid.Children.Add(entry);
+			}
+			return grid;
 		}
 
 		return new Label

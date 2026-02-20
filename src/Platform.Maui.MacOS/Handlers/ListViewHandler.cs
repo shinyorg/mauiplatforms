@@ -435,18 +435,29 @@ public partial class ListViewHandler : MacOSViewHandler<ListView, NSScrollView>
 
 		if (cell is EntryCell entryCell)
 		{
-			var hStack = new HorizontalStackLayout { Padding = new Thickness(12, 8), Spacing = 10 };
+			var grid = new Grid { Padding = new Thickness(12, 8), ColumnSpacing = 10 };
 			if (!string.IsNullOrEmpty(entryCell.Label))
 			{
+				grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Auto));
+				grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
 				var label = new Label { FontSize = 14, VerticalOptions = LayoutOptions.Center };
 				label.SetBinding(Label.TextProperty, new Binding(nameof(EntryCell.Label), source: entryCell));
-				hStack.Children.Add(label);
+				grid.Children.Add(label);
+				var entry = new Entry { VerticalOptions = LayoutOptions.Center };
+				Grid.SetColumn(entry, 1);
+				entry.SetBinding(Entry.TextProperty, new Binding(nameof(EntryCell.Text), source: entryCell, mode: BindingMode.TwoWay));
+				entry.SetBinding(Entry.PlaceholderProperty, new Binding(nameof(EntryCell.Placeholder), source: entryCell));
+				grid.Children.Add(entry);
 			}
-			var entry = new Entry { VerticalOptions = LayoutOptions.Center, HorizontalOptions = LayoutOptions.Fill };
-			entry.SetBinding(Entry.TextProperty, new Binding(nameof(EntryCell.Text), source: entryCell, mode: BindingMode.TwoWay));
-			entry.SetBinding(Entry.PlaceholderProperty, new Binding(nameof(EntryCell.Placeholder), source: entryCell));
-			hStack.Children.Add(entry);
-			return hStack;
+			else
+			{
+				grid.ColumnDefinitions.Add(new ColumnDefinition(GridLength.Star));
+				var entry = new Entry { VerticalOptions = LayoutOptions.Center };
+				entry.SetBinding(Entry.TextProperty, new Binding(nameof(EntryCell.Text), source: entryCell, mode: BindingMode.TwoWay));
+				entry.SetBinding(Entry.PlaceholderProperty, new Binding(nameof(EntryCell.Placeholder), source: entryCell));
+				grid.Children.Add(entry);
+			}
+			return grid;
 		}
 
 		return new Label { Text = cell.ToString() ?? string.Empty, Padding = new Thickness(12, 8) };
