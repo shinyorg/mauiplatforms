@@ -41,23 +41,38 @@ public class TableViewPage : ContentPage
 			}
 		};
 
-		Content = new VerticalStackLayout
+		Content = new Grid
 		{
-			Spacing = 10,
 			Padding = new Thickness(24),
+			RowSpacing = 10,
+			RowDefinitions =
+			{
+				new RowDefinition(GridLength.Auto),
+				new RowDefinition(GridLength.Auto),
+				new RowDefinition(GridLength.Auto),
+				new RowDefinition(GridLength.Star),
+			},
 			Children =
 			{
 				new Label { Text = "TableView", FontSize = 24, FontAttributes = FontAttributes.Bold },
-				new BoxView { HeightRequest = 2, Color = Colors.DodgerBlue },
-				new Label { Text = "Settings-style grouped table with various cell types:", FontSize = 14, TextColor = Colors.Gray },
-				new Border
-				{
-					Stroke = Colors.LightGray,
-					StrokeThickness = 1,
-					Content = tableView,
-					HeightRequest = 500,
-				},
 			}
 		};
+
+		var divider = new BoxView { HeightRequest = 2, Color = Colors.DodgerBlue };
+		Grid.SetRow(divider, 1);
+		((Grid)Content).Children.Add(divider);
+
+		var subtitle = new Label { Text = "Settings-style grouped table with various cell types:", FontSize = 14, TextColor = Colors.Gray };
+		Grid.SetRow(subtitle, 2);
+		((Grid)Content).Children.Add(subtitle);
+
+		var border = new Border
+		{
+			Stroke = Colors.LightGray,
+			StrokeThickness = 1,
+			Content = tableView,
+		};
+		Grid.SetRow(border, 3);
+		((Grid)Content).Children.Add(border);
 	}
 }
