@@ -249,7 +249,6 @@ internal class MacOSSwipeGestureRecognizer : NSPanGestureRecognizer
 {
     readonly List<SwipeGestureRecognizer> _swipeGestures = new();
     CGPoint _startLocation;
-    const double SwipeDistanceThreshold = 30; // minimum distance in points
 
     public MacOSSwipeGestureRecognizer(SwipeGestureRecognizer swipeGesture)
     {
@@ -271,32 +270,26 @@ internal class MacOSSwipeGestureRecognizer : NSPanGestureRecognizer
             case NSGestureRecognizerState.Began:
                 _startLocation = recognizer.LocationInView(recognizer.View);
                 break;
+            case NSGestureRecognizerState.Changed:
             case NSGestureRecognizerState.Ended:
-                var endLocation = recognizer.LocationInView(recognizer.View);
-                var dx = (double)(endLocation.X - _startLocation.X);
-                var dy = (double)(endLocation.Y - _startLocation.Y);
+                var currentLocation = recognizer.LocationInView(recognizer.View);
+                var dx = (double)(currentLocation.X - _startLocation.X);
+                var dy = (double)(currentLocation.Y - _startLocation.Y);
 
-                SwipeDirection? detectedDir = null;
-                if (Math.Abs(dx) > Math.Abs(dy))
+                // Accumulate swipe distance on all recognizers
+                foreach (var gesture in _swipeGestures)
                 {
-                    if (dx < -SwipeDistanceThreshold) detectedDir = SwipeDirection.Left;
-                    else if (dx > SwipeDistanceThreshold) detectedDir = SwipeDirection.Right;
-                }
-                else
-                {
-                    if (dy < -SwipeDistanceThreshold) detectedDir = SwipeDirection.Up;
-                    else if (dy > SwipeDistanceThreshold) detectedDir = SwipeDirection.Down;
+                    var parent = (gesture as IElement)?.FindParentOfType<View>();
+                    ((ISwipeGestureController)gesture).SendSwipe(parent as Element, dx, dy);
                 }
 
-                if (detectedDir.HasValue)
+                // On end, check if threshold was met and fire the Swiped event
+                if (recognizer.State == NSGestureRecognizerState.Ended)
                 {
                     foreach (var gesture in _swipeGestures)
                     {
-                        if (gesture.Direction.HasFlag(detectedDir.Value))
-                        {
-                            var parent = (gesture as IElement)?.FindParentOfType<View>();
-                            ((ISwipeGestureController)gesture).SendSwipe(parent as Element, dx, dy);
-                        }
+                        var parent = (gesture as IElement)?.FindParentOfType<View>();
+                        ((ISwipeGestureController)gesture).DetectSwipe(parent, gesture.Direction);
                     }
                 }
                 break;
