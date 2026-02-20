@@ -45,6 +45,7 @@ public static partial class AppHostBuilderExtensions
         handlersCollection.AddHandler<TimePicker, TimePickerHandler>();
         handlersCollection.AddHandler<ScrollView, ScrollViewHandler>();
         handlersCollection.AddHandler<Border, BorderHandler>();
+        handlersCollection.AddHandler<Microsoft.Maui.Controls.Frame, BorderHandler>();
         handlersCollection.AddHandler<NavigationPage, NavigationPageHandler>();
         handlersCollection.AddHandler<TabbedPage, TabbedPageHandler>();
         handlersCollection.AddHandler<FlyoutPage, FlyoutPageHandler>();

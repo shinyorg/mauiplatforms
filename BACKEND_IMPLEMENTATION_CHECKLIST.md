@@ -68,7 +68,7 @@ Items marked `[x]` have a handler or implementation present; items marked `[~]` 
 | [x] **ScrollView** | ✅ | Maps Content, Orientation, ScrollBarVisibility, ContentSize via `NSScrollView`; ScrollToAsync with animated scrolling via `NSAnimationContext`; `Scrolled` event fires via `SetScrolledPosition` on `BoundsChangedNotification` |
 | [x] **ContentView** | ✅ | Simple content wrapper with Background support |
 | [x] **Border** | ✅ | Full stroke/shape support — Stroke, StrokeThickness, StrokeShape, StrokeLineCap, StrokeLineJoin, StrokeDashPattern |
-| [ ] **Frame** | ❌ | Legacy border container — no dedicated handler (may fall back to Border) |
+| [x] **Frame** | ✅ | Registered to `BorderHandler` — Frame extends ContentView with IBorderView, handled by Border's stroke/shape rendering |
 | [x] **Layout (fallback)** | ✅ | Base `LayoutHandler` with Background; MAUI's layout manager handles custom layout subclasses |
 
 ---
@@ -271,7 +271,7 @@ Every handler must support these properties mapped from the base `IView` in `Mac
 | [ ] **Semantic Screen Reader** | `ISemanticScreenReader` | ❌ | Needs `NSAccessibility` announce support |
 | [x] **Share** | `IShare` | ✅ | `ShareImplementation` — `NSSharingServicePicker` |
 | [x] **Text-to-Speech** | `ITextToSpeech` | ✅ | `TextToSpeechImplementation` — `NSSpeechSynthesizer` / `AVSpeechSynthesizer` |
-| [ ] **Version Tracking** | `IVersionTracking` | ❌ | Needs `NSUserDefaults`-based version history tracking |
+| [x] **Version Tracking** | `IVersionTracking` | ✅ | Cross-platform `VersionTrackingImplementation` uses `IPreferences` + `IAppInfo` (both implemented) |
 | [ ] **Vibration** | `IVibration` | ❌ | Not typically available on macOS (no haptic motor); consider `NSHapticFeedbackManager` on supported hardware |
 
 ---
@@ -366,13 +366,13 @@ FormattedText requires special handling as a compound property using `NSAttribut
 |----------|-------------|-------|-------|
 | **Core Infrastructure** | 6 of 6 | 6 | All core abstractions in place including gesture integration |
 | **Pages** | 4 of 5 | 5 | Missing: Shell |
-| **Layouts** | 9 of 10 | 10 | Missing: Frame (dedicated handler) |
+| **Layouts** | 10 of 10 | 10 | ✅ All layouts implemented including Frame via BorderHandler |
 | **Basic Controls** | 12 of 14 | 14 | ImageButton now implemented; Label has full Padding support |
 | **Collection Controls** | 1 of 7 | 7 | Only CollectionView (basic); missing 6 controls |
 | **Input Controls** | 4 of 4 | 4 | All present; Entry/Editor improved with font/spacing |
 | **Gesture Recognizers** | 5 of 5 | 5 | ✅ All: Tap, Pan, Swipe, Pinch, Pointer |
 | **Shapes** | 1 handler | 6 types | Single ShapeViewHandler covers all shape types |
-| **Essentials** | 15 of 20 | 20 | Missing: Geolocation, Map, SemanticScreenReader, VersionTracking, Vibration |
+| **Essentials** | 16 of 20 | 20 | Missing: Geolocation, Map, SemanticScreenReader, Vibration |
 | **Dialog Types** | 3 of 3 | 3 | All implemented via NSAlert |
 | **Font Services** | 5 of 5 | 5 | ✅ Full: IFontManager, IFontRegistrar, IEmbeddedFontLoader, Native Loading, IFontNamedSizeService |
 | **Animations** | 9 of 9 | 9 | ✅ Full: MacOSTicker + MAUI's cross-platform animation system handles all animation types |
