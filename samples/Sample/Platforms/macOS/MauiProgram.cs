@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Components.WebView.Maui;
+using Microsoft.Maui.Controls;
 using Microsoft.Maui.Hosting;
 using Microsoft.Maui.LifecycleEvents;
+using Microsoft.Maui.Platform.MacOS.Handlers;
 using Microsoft.Maui.Platform.MacOS.Hosting;
 using Microsoft.Maui.Essentials.MacOS;
 using MauiDevFlow.Agent;
@@ -17,6 +19,12 @@ public static class MauiProgram
             .UseMauiAppMacOS<MacOSApp>()
             .AddMacOSEssentials()
             .AddMacOSBlazorWebView();
+
+        // Use native NSOutlineView source list sidebar for FlyoutPage
+        builder.ConfigureMauiHandlers(handlers =>
+        {
+            handlers.AddHandler<FlyoutPage, NativeSidebarFlyoutPageHandler>();
+        });
 
         builder.ConfigureFonts(fonts =>
         {

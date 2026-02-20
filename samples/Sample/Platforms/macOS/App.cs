@@ -1,5 +1,6 @@
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
+using Microsoft.Maui.Platform.MacOS;
 using Sample.Pages;
 
 namespace Sample;
@@ -22,141 +23,122 @@ class MacOSApp : Application
 
 class MainShell : FlyoutPage
 {
-	private readonly (string icon, string name, Func<Page> factory)[] _pages =
-	[
-		("🏠", "Home", () => new HomePage()),
-		("🎛️", "Controls", () => new ControlsPage()),
-		("📅", "Pickers & Search", () => new PickersPage()),
-		("🔤", "Fonts", () => new Pages.FontsPage()),
-		("📐", "Layouts", () => new LayoutsPage()),
-		("💬", "Alerts & Dialogs", () => new AlertsPage()),
-		("📋", "Collection View", () => new Pages.CollectionViewPage()),
-		("🎠", "CarouselView", () => new Pages.CarouselViewPage()),
-		("📝", "ListView", () => new Pages.ListViewPage()),
-		("⚙️", "TableView", () => new Pages.TableViewPage()),
-		("🎨", "Graphics", () => new GraphicsPage()),
-		("👆", "Gestures", () => new Pages.GesturesPage()),
-		("⭐", "Shapes", () => new Pages.ShapesPage()),
-		("🔄", "Transforms", () => new Pages.TransformsPage()),
-		("🌍", "WebView", () => new Pages.WebViewPage()),
-		("📱", "Device & App Info", () => new DeviceInfoPage()),
-		("🔋", "Battery & Network", () => new BatteryNetworkPage()),
-		("📋", "Clipboard & Storage", () => new ClipboardPrefsPage()),
-		("🚀", "Launch & Share", () => new LaunchSharePage()),
+	private readonly Dictionary<string, Func<Page>> _pageFactories = new()
+	{
+		["home"] = () => new HomePage(),
+		["controls"] = () => new ControlsPage(),
+		["pickers"] = () => new PickersPage(),
+		["fonts"] = () => new Pages.FontsPage(),
+		["layouts"] = () => new LayoutsPage(),
+		["alerts"] = () => new AlertsPage(),
+		["collectionview"] = () => new Pages.CollectionViewPage(),
+		["carouselview"] = () => new Pages.CarouselViewPage(),
+		["listview"] = () => new Pages.ListViewPage(),
+		["tableview"] = () => new Pages.TableViewPage(),
+		["graphics"] = () => new GraphicsPage(),
+		["gestures"] = () => new Pages.GesturesPage(),
+		["shapes"] = () => new Pages.ShapesPage(),
+		["transforms"] = () => new Pages.TransformsPage(),
+		["webview"] = () => new Pages.WebViewPage(),
+		["deviceinfo"] = () => new DeviceInfoPage(),
+		["battery"] = () => new BatteryNetworkPage(),
+		["clipboard"] = () => new ClipboardPrefsPage(),
+		["launch"] = () => new LaunchSharePage(),
 #if MACAPP
-		("🌐", "Blazor Hybrid", () => new Pages.BlazorPage()),
+		["blazor"] = () => new Pages.BlazorPage(),
 #endif
-		("🧭", "Navigation", () => new NavigationPage(new NavigationDemoPage())),
-		("📑", "TabbedPage", () => new TabbedPageDemo()),
-		("📂", "FlyoutPage", () => new Pages.FlyoutPageDemo()),
-		("🗺️", "Map", () => new Pages.MapPage()),
-	];
-
-	View? _selectedItem;
+		["navigation"] = () => new NavigationPage(new NavigationDemoPage()),
+		["tabbedpage"] = () => new TabbedPageDemo(),
+		["flyoutpage"] = () => new Pages.FlyoutPageDemo(),
+		["map"] = () => new Pages.MapPage(),
+	};
 
 	public MainShell()
 	{
 		Title = "macOS Demo App";
 		FlyoutLayoutBehavior = FlyoutLayoutBehavior.Split;
 
-		var menuStack = new VerticalStackLayout
-		{
-			Spacing = 2,
-			Padding = new Thickness(0, 8),
-			BackgroundColor = Color.FromArgb("#F0F0F0"),
-		};
-
-		menuStack.Children.Add(new Label
-		{
-			Text = "macOS Demo App",
-			FontSize = 11,
-			FontAttributes = FontAttributes.Bold,
-			TextColor = Color.FromArgb("#888888"),
-			Padding = new Thickness(14, 8, 10, 4),
-		});
-
-		bool first = true;
-		foreach (var (icon, name, factory) in _pages)
-		{
-			var item = CreateSidebarItem(icon, name, factory);
-			menuStack.Children.Add(item);
-			if (first)
-			{
-				SetSelected(item);
-				first = false;
-			}
-		}
-
-		Flyout = new ContentPage
-		{
-			Title = "Menu",
-			BackgroundColor = Color.FromArgb("#F0F0F0"),
-			Content = new ScrollView { Content = menuStack },
-		};
-
+		// Empty flyout page (native sidebar ignores it)
+		Flyout = new ContentPage { Title = "Menu" };
 		Detail = new NavigationPage(new HomePage());
 		IsPresented = true;
-	}
 
-	View CreateSidebarItem(string icon, string name, Func<Page> factory)
-	{
-		var container = new HorizontalStackLayout
+		// Configure native sidebar items
+		MacOSFlyoutPage.SetSidebarItems(this, new List<MacOSSidebarItem>
 		{
-			Spacing = 6,
-			Padding = new Thickness(10, 5),
-			HorizontalOptions = LayoutOptions.Fill,
-		};
-
-		container.Children.Add(new Label
-		{
-			Text = icon,
-			FontSize = 13,
-			VerticalOptions = LayoutOptions.Center,
-			MinimumWidthRequest = 24,
-			WidthRequest = 24,
-			HorizontalTextAlignment = TextAlignment.Center,
+			new MacOSSidebarItem
+			{
+				Title = "General",
+				Children = new List<MacOSSidebarItem>
+				{
+					new() { Title = "Home", SystemImage = "house.fill", Tag = "home" },
+					new() { Title = "Controls", SystemImage = "slider.horizontal.3", Tag = "controls" },
+					new() { Title = "Pickers & Search", SystemImage = "calendar", Tag = "pickers" },
+					new() { Title = "Fonts", SystemImage = "textformat", Tag = "fonts" },
+					new() { Title = "Layouts", SystemImage = "rectangle.3.group", Tag = "layouts" },
+					new() { Title = "Alerts & Dialogs", SystemImage = "bubble.left.and.bubble.right", Tag = "alerts" },
+				}
+			},
+			new MacOSSidebarItem
+			{
+				Title = "Lists & Collections",
+				Children = new List<MacOSSidebarItem>
+				{
+					new() { Title = "Collection View", SystemImage = "square.grid.2x2", Tag = "collectionview" },
+					new() { Title = "CarouselView", SystemImage = "rectangle.stack", Tag = "carouselview" },
+					new() { Title = "ListView", SystemImage = "list.bullet", Tag = "listview" },
+					new() { Title = "TableView", SystemImage = "tablecells", Tag = "tableview" },
+				}
+			},
+			new MacOSSidebarItem
+			{
+				Title = "Drawing & Visual",
+				Children = new List<MacOSSidebarItem>
+				{
+					new() { Title = "Graphics", SystemImage = "paintbrush", Tag = "graphics" },
+					new() { Title = "Gestures", SystemImage = "hand.tap", Tag = "gestures" },
+					new() { Title = "Shapes", SystemImage = "star", Tag = "shapes" },
+					new() { Title = "Transforms", SystemImage = "arrow.triangle.2.circlepath", Tag = "transforms" },
+				}
+			},
+			new MacOSSidebarItem
+			{
+				Title = "Platform",
+				Children = new List<MacOSSidebarItem>
+				{
+					new() { Title = "WebView", SystemImage = "globe", Tag = "webview" },
+					new() { Title = "Device & App Info", SystemImage = "iphone", Tag = "deviceinfo" },
+					new() { Title = "Battery & Network", SystemImage = "battery.100", Tag = "battery" },
+					new() { Title = "Clipboard & Storage", SystemImage = "doc.on.clipboard", Tag = "clipboard" },
+					new() { Title = "Launch & Share", SystemImage = "square.and.arrow.up", Tag = "launch" },
+#if MACAPP
+					new() { Title = "Blazor Hybrid", SystemImage = "network", Tag = "blazor" },
+#endif
+				}
+			},
+			new MacOSSidebarItem
+			{
+				Title = "Navigation",
+				Children = new List<MacOSSidebarItem>
+				{
+					new() { Title = "Navigation", SystemImage = "arrow.triangle.turn.up.right.diamond", Tag = "navigation" },
+					new() { Title = "TabbedPage", SystemImage = "rectangle.split.3x1", Tag = "tabbedpage" },
+					new() { Title = "FlyoutPage", SystemImage = "sidebar.left", Tag = "flyoutpage" },
+					new() { Title = "Map", SystemImage = "map", Tag = "map" },
+				}
+			},
 		});
 
-		container.Children.Add(new Label
+		MacOSFlyoutPage.SetSidebarSelectionChanged(this, item =>
 		{
-			Text = name,
-			FontSize = 13,
-			TextColor = Color.FromArgb("#333333"),
-			VerticalOptions = LayoutOptions.Center,
+			if (item.Tag is string tag && _pageFactories.TryGetValue(tag, out var factory))
+			{
+				var page = factory();
+				if (page is ContentPage cp)
+					Detail = new NavigationPage(cp);
+				else
+					Detail = page;
+			}
 		});
-
-		var tap = new TapGestureRecognizer();
-		var capturedFactory = factory;
-		tap.Tapped += (s, e) =>
-		{
-			SetSelected(container);
-			var page = capturedFactory();
-			if (page is ContentPage cp)
-				Detail = new NavigationPage(cp);
-			else
-				Detail = page;
-		};
-		container.GestureRecognizers.Add(tap);
-
-		return container;
-	}
-
-	void SetSelected(View item)
-	{
-		if (_selectedItem is HorizontalStackLayout oldHsl)
-		{
-			oldHsl.BackgroundColor = Colors.Transparent;
-			if (oldHsl.Children.Count > 1 && oldHsl.Children[1] is Label oldLabel)
-				oldLabel.TextColor = Color.FromArgb("#333333");
-		}
-
-		if (item is HorizontalStackLayout newHsl)
-		{
-			newHsl.BackgroundColor = Color.FromArgb("#0078D4");
-			if (newHsl.Children.Count > 1 && newHsl.Children[1] is Label newLabel)
-				newLabel.TextColor = Colors.White;
-		}
-
-		_selectedItem = item;
 	}
 }
