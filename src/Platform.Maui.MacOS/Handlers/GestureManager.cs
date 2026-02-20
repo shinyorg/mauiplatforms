@@ -222,20 +222,49 @@ internal class MacOSPointerTrackingArea : NSTrackingArea
 
     public PointerGestureRecognizer Recognizer => _pointerGesture;
 
-    public void FireEntered(View? sender)
+    static Func<IElement?, Point?> CreateGetPosition(NSView view, NSEvent? theEvent)
     {
-        // SendPointerEntered(View sender, Func<IElement?, Point?>? getPosition, PlatformPointerEventArgs? platformArgs, ButtonsMask button)
-        _sendEntered?.Invoke(_pointerGesture, new object?[] { sender!, null, null, ButtonsMask.Primary });
+        return (IElement? relativeTo) =>
+        {
+            if (theEvent == null) return null;
+            // Get mouse location in window coordinates, convert to view
+            var locInView = view.ConvertPointFromView(theEvent.LocationInWindow, null);
+            // Flip Y for MAUI (top-left origin) if view is not flipped
+            if (!view.IsFlipped)
+                locInView.Y = view.Bounds.Height - locInView.Y;
+
+            if (relativeTo == null)
+                return new Microsoft.Maui.Graphics.Point(locInView.X, locInView.Y);
+
+            // If relativeTo is the same element, return position in that element's coordinate space
+            if (relativeTo is View relView && relView.Handler?.PlatformView is NSView relNative)
+            {
+                var locInRel = relNative.ConvertPointFromView(theEvent.LocationInWindow, null);
+                if (!relNative.IsFlipped)
+                    locInRel.Y = relNative.Bounds.Height - locInRel.Y;
+                return new Microsoft.Maui.Graphics.Point(locInRel.X, locInRel.Y);
+            }
+
+            return new Microsoft.Maui.Graphics.Point(locInView.X, locInView.Y);
+        };
     }
 
-    public void FireExited(View? sender)
+    public void FireEntered(View? sender, NSEvent? theEvent = null)
     {
-        _sendExited?.Invoke(_pointerGesture, new object?[] { sender!, null, null, ButtonsMask.Primary });
+        Func<IElement?, Point?>? getPos = theEvent != null && Owner is NSView view ? CreateGetPosition(view, theEvent) : null;
+        _sendEntered?.Invoke(_pointerGesture, new object?[] { sender!, getPos, null, ButtonsMask.Primary });
     }
 
-    public void FireMoved(View? sender)
+    public void FireExited(View? sender, NSEvent? theEvent = null)
     {
-        _sendMoved?.Invoke(_pointerGesture, new object?[] { sender!, null, null, ButtonsMask.Primary });
+        Func<IElement?, Point?>? getPos = theEvent != null && Owner is NSView view ? CreateGetPosition(view, theEvent) : null;
+        _sendExited?.Invoke(_pointerGesture, new object?[] { sender!, getPos, null, ButtonsMask.Primary });
+    }
+
+    public void FireMoved(View? sender, NSEvent? theEvent = null)
+    {
+        Func<IElement?, Point?>? getPos = theEvent != null && Owner is NSView view ? CreateGetPosition(view, theEvent) : null;
+        _sendMoved?.Invoke(_pointerGesture, new object?[] { sender!, getPos, null, ButtonsMask.Primary });
     }
 }
 

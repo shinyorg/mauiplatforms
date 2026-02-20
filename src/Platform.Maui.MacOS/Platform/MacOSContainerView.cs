@@ -84,7 +84,7 @@ public class MacOSContainerView : NSView
             if (area is MacOSPointerTrackingArea pointerArea)
             {
                 var parent = (pointerArea.Recognizer as IElement)?.FindParentOfType<View>();
-                pointerArea.FireEntered(parent);
+                pointerArea.FireEntered(parent, theEvent);
             }
         }
         base.MouseEntered(theEvent);
@@ -97,7 +97,7 @@ public class MacOSContainerView : NSView
             if (area is MacOSPointerTrackingArea pointerArea)
             {
                 var parent = (pointerArea.Recognizer as IElement)?.FindParentOfType<View>();
-                pointerArea.FireExited(parent);
+                pointerArea.FireExited(parent, theEvent);
             }
         }
         base.MouseExited(theEvent);
@@ -110,7 +110,7 @@ public class MacOSContainerView : NSView
             if (area is MacOSPointerTrackingArea pointerArea)
             {
                 var parent = (pointerArea.Recognizer as IElement)?.FindParentOfType<View>();
-                pointerArea.FireMoved(parent);
+                pointerArea.FireMoved(parent, theEvent);
             }
         }
         base.MouseMoved(theEvent);
