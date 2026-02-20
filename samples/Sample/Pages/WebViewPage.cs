@@ -48,6 +48,8 @@ public class WebViewPage : ContentPage
 			urlEntry.Text = e.Url;
 		};
 
+		Grid.SetColumn(goBtn, 1);
+
 		Content = new ScrollView
 		{
 			Content = new VerticalStackLayout
@@ -65,11 +67,19 @@ public class WebViewPage : ContentPage
 						Children = { backBtn, forwardBtn, reloadBtn }
 					},
 
-					new HorizontalStackLayout
+					new Grid
 					{
-						Spacing = 8,
-						HorizontalOptions = LayoutOptions.Fill,
-						Children = { urlEntry, goBtn }
+						ColumnDefinitions =
+						{
+							new ColumnDefinition(GridLength.Star),
+							new ColumnDefinition(GridLength.Auto),
+						},
+						ColumnSpacing = 8,
+						Children =
+						{
+							urlEntry,
+							goBtn,
+						}
 					},
 
 					webView,
