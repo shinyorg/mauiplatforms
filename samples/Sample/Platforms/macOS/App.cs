@@ -64,7 +64,7 @@ class MainShell : FlyoutPage
 			FontSize = 11,
 			FontAttributes = FontAttributes.Bold,
 			TextColor = Color.FromArgb("#888888"),
-			Padding = new Thickness(10, 6, 10, 6),
+			Padding = new Thickness(10, 8, 10, 4),
 		});
 
 		bool first = true;
