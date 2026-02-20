@@ -3,6 +3,8 @@ using Microsoft.Maui.Hosting;
 using Microsoft.Maui.LifecycleEvents;
 using Microsoft.Maui.Platform.MacOS.Hosting;
 using Microsoft.Maui.Essentials.MacOS;
+using MauiDevFlow.Agent;
+using MauiDevFlow.Blazor;
 
 namespace Sample;
 
@@ -16,6 +18,11 @@ public static class MauiProgram
             .AddMacOSEssentials();
 
         builder.Services.AddMauiBlazorWebView();
+
+#if DEBUG
+        builder.AddMauiDevFlowAgent(opts => opts.Port = 10223);
+        builder.AddMauiBlazorDevFlowTools();
+#endif
 
         builder.ConfigureLifecycleEvents(events =>
         {

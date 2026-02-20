@@ -23,6 +23,9 @@
         <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)"/>
         <ProjectReference Include="..\..\src\Platform.Maui.MacOS\Platform.Maui.MacOS.csproj" />
         <ProjectReference Include="..\..\src\Platform.Maui.Essentials.MacOS\Platform.Maui.Essentials.MacOS.csproj" />
+        <!-- MauiDevFlow agent for runtime inspection and debugging -->
+        <ProjectReference Include="..\..\..\MauiDevFlow\src\MauiDevFlow.Agent\MauiDevFlow.Agent.csproj" />
+        <ProjectReference Include="..\..\..\MauiDevFlow\src\MauiDevFlow.Blazor\MauiDevFlow.Blazor.csproj" />
     </ItemGroup>
 
     <ItemGroup>
