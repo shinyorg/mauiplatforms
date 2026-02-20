@@ -55,10 +55,15 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
             [nameof(IWindow.Height)] = MapSize,
             [nameof(IWindow.X)] = MapPosition,
             [nameof(IWindow.Y)] = MapPosition,
+            [nameof(IWindow.MinimumWidth)] = MapMinMaxSize,
+            [nameof(IWindow.MinimumHeight)] = MapMinMaxSize,
+            [nameof(IWindow.MaximumWidth)] = MapMinMaxSize,
+            [nameof(IWindow.MaximumHeight)] = MapMinMaxSize,
         };
 
     FlippedNSView? _contentContainer;
     MacOSToolbarManager? _toolbarManager;
+    MacOSModalManager? _modalManager;
 
     public WindowHandler() : base(Mapper)
     {
@@ -66,7 +71,7 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
 
     protected override NSWindow CreatePlatformElement()
     {
-        var style = NSWindowStyle.Titled | NSWindowStyle.Closable | NSWindowStyle.Resizable | NSWindowStyle.Miniaturizable;
+        var style = NSWindowStyle.Titled | NSWindowStyle.Closable | NSWindowStyle.Resizable | NSWindowStyle.Miniaturizable | NSWindowStyle.FullSizeContentView;
         var window = new NSWindow(
             new CGRect(0, 0, 1280, 720),
             style,
@@ -82,6 +87,9 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
         // Attach the toolbar manager
         _toolbarManager = new MacOSToolbarManager();
         _toolbarManager.AttachToWindow(window);
+
+        // Create the modal manager
+        _modalManager = new MacOSModalManager(_contentContainer);
 
         window.MakeKeyAndOrderFront(null);
 
@@ -115,6 +123,9 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
             pageView.AutoresizingMask = NSViewResizingMask.WidthSizable | NSViewResizingMask.HeightSizable;
             handler._contentContainer.AddSubview(pageView);
         }
+
+        // Subscribe to modal events on the Window
+        handler.SubscribeModalEvents(window);
 
         // Subscribe to page-level navigation events so toolbar refreshes on every page change
         handler.ObservePageChanges(page);
@@ -260,5 +271,55 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
             Page page => page,
             _ => null,
         };
+    }
+
+    public static void MapMinMaxSize(WindowHandler handler, IWindow window)
+    {
+        if (handler.PlatformView == null)
+            return;
+
+        var minW = window.MinimumWidth > 0 ? (nfloat)window.MinimumWidth : 0;
+        var minH = window.MinimumHeight > 0 ? (nfloat)window.MinimumHeight : 0;
+        handler.PlatformView.MinSize = new CGSize(minW, minH);
+
+        var maxW = window.MaximumWidth > 0 && window.MaximumWidth < double.MaxValue ? (nfloat)window.MaximumWidth : nfloat.MaxValue;
+        var maxH = window.MaximumHeight > 0 && window.MaximumHeight < double.MaxValue ? (nfloat)window.MaximumHeight : nfloat.MaxValue;
+        handler.PlatformView.MaxSize = new CGSize(maxW, maxH);
+    }
+
+    Window? _subscribedWindow;
+
+    void SubscribeModalEvents(IWindow window)
+    {
+        UnsubscribeModalEvents();
+
+        if (window is Window w)
+        {
+            _subscribedWindow = w;
+            w.ModalPushed += OnModalPushed;
+            w.ModalPopped += OnModalPopped;
+        }
+    }
+
+    void UnsubscribeModalEvents()
+    {
+        if (_subscribedWindow != null)
+        {
+            _subscribedWindow.ModalPushed -= OnModalPushed;
+            _subscribedWindow.ModalPopped -= OnModalPopped;
+            _subscribedWindow = null;
+        }
+    }
+
+    void OnModalPushed(object? sender, ModalPushedEventArgs e)
+    {
+        if (_modalManager != null && MauiContext != null)
+            _modalManager.PushModal(e.Modal, MauiContext, true);
+    }
+
+    void OnModalPopped(object? sender, ModalPoppedEventArgs e)
+    {
+        if (_modalManager != null)
+            _modalManager.PopModal(true);
     }
 }

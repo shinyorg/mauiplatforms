@@ -7,19 +7,23 @@ namespace Microsoft.Maui.Platform.MacOS.Handlers;
 
 /// <summary>
 /// Manages an NSToolbar on the NSWindow, populated from Page.ToolbarItems.
-/// Attach to a window via <see cref="MacOSToolbarManager.SetToolbarItems"/>.
+/// Also renders a navigation back button and sets the window title from NavigationPage.
 /// </summary>
 public class MacOSToolbarManager : NSObject, INSToolbarDelegate
 {
     const string ToolbarId = "MauiToolbar";
     const string ItemIdPrefix = "MauiToolbarItem_";
     const string FlexibleSpaceId = "NSToolbarFlexibleSpaceItem";
+    const string SidebarToggleId = "MauiSidebarToggle";
+    const string BackButtonId = "MauiBackButton";
 
     NSWindow? _window;
     NSToolbar? _toolbar;
     readonly List<ToolbarItem> _items = new();
     readonly List<string> _itemIdentifiers = new();
     Page? _currentPage;
+    FlyoutPage? _flyoutPage;
+    NavigationPage? _navigationPage;
 
     public void AttachToWindow(NSWindow window)
     {
@@ -44,6 +48,14 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
 
         _currentPage = page;
 
+        // Walk up the page hierarchy to find FlyoutPage and NavigationPage
+        _flyoutPage = FindAncestor<FlyoutPage>(page);
+        _navigationPage = FindAncestor<NavigationPage>(page);
+
+        // Update the window title from the current page
+        if (_window != null && page != null)
+            _window.Title = page.Title ?? string.Empty;
+
         if (_currentPage != null)
         {
             if (_currentPage.ToolbarItems is INotifyCollectionChanged newCollection)
@@ -54,6 +66,17 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
         {
             RefreshToolbar(null);
         }
+    }
+
+    static T? FindAncestor<T>(Page? page) where T : Page
+    {
+        while (page != null)
+        {
+            if (page is T match)
+                return match;
+            page = page.Parent as Page;
+        }
+        return null;
     }
 
     void OnToolbarItemsChanged(object? sender, NotifyCollectionChangedEventArgs e)
@@ -68,11 +91,45 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
             item.PropertyChanged -= OnToolbarItemPropertyChanged;
     }
 
+    bool ShouldShowBackButton()
+    {
+        if (_navigationPage == null)
+            return false;
+        if (_navigationPage.Navigation.NavigationStack.Count <= 1)
+            return false;
+        // Respect HasNavigationBar on the current page
+        if (_currentPage != null && !NavigationPage.GetHasNavigationBar(_currentPage))
+            return false;
+        return true;
+    }
+
+    string? GetBackButtonTitle()
+    {
+        if (_navigationPage == null)
+            return null;
+        var stack = _navigationPage.Navigation.NavigationStack;
+        if (stack.Count <= 1)
+            return null;
+        var previousPage = stack[stack.Count - 2];
+        var backTitle = NavigationPage.GetBackButtonTitle(previousPage);
+        if (string.IsNullOrEmpty(backTitle))
+            backTitle = previousPage.Title;
+        return string.IsNullOrEmpty(backTitle) ? "Back" : backTitle;
+    }
+
     void RefreshToolbar(IList<ToolbarItem>? toolbarItems)
     {
         UnsubscribeCommands();
         _items.Clear();
         _itemIdentifiers.Clear();
+
+        // Add sidebar toggle if there's a FlyoutPage
+        if (_flyoutPage != null)
+            _itemIdentifiers.Add(SidebarToggleId);
+
+        // Add back button if NavigationPage has depth > 1
+        if (ShouldShowBackButton())
+            _itemIdentifiers.Add(BackButtonId);
 
         if (toolbarItems != null)
         {
@@ -103,7 +160,6 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
 
     void OnToolbarItemPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
-        // Re-validate toolbar items when properties change (e.g., IsEnabled via CanExecute)
         if (_toolbar != null)
             _toolbar.ValidateVisibleItems();
     }
@@ -112,6 +168,55 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
     [Export("toolbar:itemForItemIdentifier:willBeInsertedIntoToolbar:")]
     public NSToolbarItem ToolbarItemForIdentifier(NSToolbar toolbar, string itemIdentifier, bool willBeInserted)
     {
+        // Sidebar toggle button (hamburger menu)
+        if (itemIdentifier == SidebarToggleId)
+        {
+            var nsItem = new NSToolbarItem(SidebarToggleId)
+            {
+                Label = "Sidebar",
+                PaletteLabel = "Toggle Sidebar",
+                ToolTip = "Toggle Sidebar",
+                Target = this,
+                Action = new ObjCRuntime.Selector("sidebarToggleClicked:"),
+            };
+
+            var button = new NSButton
+            {
+                Title = "☰",
+                BezelStyle = NSBezelStyle.TexturedRounded,
+                Target = this,
+                Action = new ObjCRuntime.Selector("sidebarToggleClicked:"),
+            };
+            button.SetButtonType(NSButtonType.MomentaryPushIn);
+            nsItem.View = button;
+            return nsItem;
+        }
+
+        // Navigation back button
+        if (itemIdentifier == BackButtonId)
+        {
+            var backTitle = GetBackButtonTitle() ?? "Back";
+            var nsItem = new NSToolbarItem(BackButtonId)
+            {
+                Label = backTitle,
+                PaletteLabel = "Back",
+                ToolTip = $"Back to {backTitle}",
+                Target = this,
+                Action = new ObjCRuntime.Selector("backButtonClicked:"),
+            };
+
+            var button = new NSButton
+            {
+                Title = $"‹ {backTitle}",
+                BezelStyle = NSBezelStyle.TexturedRounded,
+                Target = this,
+                Action = new ObjCRuntime.Selector("backButtonClicked:"),
+            };
+            button.SetButtonType(NSButtonType.MomentaryPushIn);
+            nsItem.View = button;
+            return nsItem;
+        }
+
         if (itemIdentifier.StartsWith(ItemIdPrefix))
         {
             var indexStr = itemIdentifier.Substring(ItemIdPrefix.Length);
@@ -129,7 +234,6 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
                     Tag = index,
                 };
 
-                // Use a standard NSButton as the toolbar item's view for a native look
                 var button = new NSButton
                 {
                     Title = mauiItem.Text ?? string.Empty,
@@ -175,6 +279,20 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
             if (mauiItem.IsEnabled)
                 ((IMenuItemController)mauiItem).Activate();
         }
+    }
+
+    [Export("sidebarToggleClicked:")]
+    void OnSidebarToggleClicked(NSObject sender)
+    {
+        if (_flyoutPage != null)
+            _flyoutPage.IsPresented = !_flyoutPage.IsPresented;
+    }
+
+    [Export("backButtonClicked:")]
+    void OnBackButtonClicked(NSObject sender)
+    {
+        if (_navigationPage != null && _navigationPage.Navigation.NavigationStack.Count > 1)
+            _navigationPage.PopAsync();
     }
 
     public void Detach()

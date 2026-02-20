@@ -12,6 +12,20 @@ public class NavigationDemoPage : ContentPage
 		_depth = depth;
 		Title = $"Nav Depth {depth}";
 
+		// Add toolbar items
+		ToolbarItems.Add(new ToolbarItem("Info", null, () =>
+		{
+			DisplayAlert("Info", $"You are at depth {depth}", "OK");
+		}));
+
+		if (depth > 1)
+		{
+			ToolbarItems.Add(new ToolbarItem("Root", null, async () =>
+			{
+				await Navigation.PopToRootAsync();
+			}));
+		}
+
 		var depthLabel = new Label
 		{
 			Text = $"You are {depth} level{(depth > 1 ? "s" : "")} deep in the navigation stack.",
@@ -41,6 +55,54 @@ public class NavigationDemoPage : ContentPage
 		{
 			if (depth > 1)
 				await Navigation.PopAsync();
+		};
+
+		var pushModalButton = new Button
+		{
+			Text = "Push Modal Page",
+			BackgroundColor = Colors.MediumPurple,
+			TextColor = Colors.White,
+		};
+		pushModalButton.Clicked += async (s, e) =>
+		{
+			var modalPage = new ContentPage
+			{
+				Title = "Modal Page",
+				BackgroundColor = Colors.White,
+				Content = new VerticalStackLayout
+				{
+					Spacing = 16,
+					Padding = new Thickness(32),
+					VerticalOptions = LayoutOptions.Center,
+					HorizontalOptions = LayoutOptions.Center,
+					Children =
+					{
+						new Label { Text = "🪟 Modal Page", FontSize = 28, FontAttributes = FontAttributes.Bold, HorizontalTextAlignment = TextAlignment.Center },
+						new Label { Text = "This page was presented modally.\nIt overlays the main content.", FontSize = 14, TextColor = Colors.Gray, HorizontalTextAlignment = TextAlignment.Center },
+						new Button
+						{
+							Text = "Dismiss Modal",
+							BackgroundColor = Colors.Coral,
+							TextColor = Colors.White,
+							Command = new Command(async () => await Navigation.PopModalAsync()),
+						}
+					}
+				}
+			};
+			await Navigation.PushModalAsync(modalPage);
+		};
+
+		var pushNoNavBarButton = new Button
+		{
+			Text = "Push Page (No NavBar)",
+			BackgroundColor = Colors.Teal,
+			TextColor = Colors.White,
+		};
+		pushNoNavBarButton.Clicked += async (s, e) =>
+		{
+			var page = new NavigationDemoPage(depth + 1);
+			NavigationPage.SetHasNavigationBar(page, false);
+			await Navigation.PushAsync(page);
 		};
 
 		Content = new VerticalStackLayout
@@ -82,12 +144,14 @@ public class NavigationDemoPage : ContentPage
 
 				pushButton,
 				popButton,
+				pushNoNavBarButton,
+				pushModalButton,
 
 				new BoxView { HeightRequest = 1, Color = Colors.LightGray },
 
 				new Label
 				{
-					Text = "Each push creates a new page instance on the navigation stack.",
+					Text = "• Push/Pop tests the navigation bar with back button\n• \"No NavBar\" hides the navigation bar on the pushed page\n• \"Push Modal\" shows a modal overlay page\n• Toolbar items appear in the macOS toolbar",
 					FontSize = 12,
 					TextColor = Colors.Gray,
 				},
