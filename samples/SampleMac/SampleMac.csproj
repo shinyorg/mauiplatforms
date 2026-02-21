@@ -121,6 +121,9 @@
         <Compile Include="..\Sample\Pages\RadioButtonPage.cs">
             <Link>Pages\RadioButtonPage.cs</Link>
         </Compile>
+        <Compile Include="..\Sample\Pages\FormattedTextPage.cs">
+            <Link>Pages\FormattedTextPage.cs</Link>
+        </Compile>
     </ItemGroup>
 
     <ItemGroup>

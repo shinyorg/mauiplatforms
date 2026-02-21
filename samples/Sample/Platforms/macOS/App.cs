@@ -36,6 +36,7 @@ class MainShell : Shell
 		general.Items.Add(MakeContent("RadioButton", "rbdemo", "circle.inset.filled", typeof(RadioButtonPage)));
 		general.Items.Add(MakeContent("Pickers & Search", "pickers", "calendar", typeof(PickersPage)));
 		general.Items.Add(MakeContent("Fonts", "fonts", "textformat", typeof(FontsPage)));
+		general.Items.Add(MakeContent("Formatted Text", "formattedtext", "text.badge.star", typeof(FormattedTextPage)));
 		general.Items.Add(MakeContent("Layouts", "layouts", "rectangle.3.group", typeof(LayoutsPage)));
 		general.Items.Add(MakeContent("Alerts & Dialogs", "alerts", "bubble.left.and.bubble.right", typeof(AlertsPage)));
 		Items.Add(general);
