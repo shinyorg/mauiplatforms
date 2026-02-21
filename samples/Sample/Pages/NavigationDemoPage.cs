@@ -68,7 +68,6 @@ public class NavigationDemoPage : ContentPage
 			var modalPage = new ContentPage
 			{
 				Title = "Modal Page",
-				BackgroundColor = Colors.White,
 				Content = new VerticalStackLayout
 				{
 					Spacing = 16,
