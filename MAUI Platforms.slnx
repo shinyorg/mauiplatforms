@@ -16,6 +16,7 @@
     <Project Path="src\Platform.Maui.Essentials.MacOS\Platform.Maui.Essentials.MacOS.csproj" />
     <Project Path="src\Platform.Maui.Essentials.TvOS\Platform.Maui.Essentials.TvOS.csproj" />
     <Project Path="src\Platform.Maui.MacOS\Platform.Maui.MacOS.csproj" />
+    <Project Path="src\Platform.Maui.MacOS.BlazorWebView\Platform.Maui.MacOS.BlazorWebView.csproj" />
     <Project Path="src\Platform.Maui.TvOS\Platform.Maui.TvOS.csproj" />
   </Folder>
 </Solution>
