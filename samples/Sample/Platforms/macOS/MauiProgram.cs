@@ -5,8 +5,6 @@ using Microsoft.Maui.LifecycleEvents;
 using Microsoft.Maui.Platform.MacOS.Handlers;
 using Microsoft.Maui.Platform.MacOS.Hosting;
 using Microsoft.Maui.Essentials.MacOS;
-using MauiDevFlow.Agent;
-using MauiDevFlow.Blazor;
 using MauiIcons.Cupertino;
 
 namespace Sample;
@@ -34,11 +32,6 @@ public static class MauiProgram
         });
 
         builder.Services.AddMauiBlazorWebView();
-
-#if DEBUG
-        builder.AddMauiDevFlowAgent();
-        builder.AddMauiBlazorDevFlowTools();
-#endif
 
         builder.ConfigureLifecycleEvents(events =>
         {

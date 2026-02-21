@@ -25,13 +25,7 @@
         <ProjectReference Include="..\..\src\Platform.Maui.MacOS\Platform.Maui.MacOS.csproj" />
         <ProjectReference Include="..\..\src\Platform.Maui.MacOS.BlazorWebView\Platform.Maui.MacOS.BlazorWebView.csproj" />
         <ProjectReference Include="..\..\src\Platform.Maui.Essentials.MacOS\Platform.Maui.Essentials.MacOS.csproj" />
-        <!-- MauiDevFlow agent for runtime inspection and debugging -->
-        <ProjectReference Include="..\..\..\MauiDevFlow\src\MauiDevFlow.Agent\MauiDevFlow.Agent.csproj" />
-        <ProjectReference Include="..\..\..\MauiDevFlow\src\MauiDevFlow.Blazor\MauiDevFlow.Blazor.csproj" />
     </ItemGroup>
-
-    <!-- Import MauiDevFlow build targets (normally comes from NuGet package) -->
-    <Import Project="..\..\..\MauiDevFlow\src\MauiDevFlow.Agent\build\Redth.MauiDevFlow.Agent.targets" />
 
     <!-- Import Platform.Maui.MacOS build targets (normally comes from NuGet package) -->
     <Import Project="..\..\src\Platform.Maui.MacOS\build\Platform.Maui.MacOS.targets" />
