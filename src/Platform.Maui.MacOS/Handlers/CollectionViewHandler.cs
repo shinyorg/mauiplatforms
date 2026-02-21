@@ -111,7 +111,7 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
             try
             {
                 CalculatePositions(rect);
-                UpdateVisibleItems();
+                UpdateVisibleItems(rect);
             }
             finally
             {
@@ -263,7 +263,9 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
         }
     }
 
-    void UpdateVisibleItems()
+    void UpdateVisibleItems() => UpdateVisibleItems(null);
+
+    void UpdateVisibleItems(Rect? viewportOverride)
     {
         if (_itemsContainer == null || _documentView == null || !_positionsCalculated || _flatItems.Count == 0)
             return;
@@ -272,6 +274,16 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
         var layout = (VirtualView as StructuredItemsView)?.ItemsLayout;
         var isHorizontal = GetOrientation(layout) == ItemsLayoutOrientation.Horizontal;
         var span = GetSpan(layout);
+
+        // During initial layout, ContentView.Bounds may not yet reflect the final size.
+        // Use the viewport override (from PlatformArrange rect) if it's larger.
+        if (viewportOverride is Rect vp)
+        {
+            if (isHorizontal && vp.Width > visibleRect.Width)
+                visibleRect = new CGRect(visibleRect.X, visibleRect.Y, vp.Width, visibleRect.Height);
+            else if (!isHorizontal && vp.Height > visibleRect.Height)
+                visibleRect = new CGRect(visibleRect.X, visibleRect.Y, visibleRect.Width, vp.Height);
+        }
 
         nfloat viewStart, viewEnd;
         if (isHorizontal)
@@ -357,7 +369,8 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
                 (nfloat)GetItemSpacing(layout), (nfloat)GetLineSpacing(layout));
         }
 
-        // If any measurements changed, recalculate positions and reposition all visible items
+        // If any measurements changed, recalculate positions and reposition all visible items,
+        // then re-check if more items now fit in the viewport
         if (needsRecalc)
         {
             var rect = new Rect(0, 0, PlatformView.Frame.Width, PlatformView.Frame.Height);
@@ -368,6 +381,8 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
                     isHorizontal, span, containerWidth, containerHeight,
                     itemSpacing, lineSpacing);
             }
+            // Items shrank — more items may now fit in the viewport; re-run once
+            UpdateVisibleItems(viewportOverride);
         }
     }
 
