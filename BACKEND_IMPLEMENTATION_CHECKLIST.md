@@ -50,7 +50,7 @@ Items marked `[x]` have a handler or implementation present; items marked `[~]` 
 |------|--------|-------|
 | [x] **ContentPage** | ✅ | Maps Content, Background, Title, MenuBarItems (via `MenuBarManager` → `NSApp.MainMenu`) |
 | [~] **NavigationPage** | Partial | Push/Pop via `RequestNavigation` command works; missing transition animations, back button customization |
-| [~] **TabbedPage** | Partial | Tab switching via events; missing property mappers for tab appearance/placement |
+| [~] **TabbedPage** | Partial | Tab switching, BarBackgroundColor (layer), SelectedTabColor (bezel); BarTextColor/UnselectedTabColor limited by AppKit |
 | [x] **FlyoutPage** | ✅ | Maps Flyout, Detail, IsPresented, FlyoutBehavior, FlyoutWidth via `NSSplitView` |
 | [x] **Shell** | ✅ | `ShellHandler` — NSSplitView with sidebar flyout, content area, selection, flyout behavior |
 
@@ -98,9 +98,9 @@ Items marked `[x]` have a handler or implementation present; items marked `[~]` 
 
 | Control | Status | Notes |
 |---------|--------|-------|
-| [~] **Picker** | Partial | Maps Title, SelectedIndex, Items, TextColor, Background via `NSPopUpButton`; missing TitleColor |
-| [~] **DatePicker** | Partial | Maps Date, MinimumDate, MaximumDate, TextColor via `NSDatePicker`; missing custom Format |
-| [~] **TimePicker** | Partial | Maps Time, TextColor via `NSDatePicker`; missing custom Format |
+| [x] **Picker** | Done | Maps Title, SelectedIndex, Items, TextColor, TitleColor, Background via `NSPopUpButton` |
+| [x] **DatePicker** | Done | Maps Date, MinimumDate, MaximumDate, TextColor, Format via `NSDatePicker` |
+| [x] **TimePicker** | Done | Maps Time, TextColor, Format via `NSDatePicker` |
 | [x] **SearchBar** | ✅ | Maps Text, TextColor, Placeholder, IsReadOnly, MaxLength via `NSSearchField` |
 
 ---
@@ -161,7 +161,7 @@ Items marked `[x]` have a handler or implementation present; items marked `[~]` 
 | [x] **GraphicsView** | ✅ | `MacOSGraphicsView : NSView` with `IDrawable` rendering via `DirectRenderer` + CoreGraphics |
 | [x] **Canvas Operations** | ✅ | CoreGraphics (`CGContext`) provides DrawLine, DrawRect, DrawEllipse, DrawPath, DrawString, Fill operations |
 | [x] **Canvas State** | ✅ | CGContext supports SaveState/RestoreState, affine transforms |
-| [~] **Brushes** | Partial | SolidColorBrush mapped on several handlers; LinearGradientBrush/RadialGradientBrush via `CAGradientLayer` — needs verification |
+| [x] **Brushes** | Done | SolidColorBrush, LinearGradientBrush, RadialGradientBrush via `CAGradientLayer` in MapBackground |
 
 ### Shapes
 | Shape | Status | Notes |
@@ -181,7 +181,7 @@ Every handler must support these properties mapped from the base `IView` in `Mac
 - [x] Opacity → `NSView.AlphaValue`
 - [x] IsVisible → `NSView.Hidden`
 - [x] IsEnabled → `NSControl.Enabled`
-- [~] InputTransparent → mapped but needs hit-test override in container `NSView`
+- [x] InputTransparent → returns null from HitTest in MacOSContainerView
 
 ### Sizing
 - [x] WidthRequest / HeightRequest — respected during `GetDesiredSize` measurement
@@ -198,7 +198,7 @@ Every handler must support these properties mapped from the base `IView` in `Mac
 
 ### Appearance
 - [x] BackgroundColor — mapped in base `MacOSViewHandler.MapBackground` via `CALayer.BackgroundColor`
-- [~] Background (LinearGradientBrush, RadialGradientBrush) → needs `CAGradientLayer` (only SolidPaint supported currently)
+- [x] Background (LinearGradientBrush, RadialGradientBrush) → via `CAGradientLayer`
 
 ### Interactivity Attachments
 - [x] **ToolTip** — `ToolTipProperties.Text` → `NSView.ToolTip`
