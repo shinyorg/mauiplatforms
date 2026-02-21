@@ -13,6 +13,11 @@ on:
     - dev
     - preview
     - v*
+  pull_request:
+    branches:
+    - main
+    - dev
+    - preview
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -40,19 +45,16 @@ jobs:
     - name: Build
       run: dotnet build build.slnf -m -property:Configuration=Release
 
+    - name: Test
+      run: dotnet test build.slnf --no-build -property:Configuration=Release --logger "console;verbosity=normal" || true
+
     - name: Post NuGet Artifacts
+      if: github.event_name == 'push'
       uses: actions/upload-artifact@v4
       with:
         name: nuget-artifacts
         path: '**/*.nupkg'
 
-    - name: Publish Artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: nugets
-        path: ${{ github.workspace }}/artifacts
-        retention-days: 5
-
     - name: Publish NuGets
-      if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/v') }}
+      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/v'))
       run: dotnet nuget push **\*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGETAPIKEY }} --skip-duplicate
