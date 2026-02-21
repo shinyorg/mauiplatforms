@@ -16,7 +16,6 @@
         <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
         <ApplicationVersion>1</ApplicationVersion>
         <DefineConstants>$(DefineConstants);MACAPP</DefineConstants>
-        <XamMacResourcePrefix>Resources</XamMacResourcePrefix>
     </PropertyGroup>
 
     <ItemGroup>
@@ -33,6 +32,9 @@
 
     <!-- Import MauiDevFlow build targets (normally comes from NuGet package) -->
     <Import Project="..\..\..\MauiDevFlow\src\MauiDevFlow.Agent\build\Redth.MauiDevFlow.Agent.targets" />
+
+    <!-- Import Platform.Maui.MacOS build targets (normally comes from NuGet package) -->
+    <Import Project="..\..\src\Platform.Maui.MacOS\build\Platform.Maui.MacOS.targets" />
 
     <ItemGroup>
         <Compile Include="..\Sample\Platforms\macOS\App.cs">
@@ -135,7 +137,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <BundleResource Include="Resources\AppIcon.icns" />
+        <MauiIcon Include="..\Sample\Resources\AppIcon\appicon.png" />
     </ItemGroup>
 
     <ItemGroup>

@@ -10,4 +10,10 @@
         <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)"/>
     </ItemGroup>
 
+    <!-- Ship build targets with the NuGet package -->
+    <ItemGroup>
+        <None Include="build\**" Pack="true" PackagePath="build\" />
+        <None Include="build\**" Pack="true" PackagePath="buildTransitive\" />
+    </ItemGroup>
+
 </Project>
