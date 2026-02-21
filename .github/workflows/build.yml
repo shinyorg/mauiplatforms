@@ -55,4 +55,4 @@ jobs:
 
     - name: Publish NuGets
       if: ${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/v') }}
-      run: dotnet nuget push **\*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGETAPIKEY }}
+      run: dotnet nuget push **\*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGETAPIKEY }} --skip-duplicate

@@ -5,6 +5,7 @@
       "src\\Platform.Maui.Essentials.MacOS\\Platform.Maui.Essentials.MacOS.csproj",
       "src\\Platform.Maui.Essentials.TvOS\\Platform.Maui.Essentials.TvOS.csproj",
       "src\\Platform.Maui.MacOS\\Platform.Maui.MacOS.csproj",
+      "src\\Platform.Maui.MacOS.BlazorWebView\\Platform.Maui.MacOS.BlazorWebView.csproj",
       "src\\Platform.Maui.TvOS\\Platform.Maui.TvOS.csproj"
     ]
   }
