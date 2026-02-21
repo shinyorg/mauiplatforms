@@ -18,6 +18,9 @@ public class CollectionViewPage : TabbedPage
 		Children.Add(new TemplateSelectorTab());
 		Children.Add(new SelectionTab());
 		Children.Add(new LargeListTab());
+		Children.Add(new EmptyViewTab());
+		Children.Add(new HeaderFooterTab());
+		Children.Add(new ScrollToTab());
 	}
 }
 
@@ -745,6 +748,162 @@ static class CollectionViewHelpers
 				$"Description for item {i}",
 				AccentColors[(i - 1) % AccentColors.Length]))
 			.ToList();
+}
+
+#endregion
+
+#region EmptyView Tab
+
+class EmptyViewTab : ContentPage
+{
+	readonly ObservableCollection<SimpleItem> _items = new();
+	readonly CollectionView _collectionView;
+
+	public EmptyViewTab()
+	{
+		Title = "EmptyView";
+
+		_collectionView = new CollectionView
+		{
+			ItemsSource = _items,
+			EmptyView = new StackLayout
+			{
+				VerticalOptions = LayoutOptions.Center,
+				HorizontalOptions = LayoutOptions.Center,
+				Children =
+				{
+					new Label { Text = "📭", FontSize = 48, HorizontalTextAlignment = TextAlignment.Center },
+					new Label { Text = "No items yet", FontSize = 20, FontAttributes = FontAttributes.Bold, HorizontalTextAlignment = TextAlignment.Center },
+					new Label { Text = "Tap 'Add Items' to populate the list", FontSize = 14, TextColor = Colors.Gray, HorizontalTextAlignment = TextAlignment.Center },
+				}
+			},
+			ItemTemplate = new DataTemplate(() =>
+			{
+				var label = new Label { FontSize = 16, Margin = new Thickness(12, 8) };
+				label.SetBinding(Label.TextProperty, "Name");
+				return label;
+			}),
+		};
+
+		var addButton = new Button { Text = "Add 5 Items" };
+		addButton.Clicked += (s, e) =>
+		{
+			var start = _items.Count + 1;
+			for (int i = start; i < start + 5; i++)
+				_items.Add(new SimpleItem($"Item {i}", $"Added item {i}", Colors.Blue));
+		};
+
+		var clearButton = new Button { Text = "Clear All" };
+		clearButton.Clicked += (s, e) => _items.Clear();
+
+		Content = new Grid
+		{
+			RowDefinitions =
+			{
+				new RowDefinition(GridLength.Auto),
+				new RowDefinition(GridLength.Star),
+			},
+			Children =
+			{
+				new HorizontalStackLayout { Spacing = 8, Margin = new Thickness(8), Children = { addButton, clearButton } },
+			}
+		};
+		Grid.SetRow(_collectionView, 1);
+		((Grid)Content).Children.Add(_collectionView);
+	}
+}
+
+#endregion
+
+#region Header/Footer Tab
+
+class HeaderFooterTab : ContentPage
+{
+	public HeaderFooterTab()
+	{
+		Title = "Header/Footer";
+
+		var items = CollectionViewHelpers.GenerateSimpleItems(15);
+
+		var cv = new CollectionView
+		{
+			ItemsSource = items,
+			Header = "📋 Collection Header — 15 items total",
+			Footer = "— End of List —",
+			ItemTemplate = new DataTemplate(() =>
+			{
+				var label = new Label { FontSize = 16, Margin = new Thickness(12, 8) };
+				label.SetBinding(Label.TextProperty, "Name");
+				return label;
+			}),
+		};
+
+		var grid = new Grid
+		{
+			RowDefinitions = { new RowDefinition(GridLength.Star) },
+		};
+		grid.Add(cv);
+		Content = grid;
+	}
+}
+
+#endregion
+
+#region ScrollTo Tab
+
+class ScrollToTab : ContentPage
+{
+	readonly CollectionView _collectionView;
+	readonly List<SimpleItem> _items;
+
+	public ScrollToTab()
+	{
+		Title = "ScrollTo";
+
+		_items = CollectionViewHelpers.GenerateSimpleItems(100);
+
+		_collectionView = new CollectionView
+		{
+			ItemsSource = _items,
+			ItemTemplate = new DataTemplate(() =>
+			{
+				var label = new Label { FontSize = 14, Margin = new Thickness(12, 6) };
+				label.SetBinding(Label.TextProperty, "Name");
+				return label;
+			}),
+		};
+
+		var scrollToStart = new Button { Text = "→ First" };
+		scrollToStart.Clicked += (s, e) => _collectionView.ScrollTo(0, position: ScrollToPosition.Start, animate: true);
+
+		var scrollToMiddle = new Button { Text = "→ Item 50" };
+		scrollToMiddle.Clicked += (s, e) => _collectionView.ScrollTo(49, position: ScrollToPosition.Center, animate: true);
+
+		var scrollToEnd = new Button { Text = "→ Last" };
+		scrollToEnd.Clicked += (s, e) => _collectionView.ScrollTo(_items.Count - 1, position: ScrollToPosition.End, animate: true);
+
+		var scrollToItem = new Button { Text = "→ Item 75 (by item)" };
+		scrollToItem.Clicked += (s, e) => _collectionView.ScrollTo(_items[74], position: ScrollToPosition.Center, animate: true);
+
+		var buttonBar = new HorizontalStackLayout
+		{
+			Spacing = 8,
+			Margin = new Thickness(8),
+			Children = { scrollToStart, scrollToMiddle, scrollToEnd, scrollToItem }
+		};
+
+		Content = new Grid
+		{
+			RowDefinitions =
+			{
+				new RowDefinition(GridLength.Auto),
+				new RowDefinition(GridLength.Star),
+			},
+			Children = { buttonBar }
+		};
+		Grid.SetRow(_collectionView, 1);
+		((Grid)Content).Children.Add(_collectionView);
+	}
 }
 
 #endregion

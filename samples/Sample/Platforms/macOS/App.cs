@@ -43,7 +43,20 @@ class MainShell : Shell
 
 		// Lists & Collections
 		var lists = new FlyoutItem { Title = "Lists & Collections" };
-		lists.Items.Add(MakeContent("Collection View", "collectionview", "square.grid.2x2", typeof(CollectionViewShellPage)));
+		var cvSection = new ShellSection { Title = "Collection View" };
+		MacOSShell.SetSystemImage(cvSection, "square.grid.2x2");
+		cvSection.Items.Add(new ShellContent { Title = "Vertical", Route = "cv_vertical", ContentTemplate = new DataTemplate(typeof(VerticalListTab)) });
+		cvSection.Items.Add(new ShellContent { Title = "Horizontal", Route = "cv_horizontal", ContentTemplate = new DataTemplate(typeof(HorizontalListTab)) });
+		cvSection.Items.Add(new ShellContent { Title = "Grid V", Route = "cv_gridv", ContentTemplate = new DataTemplate(typeof(VerticalGridTab)) });
+		cvSection.Items.Add(new ShellContent { Title = "Grid H", Route = "cv_gridh", ContentTemplate = new DataTemplate(typeof(HorizontalGridTab)) });
+		cvSection.Items.Add(new ShellContent { Title = "Grouped", Route = "cv_grouped", ContentTemplate = new DataTemplate(typeof(GroupedTab)) });
+		cvSection.Items.Add(new ShellContent { Title = "Templates", Route = "cv_templates", ContentTemplate = new DataTemplate(typeof(TemplateSelectorTab)) });
+		cvSection.Items.Add(new ShellContent { Title = "Selection", Route = "cv_selection", ContentTemplate = new DataTemplate(typeof(SelectionTab)) });
+		cvSection.Items.Add(new ShellContent { Title = "10K Items", Route = "cv_large", ContentTemplate = new DataTemplate(typeof(LargeListTab)) });
+		cvSection.Items.Add(new ShellContent { Title = "EmptyView", Route = "cv_empty", ContentTemplate = new DataTemplate(typeof(EmptyViewTab)) });
+		cvSection.Items.Add(new ShellContent { Title = "Header/Footer", Route = "cv_headerfooter", ContentTemplate = new DataTemplate(typeof(HeaderFooterTab)) });
+		cvSection.Items.Add(new ShellContent { Title = "ScrollTo", Route = "cv_scrollto", ContentTemplate = new DataTemplate(typeof(ScrollToTab)) });
+		lists.Items.Add(cvSection);
 		lists.Items.Add(MakeContent("CarouselView", "carouselview", "rectangle.stack", typeof(CarouselViewPage)));
 		lists.Items.Add(MakeContent("ListView", "listview", "list.bullet", typeof(ListViewPage)));
 		lists.Items.Add(MakeContent("TableView", "tableview", "tablecells", typeof(TableViewPage)));
@@ -88,30 +101,6 @@ class MainShell : Shell
 		};
 		MacOSShell.SetSystemImage(content, systemImage);
 		return content;
-	}
-}
-
-/// <summary>
-/// Wrapper ContentPage for CollectionViewPage (TabbedPage) since Shell requires ContentPage.
-/// Navigates to the actual TabbedPage when appearing.
-/// </summary>
-class CollectionViewShellPage : ContentPage
-{
-	public CollectionViewShellPage()
-	{
-		Title = "Collection View";
-		Content = new VerticalStackLayout
-		{
-			VerticalOptions = LayoutOptions.Center,
-			HorizontalOptions = LayoutOptions.Center,
-			Spacing = 12,
-			Children =
-			{
-				new Label { Text = "Collection View Demos", FontSize = 20, FontAttributes = FontAttributes.Bold, HorizontalTextAlignment = TextAlignment.Center },
-				new Label { Text = "Opens in a TabbedPage with multiple demos", FontSize = 14, TextColor = Colors.Gray, HorizontalTextAlignment = TextAlignment.Center },
-				new Button { Text = "Open Collection View Demos", Command = new Command(async () => await Navigation.PushAsync(new CollectionViewPage())) },
-			}
-		};
 	}
 }
 

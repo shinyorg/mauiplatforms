@@ -17,12 +17,24 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
         {
             [nameof(ItemsView.ItemsSource)] = MapItemsSource,
             [nameof(ItemsView.ItemTemplate)] = MapItemTemplate,
+            [nameof(ItemsView.EmptyView)] = MapEmptyView,
+            [nameof(ItemsView.EmptyViewTemplate)] = MapEmptyView,
             [nameof(StructuredItemsView.ItemsLayout)] = MapItemsLayout,
+            [nameof(StructuredItemsView.Header)] = MapHeaderFooter,
+            [nameof(StructuredItemsView.Footer)] = MapHeaderFooter,
+            [nameof(StructuredItemsView.HeaderTemplate)] = MapHeaderFooter,
+            [nameof(StructuredItemsView.FooterTemplate)] = MapHeaderFooter,
             [nameof(SelectableItemsView.SelectionMode)] = MapSelectionMode,
             [nameof(SelectableItemsView.SelectedItem)] = MapSelectedItem,
             [nameof(GroupableItemsView.IsGrouped)] = MapIsGrouped,
             [nameof(GroupableItemsView.GroupHeaderTemplate)] = MapGroupHeaderTemplate,
             [nameof(GroupableItemsView.GroupFooterTemplate)] = MapGroupFooterTemplate,
+        };
+
+    public static readonly CommandMapper<CollectionView, CollectionViewHandler> CvCommandMapper =
+        new(ViewCommandMapper)
+        {
+            [nameof(ItemsView.ScrollTo)] = MapScrollTo,
         };
 
     FlippedDocumentView? _documentView;
@@ -38,10 +50,17 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
     bool _positionsCalculated;
     readonly HashSet<int> _selectedIndices = new();
 
+    // Header/Footer/EmptyView
+    NSView? _emptyView;
+    IView? _emptyMauiView;
+    bool _remainingThresholdFired;
+    bool _isInLayout;
+    bool _isReloading;
+
     // Threshold: render items this far beyond the visible rect
     static readonly nfloat OverScanPixels = 200;
 
-    public CollectionViewHandler() : base(Mapper)
+    public CollectionViewHandler() : base(Mapper, CvCommandMapper)
     {
     }
 
@@ -67,22 +86,37 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
     {
         base.ConnectHandler(platformView);
         SubscribeScroll();
+        if (VirtualView is ItemsView itemsView)
+            itemsView.ScrollToRequested += OnScrollToRequested;
     }
 
     protected override void DisconnectHandler(NSScrollView platformView)
     {
         UnsubscribeScroll();
         UnsubscribeCollection();
+        if (VirtualView is ItemsView itemsView)
+            itemsView.ScrollToRequested -= OnScrollToRequested;
         base.DisconnectHandler(platformView);
     }
+
+    void OnScrollToRequested(object? sender, ScrollToRequestEventArgs args)
+        => HandleScrollTo(args);
 
     public override void PlatformArrange(Rect rect)
     {
         base.PlatformArrange(rect);
-        if (rect.Width > 0 && rect.Height > 0)
+        if (rect.Width > 0 && rect.Height > 0 && !_isInLayout)
         {
-            CalculatePositions(rect);
-            UpdateVisibleItems();
+            _isInLayout = true;
+            try
+            {
+                CalculatePositions(rect);
+                UpdateVisibleItems();
+            }
+            finally
+            {
+                _isInLayout = false;
+            }
         }
     }
 
@@ -110,6 +144,7 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
     void OnScrollChanged(NSNotification notification)
     {
         UpdateVisibleItems();
+        CheckRemainingItemsThreshold();
     }
 
     #endregion
@@ -122,15 +157,27 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
         public DataTemplate? Template { get; init; }
         public bool IsGroupHeader { get; init; }
         public bool IsGroupFooter { get; init; }
-        public nfloat Position { get; set; } // y for vertical, x for horizontal
-        public nfloat Size { get; set; }     // height for vertical, width for horizontal
+        public bool IsHeader { get; init; }
+        public bool IsFooter { get; init; }
+        public nfloat Position { get; set; }
+        public nfloat Size { get; set; }
         public bool Measured { get; set; }
     }
 
     void CalculatePositions(Rect rect)
     {
         if (_flatItems.Count == 0)
+        {
+            // Ensure document view fills the scroll view for empty state
+            if (_documentView != null)
+                _documentView.Frame = new CGRect(0, 0, rect.Width, rect.Height);
+            if (_itemsContainer != null)
+                _itemsContainer.Frame = new CGRect(0, 0, rect.Width, rect.Height);
+            UpdateEmptyView(rect);
             return;
+        }
+
+        RemoveEmptyView();
 
         var layout = (VirtualView as StructuredItemsView)?.ItemsLayout;
         var isHorizontal = GetOrientation(layout) == ItemsLayoutOrientation.Horizontal;
@@ -145,6 +192,22 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
         else
             CalculateLinearPositions(rect, itemSpacing, isHorizontal: false);
 
+        // Resize document/container
+        var totalSize = _flatItems.Count > 0
+            ? _flatItems[^1].Position + _flatItems[^1].Size
+            : 0;
+
+        if (isHorizontal)
+        {
+            _itemsContainer!.Frame = new CGRect(0, 0, totalSize, rect.Height);
+            _documentView!.Frame = new CGRect(0, 0, totalSize, rect.Height);
+        }
+        else
+        {
+            _itemsContainer!.Frame = new CGRect(0, 0, rect.Width, totalSize);
+            _documentView!.Frame = new CGRect(0, 0, rect.Width, totalSize);
+        }
+
         _positionsCalculated = true;
     }
 
@@ -157,18 +220,6 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
             if (!info.Measured)
                 info.Size = _estimatedItemHeight;
             offset += info.Size + spacing;
-        }
-
-        var totalSize = offset > 0 ? offset - spacing : 0;
-        if (isHorizontal)
-        {
-            _itemsContainer!.Frame = new CGRect(0, 0, totalSize, rect.Height);
-            _documentView!.Frame = new CGRect(0, 0, totalSize, rect.Height);
-        }
-        else
-        {
-            _itemsContainer!.Frame = new CGRect(0, 0, rect.Width, totalSize);
-            _documentView!.Frame = new CGRect(0, 0, rect.Width, totalSize);
         }
     }
 
@@ -193,9 +244,6 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
                 _flatItems[i].Size = _flatItems[i].Measured ? _flatItems[i].Size : _estimatedItemHeight;
                 if (_flatItems[i].Size > maxColWidth) maxColWidth = _flatItems[i].Size;
             }
-            var totalWidth = x + maxColWidth;
-            _itemsContainer!.Frame = new CGRect(0, 0, totalWidth, rect.Height);
-            _documentView!.Frame = new CGRect(0, 0, totalWidth, rect.Height);
         }
         else
         {
@@ -212,10 +260,6 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
                     _flatItems[i].Size = _estimatedItemHeight;
                 colTops[col] += _flatItems[i].Size + vSpacing;
             }
-            nfloat maxY = 0;
-            foreach (var t in colTops) if (t > maxY) maxY = t;
-            _itemsContainer!.Frame = new CGRect(0, 0, rect.Width, maxY);
-            _documentView!.Frame = new CGRect(0, 0, rect.Width, maxY);
         }
     }
 
@@ -331,6 +375,16 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
         bool isHorizontal, int span, nfloat containerWidth, nfloat containerHeight,
         nfloat hSpacing, nfloat vSpacing)
     {
+        // Header/Footer always span full width/height
+        if (info.IsHeader || info.IsFooter)
+        {
+            if (isHorizontal)
+                platformView.Frame = new CGRect(info.Position, 0, info.Size, containerHeight);
+            else
+                platformView.Frame = new CGRect(0, info.Position, containerWidth, info.Size);
+            return;
+        }
+
         if (span > 1)
         {
             if (isHorizontal)
@@ -360,8 +414,8 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
 
     (IView mauiView, NSView platformView) CreateOrReuseView(int index, ItemInfo info)
     {
-        var template = info.Template;
         IView? mauiView = null;
+        var template = info.Template;
 
         // Try to reuse from recycle pool
         if (template != null && _recyclePool.TryGetValue(template, out var pool) && pool.Count > 0)
@@ -374,13 +428,13 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
         if (mauiView == null)
             mauiView = CreateItemView(info.DataItem, info.Template, VirtualView);
 
-        var platformView = mauiView!.ToMacOSPlatform(MauiContext!);
+        var pView = mauiView!.ToMacOSPlatform(MauiContext!);
 
-        // Add selection gesture if not a header/footer
-        if (!info.IsGroupHeader && !info.IsGroupFooter)
-            AddSelectionGesture(platformView, info.DataItem, index);
+        // Add selection gesture if not a header/footer/group header/footer
+        if (!info.IsGroupHeader && !info.IsGroupFooter && !info.IsHeader && !info.IsFooter)
+            AddSelectionGesture(pView, info.DataItem, index);
 
-        return (mauiView, platformView);
+        return (mauiView, pView);
     }
 
     void RecycleView(int index, IView mauiView)
@@ -389,7 +443,7 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
             return;
 
         var info = _flatItems[index];
-        if (info.Template == null || info.IsGroupHeader || info.IsGroupFooter)
+        if (info.Template == null || info.IsGroupHeader || info.IsGroupFooter || info.IsHeader || info.IsFooter)
             return;
 
         if (!_recyclePool.TryGetValue(info.Template, out var pool))
@@ -495,6 +549,272 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
     public static void MapGroupFooterTemplate(CollectionViewHandler handler, CollectionView view)
         => handler.ReloadItems();
 
+    public static void MapEmptyView(CollectionViewHandler handler, CollectionView view)
+    {
+        var rect = new Rect(0, 0, handler.PlatformView.Frame.Width, handler.PlatformView.Frame.Height);
+        handler.UpdateEmptyView(rect);
+    }
+
+    public static void MapHeaderFooter(CollectionViewHandler handler, CollectionView view)
+    {
+        if (!handler._isReloading)
+            handler.UpdateHeaderFooter();
+    }
+
+    public static void MapScrollTo(CollectionViewHandler handler, CollectionView view, object? arg)
+    {
+        if (arg is ScrollToRequestEventArgs scrollArgs)
+        {
+            handler.HandleScrollTo(scrollArgs);
+        }
+    }
+
+    #endregion
+
+    #region EmptyView
+
+    void UpdateEmptyView(Rect rect)
+    {
+        var hasItems = _flatItems.Count > 0;
+
+        if (hasItems)
+        {
+            RemoveEmptyView();
+            return;
+        }
+
+        // Show empty view
+        if (_emptyView != null)
+            return; // already showing
+
+        var emptyView = VirtualView?.EmptyView;
+        var emptyTemplate = VirtualView?.EmptyViewTemplate;
+
+        IView? mauiView = null;
+        if (emptyTemplate != null)
+        {
+            var content = emptyTemplate.CreateContent();
+            if (content is View v)
+            {
+                v.BindingContext = emptyView;
+                mauiView = v;
+            }
+        }
+        else if (emptyView is IView ev)
+        {
+            mauiView = ev;
+        }
+        else if (emptyView is string text)
+        {
+            mauiView = new Label
+            {
+                Text = text,
+                HorizontalTextAlignment = TextAlignment.Center,
+                VerticalTextAlignment = TextAlignment.Center,
+                TextColor = Colors.Gray,
+                FontSize = 16,
+            };
+        }
+
+        if (mauiView != null && MauiContext != null)
+        {
+            _emptyMauiView = mauiView;
+            if (mauiView is Element elem && VirtualView is Element parent)
+                parent.AddLogicalChild(elem);
+            _emptyView = mauiView.ToMacOSPlatform(MauiContext);
+            _documentView?.AddSubview(_emptyView);
+            LayoutEmptyView(rect);
+        }
+    }
+
+    void RemoveEmptyView()
+    {
+        if (_emptyView != null)
+        {
+            _emptyView.RemoveFromSuperview();
+            if (_emptyMauiView is Element elem && VirtualView is Element parent)
+                parent.RemoveLogicalChild(elem);
+            _emptyView = null;
+            _emptyMauiView = null;
+        }
+    }
+
+    void LayoutEmptyView(Rect rect)
+    {
+        if (_emptyView == null || _documentView == null)
+            return;
+
+        var width = rect.Width > 0 ? rect.Width : PlatformView.Bounds.Width;
+        var height = rect.Height > 0 ? rect.Height : PlatformView.Bounds.Height;
+
+        _emptyView.Frame = new CGRect(0, 0, width, height);
+        _documentView.Frame = new CGRect(0, 0, width, height);
+
+        if (_emptyMauiView != null)
+        {
+            _emptyMauiView.Measure(width, height);
+            _emptyMauiView.Arrange(new Rect(0, 0, width, height));
+        }
+    }
+
+    #endregion
+
+    #region Header/Footer
+
+    void UpdateHeaderFooter()
+        => ReloadItems();
+
+    static DataTemplate? GetHeaderFooterTemplate(object? content, DataTemplate? template)
+    {
+        if (template != null)
+            return template;
+
+        if (content is View view)
+        {
+            // Wrap in a ContentView to avoid parent conflicts
+            return new DataTemplate(() =>
+            {
+                var wrapper = new ContentView { Content = view };
+                return wrapper;
+            });
+        }
+
+        if (content is string text)
+            return new DataTemplate(() => new Label { Text = text, FontAttributes = FontAttributes.Bold, Margin = new Thickness(8) });
+
+        if (content != null)
+            return new DataTemplate(() => new Label { Text = content.ToString(), Margin = new Thickness(8) });
+
+        return null;
+    }
+
+    #endregion
+
+    #region ScrollTo
+
+    void HandleScrollTo(ScrollToRequestEventArgs args)
+    {
+        if (_documentView == null || _flatItems.Count == 0)
+            return;
+
+        int targetIndex = -1;
+
+        if (args.Mode == ScrollToMode.Position)
+        {
+            targetIndex = args.Index;
+        }
+        else if (args.Mode == ScrollToMode.Element && args.Item != null)
+        {
+            for (int i = 0; i < _flatItems.Count; i++)
+            {
+                if (Equals(_flatItems[i].DataItem, args.Item))
+                {
+                    targetIndex = i;
+                    break;
+                }
+            }
+        }
+
+        if (targetIndex < 0 || targetIndex >= _flatItems.Count)
+            return;
+
+        var info = _flatItems[targetIndex];
+        var layout = (VirtualView as StructuredItemsView)?.ItemsLayout;
+        var isHorizontal = GetOrientation(layout) == ItemsLayoutOrientation.Horizontal;
+
+        var scrollPosition = info.Position;
+
+        // Adjust based on ScrollToPosition
+        var visibleRect = PlatformView.ContentView.Bounds;
+        if (isHorizontal)
+        {
+            var targetX = args.ScrollToPosition switch
+            {
+                ScrollToPosition.Start => scrollPosition,
+                ScrollToPosition.Center => scrollPosition - ((nfloat)visibleRect.Width - info.Size) / 2,
+                ScrollToPosition.End => scrollPosition - (nfloat)visibleRect.Width + info.Size,
+                ScrollToPosition.MakeVisible when scrollPosition < (nfloat)visibleRect.X => scrollPosition,
+                ScrollToPosition.MakeVisible when scrollPosition + info.Size > (nfloat)(visibleRect.X + visibleRect.Width) =>
+                    scrollPosition - (nfloat)visibleRect.Width + info.Size,
+                _ => (nfloat)visibleRect.X,
+            };
+            var point = new CGPoint(Math.Max(0, (double)targetX), visibleRect.Y);
+            ScrollToPoint(point, args.IsAnimated);
+        }
+        else
+        {
+            var targetY = args.ScrollToPosition switch
+            {
+                ScrollToPosition.Start => scrollPosition,
+                ScrollToPosition.Center => scrollPosition - ((nfloat)visibleRect.Height - info.Size) / 2,
+                ScrollToPosition.End => scrollPosition - (nfloat)visibleRect.Height + info.Size,
+                ScrollToPosition.MakeVisible when scrollPosition < (nfloat)visibleRect.Y => scrollPosition,
+                ScrollToPosition.MakeVisible when scrollPosition + info.Size > (nfloat)(visibleRect.Y + visibleRect.Height) =>
+                    scrollPosition - (nfloat)visibleRect.Height + info.Size,
+                _ => (nfloat)visibleRect.Y,
+            };
+            var point = new CGPoint(visibleRect.X, Math.Max(0, (double)targetY));
+            ScrollToPoint(point, args.IsAnimated);
+        }
+
+        PlatformView.ReflectScrolledClipView(PlatformView.ContentView);
+        UpdateVisibleItems();
+    }
+
+    void ScrollToPoint(CGPoint point, bool animated)
+    {
+        if (animated)
+        {
+            NSAnimationContext.BeginGrouping();
+            NSAnimationContext.CurrentContext.Duration = 0.3;
+            NSAnimationContext.CurrentContext.AllowsImplicitAnimation = true;
+            PlatformView.ContentView.ScrollToPoint(point);
+            NSAnimationContext.EndGrouping();
+        }
+        else
+        {
+            PlatformView.ContentView.ScrollToPoint(point);
+        }
+    }
+
+    #endregion
+
+    #region RemainingItemsThreshold
+
+    void CheckRemainingItemsThreshold()
+    {
+        if (VirtualView is not ItemsView itemsView)
+            return;
+
+        var threshold = itemsView.RemainingItemsThreshold;
+        if (threshold < 0) return;
+
+        var layout = (VirtualView as StructuredItemsView)?.ItemsLayout;
+        var isHorizontal = GetOrientation(layout) == ItemsLayoutOrientation.Horizontal;
+        var visibleRect = PlatformView.ContentView.Bounds;
+
+        // Find the last visible item index
+        int lastVisibleIndex = -1;
+        foreach (var kvp in _visibleViews)
+        {
+            if (kvp.Key > lastVisibleIndex)
+                lastVisibleIndex = kvp.Key;
+        }
+
+        if (lastVisibleIndex < 0) return;
+
+        var remainingItems = _flatItems.Count - lastVisibleIndex - 1;
+        if (remainingItems <= threshold && !_remainingThresholdFired)
+        {
+            _remainingThresholdFired = true;
+            itemsView.SendRemainingItemsThresholdReached();
+        }
+        else if (remainingItems > threshold)
+        {
+            _remainingThresholdFired = false;
+        }
+    }
+
     #endregion
 
     #region Data Loading
@@ -513,8 +833,22 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
 
     void ReloadItems()
     {
-        if (_itemsContainer == null || MauiContext == null)
+        if (_itemsContainer == null || MauiContext == null || _isReloading)
             return;
+
+        _isReloading = true;
+        try
+        {
+            ReloadItemsCore();
+        }
+        finally
+        {
+            _isReloading = false;
+        }
+    }
+
+    void ReloadItemsCore()
+    {
 
         UnsubscribeCollection();
 
@@ -529,10 +863,16 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
         _recyclePool.Clear();
         _flatItems.Clear();
         _positionsCalculated = false;
+        _remainingThresholdFired = false;
+        RemoveEmptyView();
 
         var itemsSource = VirtualView?.ItemsSource;
         if (itemsSource == null)
+        {
+            var rect = new Rect(0, 0, PlatformView.Frame.Width, PlatformView.Frame.Height);
+            UpdateEmptyView(rect);
             return;
+        }
 
         if (itemsSource is INotifyCollectionChanged observable)
         {
@@ -597,6 +937,35 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
                 {
                     DataItem = item,
                     Template = resolvedTemplate,
+                    Size = _estimatedItemHeight,
+                });
+            }
+        }
+
+        // Add header/footer as items in the flat list
+        var structured = VirtualView as StructuredItemsView;
+        if (structured != null)
+        {
+            var headerTemplate = GetHeaderFooterTemplate(structured.Header, structured.HeaderTemplate);
+            if (headerTemplate != null)
+            {
+                _flatItems.Insert(0, new ItemInfo
+                {
+                    DataItem = structured.Header ?? "Header",
+                    Template = headerTemplate,
+                    IsHeader = true,
+                    Size = _estimatedItemHeight,
+                });
+            }
+
+            var footerTemplate = GetHeaderFooterTemplate(structured.Footer, structured.FooterTemplate);
+            if (footerTemplate != null)
+            {
+                _flatItems.Add(new ItemInfo
+                {
+                    DataItem = structured.Footer ?? "Footer",
+                    Template = footerTemplate,
+                    IsFooter = true,
                     Size = _estimatedItemHeight,
                 });
             }
