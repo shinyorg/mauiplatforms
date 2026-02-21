@@ -27,6 +27,7 @@ class MainShell : Shell
 	{
 		Title = "macOS Demo App";
 		FlyoutBehavior = FlyoutBehavior.Locked;
+		MacOSShell.SetUseNativeSidebar(this, true);
 
 		// General
 		var general = new FlyoutItem { Title = "General" };

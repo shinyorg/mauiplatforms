@@ -35,13 +35,26 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 
 	NSView? _container;
 	NSView? _sidebarView;
-	NSScrollView? _sidebarScrollView;
-	FlippedDocumentView? _sidebarContent;
 	NSView? _contentView;
 	NSView? _currentPageView;
 	Page? _currentPage;
 	Shell? _shell;
 	nfloat _flyoutWidth = 220;
+
+	// Custom sidebar mode
+	NSScrollView? _sidebarScrollView;
+	FlippedDocumentView? _sidebarContent;
+
+	// Native sidebar mode (NSOutlineView source list)
+	bool _useNativeSidebar;
+	NSScrollView? _nativeSidebarScrollView;
+	NSOutlineView? _outlineView;
+	NSVisualEffectView? _sidebarEffectView;
+	SidebarOutlineViewDataSource? _outlineDataSource;
+	SidebarOutlineViewDelegate? _outlineDelegate;
+	// Maps leaf MacOSSidebarItem → (ShellItem, ShellSection, ShellContent)
+	Dictionary<MacOSSidebarItem, (ShellItem, ShellSection, ShellContent)>? _itemNavMap;
+	bool _isUpdatingSelection;
 
 	public ShellHandler() : base(Mapper, CommandMapper)
 	{
@@ -51,23 +64,66 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 	{
 		_container = new FlippedDocumentView();
 
+		// Check if native sidebar is requested
+		_useNativeSidebar = VirtualView is Shell shell && MacOSShell.GetUseNativeSidebar(shell);
+
 		// Sidebar
 		_sidebarView = new NSView();
 		_sidebarView.WantsLayer = true;
-		_sidebarView.Layer!.BackgroundColor = NSColor.UnderPageBackground.CGColor;
 
-		_sidebarScrollView = new NSScrollView
+		if (_useNativeSidebar)
 		{
-			HasVerticalScroller = true,
-			HasHorizontalScroller = false,
-			AutohidesScrollers = true,
-			DrawsBackground = false,
-		};
+			// Native NSOutlineView source list sidebar
+			_sidebarEffectView = new NSVisualEffectView
+			{
+				BlendingMode = NSVisualEffectBlendingMode.BehindWindow,
+				Material = NSVisualEffectMaterial.Sidebar,
+				State = NSVisualEffectState.Active,
+			};
+			_sidebarView.AddSubview(_sidebarEffectView);
 
-		_sidebarContent = new FlippedDocumentView();
-		_sidebarScrollView.DocumentView = _sidebarContent;
+			_outlineView = new NSOutlineView
+			{
+				SelectionHighlightStyle = NSTableViewSelectionHighlightStyle.SourceList,
+				FloatsGroupRows = false,
+				RowSizeStyle = NSTableViewRowSizeStyle.Default,
+				HeaderView = null,
+			};
 
-		_sidebarView.AddSubview(_sidebarScrollView);
+			var column = new NSTableColumn("SidebarColumn")
+			{
+				Editable = false,
+			};
+			_outlineView.AddColumn(column);
+			_outlineView.OutlineTableColumn = column;
+
+			_nativeSidebarScrollView = new NSScrollView
+			{
+				HasVerticalScroller = true,
+				HasHorizontalScroller = false,
+				AutohidesScrollers = true,
+				DrawsBackground = false,
+				DocumentView = _outlineView,
+			};
+			_sidebarView.AddSubview(_nativeSidebarScrollView);
+		}
+		else
+		{
+			// Custom sidebar with MAUI-drawn items
+			_sidebarView.Layer!.BackgroundColor = NSColor.UnderPageBackground.CGColor;
+
+			_sidebarScrollView = new NSScrollView
+			{
+				HasVerticalScroller = true,
+				HasHorizontalScroller = false,
+				AutohidesScrollers = true,
+				DrawsBackground = false,
+			};
+
+			_sidebarContent = new FlippedDocumentView();
+			_sidebarScrollView.DocumentView = _sidebarContent;
+			_sidebarView.AddSubview(_sidebarScrollView);
+		}
 
 		// Content area
 		_contentView = new FlippedDocumentView();
@@ -88,6 +144,13 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 		if (_shell != null)
 		{
 			((INotifyCollectionChanged)_shell.Items).CollectionChanged += OnShellItemsChanged;
+			_shell.Navigating += OnShellNavigating;
+			_shell.Navigated += OnShellNavigated;
+			_shell.PropertyChanged += OnShellPropertyChanged;
+
+			// Ensure handlers are created for all Shell sub-elements so
+			// Shell's internal navigation system (GoToAsync) can resolve them
+			EnsureShellItemHandlers();
 		}
 
 		BuildSidebar();
@@ -98,6 +161,9 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 		if (_shell != null)
 		{
 			((INotifyCollectionChanged)_shell.Items).CollectionChanged -= OnShellItemsChanged;
+			_shell.Navigating -= OnShellNavigating;
+			_shell.Navigated -= OnShellNavigated;
+			_shell.PropertyChanged -= OnShellPropertyChanged;
 		}
 		_shell = null;
 		base.DisconnectHandler(platformView);
@@ -105,7 +171,58 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 
 	void OnShellItemsChanged(object? sender, NotifyCollectionChangedEventArgs e)
 	{
+		EnsureShellItemHandlers();
 		BuildSidebar();
+	}
+
+	void EnsureShellItemHandlers()
+	{
+		if (_shell == null || MauiContext == null)
+			return;
+
+		foreach (var shellItem in _shell.Items)
+		{
+			if (shellItem is ShellItem item)
+			{
+				// Create handler for ShellItem if not already created
+				item.Handler ??= item.ToHandler(MauiContext);
+
+				foreach (var section in item.Items)
+				{
+					if (section is ShellSection shellSection)
+					{
+						// Create handler for ShellSection if not already created
+						shellSection.Handler ??= shellSection.ToHandler(MauiContext);
+
+						foreach (var content in shellSection.Items)
+						{
+							// Create handler for ShellContent if not already created
+							content.Handler ??= content.ToHandler(MauiContext);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	void OnShellNavigating(object? sender, ShellNavigatingEventArgs e)
+	{
+		// Navigation is handled by Shell's internal pipeline via the
+		// ShellItemHandler/ShellSectionHandler/ShellContentHandler infrastructure
+	}
+
+	void OnShellNavigated(object? sender, ShellNavigatedEventArgs e)
+	{
+		// Shell navigation completed — update our display
+		ShowCurrentPage();
+	}
+
+	void OnShellPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+	{
+		if (e.PropertyName == nameof(Shell.CurrentItem))
+		{
+			ShowCurrentPage();
+		}
 	}
 
 	public override void PlatformArrange(Rect rect)
@@ -120,8 +237,18 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 		var sidebarWidth = Math.Min((double)_flyoutWidth, rect.Width * 0.4);
 		_sidebarView.Frame = new CGRect(0, 0, sidebarWidth, rect.Height);
 
-		if (_sidebarScrollView != null)
-			_sidebarScrollView.Frame = _sidebarView.Bounds;
+		if (_useNativeSidebar)
+		{
+			if (_sidebarEffectView != null)
+				_sidebarEffectView.Frame = _sidebarView.Bounds;
+			if (_nativeSidebarScrollView != null)
+				_nativeSidebarScrollView.Frame = _sidebarView.Bounds;
+		}
+		else
+		{
+			if (_sidebarScrollView != null)
+				_sidebarScrollView.Frame = _sidebarView.Bounds;
+		}
 
 		var contentX = sidebarWidth + 1; // 1px divider
 		var contentWidth = rect.Width - contentX;
@@ -133,7 +260,8 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 			LayoutCurrentPage(rect);
 		}
 
-		LayoutSidebarContent();
+		if (!_useNativeSidebar)
+			LayoutSidebarContent();
 	}
 
 	void LayoutSidebarContent()
@@ -171,6 +299,170 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 	}
 
 	void BuildSidebar()
+	{
+		if (_shell == null || MauiContext == null)
+			return;
+
+		if (_useNativeSidebar)
+			BuildNativeSidebar();
+		else
+			BuildCustomSidebar();
+	}
+
+	void BuildNativeSidebar()
+	{
+		if (_outlineView == null || _shell == null)
+			return;
+
+		// Convert Shell.Items → MacOSSidebarItem hierarchy
+		var sidebarItems = new List<MacOSSidebarItem>();
+		_itemNavMap = new Dictionary<MacOSSidebarItem, (ShellItem, ShellSection, ShellContent)>();
+
+		foreach (var shellItem in _shell.Items)
+		{
+			if (shellItem is not ShellItem item)
+				continue;
+
+			var sections = item.Items.ToList();
+			var allContents = sections.SelectMany(s => s.Items).ToList();
+
+			if (allContents.Count > 1 && !string.IsNullOrEmpty(item.Title))
+			{
+				// Group with children
+				var group = new MacOSSidebarItem
+				{
+					Title = item.Title,
+					Children = new List<MacOSSidebarItem>(),
+				};
+
+				foreach (var section in sections)
+				{
+					if (section is ShellSection shellSection)
+					{
+						foreach (var content in shellSection.Items)
+						{
+							var child = new MacOSSidebarItem
+							{
+								Title = content.Title ?? shellSection.Title ?? item.Title ?? "Page",
+								SystemImage = GetSystemImageName(content.Icon ?? shellSection.Icon ?? item.Icon),
+							};
+							group.Children.Add(child);
+							_itemNavMap[child] = (item, shellSection, content);
+						}
+					}
+				}
+
+				sidebarItems.Add(group);
+			}
+			else
+			{
+				// Single item (no group header)
+				foreach (var section in sections)
+				{
+					if (section is ShellSection shellSection)
+					{
+						foreach (var content in shellSection.Items)
+						{
+							var leaf = new MacOSSidebarItem
+							{
+								Title = content.Title ?? shellSection.Title ?? item.Title ?? "Page",
+								SystemImage = GetSystemImageName(content.Icon ?? shellSection.Icon ?? item.Icon),
+							};
+							sidebarItems.Add(leaf);
+							_itemNavMap[leaf] = (item, shellSection, content);
+						}
+					}
+				}
+			}
+		}
+
+		_outlineDataSource = new SidebarOutlineViewDataSource(sidebarItems);
+		_outlineDelegate = new SidebarOutlineViewDelegate(_outlineDataSource, OnNativeSidebarItemSelected);
+
+		_outlineView.DataSource = _outlineDataSource;
+		_outlineView.Delegate = _outlineDelegate;
+		_outlineView.ReloadData();
+
+		// Expand all groups and select current item
+		foreach (var item in sidebarItems)
+		{
+			if (item.IsGroup)
+			{
+				var wrapper = _outlineDataSource.GetWrapper(item);
+				_outlineView.ExpandItem(wrapper);
+			}
+		}
+
+		SelectCurrentItemInOutlineView();
+	}
+
+	void SelectCurrentItemInOutlineView()
+	{
+		if (_outlineView == null || _shell == null || _itemNavMap == null || _outlineDataSource == null)
+			return;
+
+		_isUpdatingSelection = true;
+		try
+		{
+			var currentItem = _shell.CurrentItem;
+			var currentSection = currentItem?.CurrentItem;
+			var currentContent = currentSection?.CurrentItem;
+
+			foreach (var kvp in _itemNavMap)
+			{
+				if (kvp.Value.Item1 == currentItem &&
+					kvp.Value.Item2 == currentSection &&
+					kvp.Value.Item3 == currentContent)
+				{
+					var wrapper = _outlineDataSource.GetWrapper(kvp.Key);
+					var row = _outlineView.RowForItem(wrapper);
+					if (row >= 0)
+					{
+						_outlineView.SelectRow(row, false);
+					}
+					break;
+				}
+			}
+		}
+		finally
+		{
+			_isUpdatingSelection = false;
+		}
+	}
+
+	void OnNativeSidebarItemSelected(MacOSSidebarItem sidebarItem)
+	{
+		if (_shell == null || _itemNavMap == null || _isUpdatingSelection)
+			return;
+
+		if (_itemNavMap.TryGetValue(sidebarItem, out var nav))
+		{
+			_shell.CurrentItem = nav.Item1;
+			nav.Item1.CurrentItem = nav.Item2;
+			nav.Item2.CurrentItem = nav.Item3;
+		}
+	}
+
+	static string? GetSystemImageName(ImageSource? icon)
+	{
+		// Try to extract a meaningful SF Symbol name from the icon
+		if (icon is FileImageSource fileIcon)
+		{
+			var name = fileIcon.File;
+			// Common MAUI icon names that map to SF Symbols
+			return name?.ToLowerInvariant() switch
+			{
+				"home" or "home.png" => "house.fill",
+				"settings" or "settings.png" => "gear",
+				"star" or "star.png" => "star.fill",
+				"info" or "info.png" => "info.circle",
+				_ => null,
+			};
+		}
+		return null;
+	}
+
+	void BuildCustomSidebar()
 	{
 		if (_sidebarContent == null || _shell == null || MauiContext == null)
 			return;
@@ -241,7 +533,6 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 		if (_contentView == null || _shell == null || MauiContext == null)
 			return;
 
-
 		// Remove old page
 		if (_currentPageView != null)
 		{
@@ -250,23 +541,14 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 			_currentPage = null;
 		}
 
-		// Get the current page from Shell
+		// Get the current page from Shell via IShellContentController
 		var currentItem = _shell.CurrentItem;
-		if (currentItem?.CurrentItem?.CurrentItem is ShellContent shellContent)
+		if (currentItem?.CurrentItem?.CurrentItem is ShellContent shellContent &&
+			shellContent is IShellContentController controller)
 		{
-			Page? page = null;
-
-			// Try to get the page from the controller (may be lazily created)
-			if (shellContent is IShellContentController controller)
-				page = controller.Page;
-
-			// If still null, create from ContentTemplate
-			if (page == null && shellContent.ContentTemplate != null)
-			{
-				page = shellContent.ContentTemplate.CreateContent() as Page;
-				if (page != null)
-					page.Parent = shellContent;
-			}
+			// GetOrCreateContent creates from ContentTemplate if needed
+			// and caches via ContentCache (also sets up Shell.CurrentPage)
+			var page = controller.GetOrCreateContent();
 
 			if (page != null)
 			{
@@ -286,8 +568,11 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 			}
 		}
 
-		// Rebuild sidebar to update selection
-		BuildSidebar();
+		// Update sidebar selection
+		if (_useNativeSidebar)
+			SelectCurrentItemInOutlineView();
+		else
+			BuildCustomSidebar();
 	}
 
 	// Property mappers

@@ -48,6 +48,9 @@ public static partial class AppHostBuilderExtensions
         handlersCollection.AddHandler<Microsoft.Maui.Controls.Frame, BorderHandler>();
         handlersCollection.AddHandler<NavigationPage, NavigationPageHandler>();
         handlersCollection.AddHandler<Shell, ShellHandler>();
+        handlersCollection.AddHandler<ShellItem, ShellItemHandler>();
+        handlersCollection.AddHandler<ShellSection, ShellSectionHandler>();
+        handlersCollection.AddHandler<ShellContent, ShellContentHandler>();
         handlersCollection.AddHandler<TabbedPage, TabbedPageHandler>();
         handlersCollection.AddHandler<FlyoutPage, FlyoutPageHandler>();
         handlersCollection.AddHandler<Stepper, StepperHandler>();
