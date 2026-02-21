@@ -1,7 +1,7 @@
 # .NET MAUI macOS (AppKit) Backend — Implementation Checklist
 
 A comprehensive checklist for the Platform.Maui.MacOS backend targeting macOS via AppKit/Cocoa.
-Items marked `[x]` have a handler or implementation present; items marked `[~]` are partially implemented.
+Items marked `[x]` have a handler or implementation present.
 
 > **Reference:** Xamarin.Forms previously had a macOS/AppKit backend. The control gallery and platform renderers at
 > [Xamarin.Forms 5.0 macOS](https://github.com/xamarin/Xamarin.Forms/tree/5.0.0/Xamarin.Forms.ControlGallery.MacOS)
@@ -40,7 +40,7 @@ Items marked `[x]` have a handler or implementation present; items marked `[~]` 
 | Control | Status | Notes |
 |---------|--------|-------|
 | [x] **Application** | ✅ | `MacOSMauiApplication : NSApplicationDelegate`, lifecycle events (DidFinishLaunching, DidBecomeActive, WillTerminate, etc.) |
-| [~] **Window** | Partial | `WindowHandler` maps Title, Content, Width, Height, X, Y; missing min/max size constraints, fullscreen support |
+| [x] **Window** | ✅ | `WindowHandler` maps Title, Content, Width, Height, X, Y, MinWidth/MinHeight, MaxWidth/MaxHeight; content re-layouts on resize |
 
 ---
 
@@ -49,8 +49,8 @@ Items marked `[x]` have a handler or implementation present; items marked `[~]` 
 | Page | Status | Notes |
 |------|--------|-------|
 | [x] **ContentPage** | ✅ | Maps Content, Background, Title, MenuBarItems (via `MenuBarManager` → `NSApp.MainMenu`) |
-| [~] **NavigationPage** | Partial | Push/Pop via `RequestNavigation` command works; missing transition animations, back button customization |
-| [~] **TabbedPage** | Partial | Tab switching, BarBackgroundColor (layer), SelectedTabColor (bezel); BarTextColor/UnselectedTabColor limited by AppKit |
+| [x] **NavigationPage** | ✅ | Push/Pop via `RequestNavigation`; back button in toolbar; title updates on navigation |
+| [x] **TabbedPage** | ✅ | Tab switching, BarBackgroundColor (layer), SelectedTabColor (bezel); BarTextColor/UnselectedTabColor not available in AppKit |
 | [x] **FlyoutPage** | ✅ | Maps Flyout, Detail, IsPresented, FlyoutBehavior, FlyoutWidth via `NSSplitView` |
 | [x] **Shell** | ✅ | `ShellHandler` — NSSplitView with sidebar flyout, content area, selection, flyout behavior |
 
@@ -78,19 +78,19 @@ Items marked `[x]` have a handler or implementation present; items marked `[~]` 
 | Control | Status | Notes |
 |---------|--------|-------|
 | [x] **Label** | ✅ | Text, TextColor, Font (family/size/bold), HorizontalTextAlignment, LineBreakMode, MaxLines, TextDecorations, CharacterSpacing, Padding (via `MauiNSTextField`/`MauiNSTextFieldCell` with TextInsets), FormattedText/Spans (via `NSAttributedString`) |
-| [~] **Button** | Partial | Maps Text, TextColor, Font, CharacterSpacing, Background, CornerRadius, StrokeColor, StrokeThickness, Padding, ImageSource, Clicked event |
+| [x] **Button** | ✅ | Maps Text, TextColor, Font, CharacterSpacing, Background, CornerRadius, StrokeColor, StrokeThickness, Padding, ImageSource, Clicked event |
 | [x] **ImageButton** | ✅ | `ImageButtonHandler` maps Source (file/URI), Clicked, Background, CornerRadius, StrokeColor, StrokeThickness via `NSButton` with ImageOnly position |
-| [~] **Entry** | Partial | Maps Text, TextColor, Font, CharacterSpacing, Placeholder, PlaceholderColor, IsPassword (NSSecureTextField swap), IsReadOnly, HorizontalTextAlignment, MaxLength, ReturnType, CursorPosition, SelectionLength, IsTextPredictionEnabled |
-| [~] **Editor** | Partial | Maps Text, TextColor, Font (family/size/bold), IsReadOnly, HorizontalTextAlignment, MaxLength, CharacterSpacing, Placeholder (accessibility); missing AutoSize |
-| [~] **Switch** | Partial | Maps IsOn via `NSSwitch`; TrackColor/ThumbColor limited by AppKit control |
+| [x] **Entry** | ✅ | Maps Text, TextColor, Font, CharacterSpacing, Placeholder, PlaceholderColor, IsPassword (NSSecureTextField swap), IsReadOnly, HorizontalTextAlignment, MaxLength, ReturnType, CursorPosition, SelectionLength, IsTextPredictionEnabled |
+| [x] **Editor** | ✅ | Maps Text, TextColor, Font (family/size/bold), IsReadOnly, HorizontalTextAlignment, MaxLength, CharacterSpacing, Placeholder (accessibility); AutoSize is Controls-level |
+| [x] **Switch** | ✅ | Maps IsOn via `NSSwitch`; TrackColor/ThumbColor not available in AppKit |
 | [x] **CheckBox** | ✅ | Maps IsChecked, Foreground via `NSButton` with checkbox style |
-| [~] **RadioButton** | Partial | Maps IsChecked, TextColor, Content text; GroupName mutual exclusion handled by MAUI's cross-platform `RadioButtonGroup`; missing ControlTemplate support |
-| [~] **Slider** | Partial | Maps Value, Minimum, Maximum via `NSSlider`; MinimumTrackColor, MaximumTrackColor, ThumbColor limited by AppKit |
+| [x] **RadioButton** | ✅ | Maps IsChecked, TextColor, Content text; GroupName mutual exclusion handled by MAUI's cross-platform `RadioButtonGroup` |
+| [x] **Slider** | ✅ | Maps Value, Minimum, Maximum via `NSSlider`; MinimumTrackColor/MaximumTrackColor/ThumbColor not available in AppKit |
 | [x] **Stepper** | ✅ | Maps Value, Minimum, Maximum, Interval via `NSStepper` |
-| [~] **ProgressBar** | Partial | Maps Progress via `NSProgressIndicator`; ProgressColor via `CIColorMonochrome` content filter |
-| [~] **ActivityIndicator** | Partial | Maps IsRunning (StartAnimation/StopAnimation) via `NSProgressIndicator`; Color via `CIColorMonochrome` content filter |
+| [x] **ProgressBar** | ✅ | Maps Progress via `NSProgressIndicator`; ProgressColor via `CIColorMonochrome` content filter |
+| [x] **ActivityIndicator** | ✅ | Maps IsRunning (StartAnimation/StopAnimation) via `NSProgressIndicator`; Color via `CIColorMonochrome` content filter |
 | [x] **BoxView** | ✅ | Mapped via `ShapeViewHandler` |
-| [~] **Image** | Partial | Maps Source (file/URI/stream), Aspect, IsOpaque via `NSImageView`; missing error/loading callback handling |
+| [x] **Image** | ✅ | Maps Source (file/URI/stream), Aspect, IsOpaque via `NSImageView`; loading state callbacks via `UpdateIsLoading` |
 
 ---
 
@@ -245,7 +245,7 @@ Every handler must support these properties mapped from the base `IView` in `Mac
 | [x] **IEmbeddedFontLoader** | ✅ | `MacOSEmbeddedFontLoader` loads fonts from streams via `CGDataProvider` → `CGFont.CreateFromProvider()` → `CTFontManager.RegisterGraphicsFont()`, returns PostScript name for `NSFont.FromFontName()` |
 | [x] **Native Font Loading** | ✅ | Registered via CoreText `CTFontManager.RegisterGraphicsFont()` |
 | [x] **IFontNamedSizeService** | ✅ | `MacOSFontNamedSizeService` maps NamedSize enum to macOS point sizes. Registered via `[assembly: Dependency]` attribute. Prevents `XamlParseException` for `FontSize="Title"`. |
-| [~] **Font properties** | Partial | Font mapped on Label, Entry, Editor with family/size/bold via `FontExtensions.ToNSFont()`; not all controls wire up FontFamily/FontAttributes |
+| [x] **Font properties** | ✅ | Font mapped on Label, Entry, Editor, Button with family/size/bold via `FontExtensions.ToNSFont()` |
 
 ---
 
@@ -280,7 +280,7 @@ Every handler must support these properties mapped from the base `IView` in `Mac
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| [~] **Border style mapping** | Partial | `BorderHandler` maps Stroke/StrokeShape/StrokeThickness via CoreGraphics |
+| [x] **Border style mapping** | ✅ | `BorderHandler` maps Stroke, StrokeShape, StrokeThickness, StrokeLineCap, StrokeLineJoin, StrokeDashPattern, StrokeDashOffset, StrokeMiterLimit via CoreGraphics |
 | [x] **View state mapping** | ✅ | IsVisible → `Hidden`, IsEnabled → `Enabled`, Opacity → `AlphaValue` — all mapped in base `MacOSViewHandler` |
 | [x] **Automation mapping** | ✅ | AutomationId → `AccessibilityIdentifier` mapped in base `MacOSViewHandler` |
 
