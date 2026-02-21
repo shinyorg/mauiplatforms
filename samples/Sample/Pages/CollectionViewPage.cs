@@ -16,6 +16,7 @@ public class CollectionViewPage : TabbedPage
 		Children.Add(new HorizontalGridTab());
 		Children.Add(new GroupedTab());
 		Children.Add(new TemplateSelectorTab());
+		Children.Add(new SelectionTab());
 		Children.Add(new LargeListTab());
 	}
 }
@@ -526,6 +527,141 @@ class TemplateSelectorTab : ContentPage
 		};
 		grid.Add(header, 0, 0);
 		grid.Add(cv, 0, 1);
+		Content = grid;
+	}
+}
+
+class SelectionTab : ContentPage
+{
+	public SelectionTab()
+	{
+		Title = "Selection";
+		var items = CollectionViewHelpers.GenerateSimpleItems(20);
+		var statusLabel = new Label
+		{
+			Text = "Tap items to select — using Single mode",
+			FontSize = 12,
+			TextColor = Colors.Gray,
+			Margin = new Thickness(16, 4),
+		};
+
+		var cv = new CollectionView
+		{
+			ItemsSource = items,
+			SelectionMode = SelectionMode.Single,
+			ItemsLayout = LinearItemsLayout.Vertical,
+			ItemTemplate = new DataTemplate(() =>
+			{
+				var nameLabel = new Label { FontSize = 15, FontAttributes = FontAttributes.Bold };
+				nameLabel.SetBinding(Label.TextProperty, "Name");
+
+				var descLabel = new Label { FontSize = 12, TextColor = Colors.Gray };
+				descLabel.SetBinding(Label.TextProperty, "Description");
+
+				var accent = new BoxView { WidthRequest = 4, CornerRadius = 2 };
+				accent.SetBinding(BoxView.ColorProperty, "AccentColor");
+
+				return new Border
+				{
+					StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = 8 },
+					Stroke = Colors.Gray.WithAlpha(0.3f),
+					StrokeThickness = 1,
+					Margin = new Thickness(16, 4),
+					Padding = 0,
+					Content = new HorizontalStackLayout
+					{
+						Spacing = 12,
+						Padding = new Thickness(0, 8, 12, 8),
+						Children =
+						{
+							accent,
+							new VerticalStackLayout
+							{
+								Spacing = 2,
+								VerticalOptions = LayoutOptions.Center,
+								Children = { nameLabel, descLabel }
+							}
+						}
+					}
+				};
+			})
+		};
+
+		cv.SelectionChanged += (s, e) =>
+		{
+			if (cv.SelectionMode == SelectionMode.Single)
+			{
+				if (e.CurrentSelection.FirstOrDefault() is SimpleItem si)
+					statusLabel.Text = $"Selected: {si.Name}";
+				else
+					statusLabel.Text = "No selection";
+			}
+			else
+			{
+				statusLabel.Text = $"Selected {e.CurrentSelection.Count} item(s)";
+			}
+		};
+
+		var modeButton = new Button
+		{
+			Text = "Mode: Single",
+			Margin = new Thickness(16, 4),
+			HorizontalOptions = LayoutOptions.Start,
+		};
+		modeButton.Clicked += (s, e) =>
+		{
+			if (cv.SelectionMode == SelectionMode.Single)
+			{
+				cv.SelectionMode = SelectionMode.Multiple;
+				modeButton.Text = "Mode: Multiple";
+				statusLabel.Text = "Tap items to select — using Multiple mode";
+			}
+			else if (cv.SelectionMode == SelectionMode.Multiple)
+			{
+				cv.SelectionMode = SelectionMode.None;
+				modeButton.Text = "Mode: None";
+				statusLabel.Text = "Selection disabled";
+			}
+			else
+			{
+				cv.SelectionMode = SelectionMode.Single;
+				modeButton.Text = "Mode: Single";
+				statusLabel.Text = "Tap items to select — using Single mode";
+			}
+		};
+
+		var clearButton = new Button
+		{
+			Text = "Clear Selection",
+			Margin = new Thickness(4),
+			HorizontalOptions = LayoutOptions.Start,
+		};
+		clearButton.Clicked += (s, e) =>
+		{
+			cv.SelectedItem = null;
+			cv.SelectedItems?.Clear();
+			statusLabel.Text = "Selection cleared";
+		};
+
+		var buttonRow = new HorizontalStackLayout
+		{
+			Spacing = 8,
+			Margin = new Thickness(12, 0),
+			Children = { modeButton, clearButton }
+		};
+
+		var grid = new Grid
+		{
+			RowDefinitions =
+			{
+				new RowDefinition(GridLength.Auto),
+				new RowDefinition(GridLength.Auto),
+				new RowDefinition(GridLength.Star),
+			}
+		};
+		grid.Add(buttonRow, 0, 0);
+		grid.Add(statusLabel, 0, 1);
+		grid.Add(cv, 0, 2);
 		Content = grid;
 	}
 }

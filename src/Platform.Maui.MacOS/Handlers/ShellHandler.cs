@@ -33,14 +33,15 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 	public static readonly CommandMapper<Shell, ShellHandler> CommandMapper =
 		new(ViewCommandMapper);
 
-	NSSplitView? _splitView;
+	NSView? _container;
 	NSView? _sidebarView;
 	NSScrollView? _sidebarScrollView;
 	FlippedDocumentView? _sidebarContent;
 	NSView? _contentView;
 	NSView? _currentPageView;
+	Page? _currentPage;
 	Shell? _shell;
-	nfloat _flyoutWidth = 250;
+	nfloat _flyoutWidth = 220;
 
 	public ShellHandler() : base(Mapper, CommandMapper)
 	{
@@ -48,16 +49,12 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 
 	protected override NSView CreatePlatformView()
 	{
-		_splitView = new NSSplitView
-		{
-			IsVertical = true, // side-by-side
-			DividerStyle = NSSplitViewDividerStyle.Thin,
-		};
+		_container = new FlippedDocumentView();
 
 		// Sidebar
 		_sidebarView = new NSView();
 		_sidebarView.WantsLayer = true;
-		_sidebarView.Layer!.BackgroundColor = NSColor.WindowBackground.CGColor;
+		_sidebarView.Layer!.BackgroundColor = NSColor.UnderPageBackground.CGColor;
 
 		_sidebarScrollView = new NSScrollView
 		{
@@ -75,15 +72,12 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 		// Content area
 		_contentView = new FlippedDocumentView();
 		_contentView.WantsLayer = true;
-		_contentView.Layer!.BackgroundColor = NSColor.TextBackground.CGColor;
+		_contentView.Layer!.MasksToBounds = true;
 
-		_splitView.AddArrangedSubview(_sidebarView);
-		_splitView.AddArrangedSubview(_contentView);
+		_container.AddSubview(_sidebarView);
+		_container.AddSubview(_contentView);
 
-		_splitView.SetHoldingPriority(750f, 0); // sidebar holds size
-		_splitView.SetHoldingPriority(250f, 1);  // content flexes
-
-		return _splitView;
+		return _container;
 	}
 
 	protected override void ConnectHandler(NSView platformView)
@@ -118,33 +112,27 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 	{
 		base.PlatformArrange(rect);
 
-		if (_splitView == null || _sidebarView == null || _contentView == null)
+		if (_container == null || _sidebarView == null || _contentView == null)
 			return;
 
-		// Layout the split view
-		_splitView.Frame = new CGRect(0, 0, rect.Width, rect.Height);
+		_container.Frame = new CGRect(0, 0, rect.Width, rect.Height);
 
-		// Set sidebar width
 		var sidebarWidth = Math.Min((double)_flyoutWidth, rect.Width * 0.4);
 		_sidebarView.Frame = new CGRect(0, 0, sidebarWidth, rect.Height);
 
-		// Layout sidebar scroll view to fill sidebar
 		if (_sidebarScrollView != null)
 			_sidebarScrollView.Frame = _sidebarView.Bounds;
 
-		// Layout content
-		var contentX = sidebarWidth + _splitView.DividerThickness;
+		var contentX = sidebarWidth + 1; // 1px divider
 		var contentWidth = rect.Width - contentX;
 		_contentView.Frame = new CGRect(contentX, 0, contentWidth, rect.Height);
 
-		// Resize current page
 		if (_currentPageView != null)
 		{
 			_currentPageView.Frame = _contentView.Bounds;
 			LayoutCurrentPage(rect);
 		}
 
-		// Re-layout sidebar content
 		LayoutSidebarContent();
 	}
 
@@ -174,16 +162,12 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 
 	void LayoutCurrentPage(Rect rect)
 	{
-		if (_shell?.CurrentItem?.CurrentItem?.CurrentItem is IShellContentController controller)
-		{
-			var page = controller.Page;
-			if (page != null)
-			{
-				var contentBounds = _contentView!.Bounds;
-				page.Measure((double)contentBounds.Width, (double)contentBounds.Height);
-				page.Arrange(new Rect(0, 0, (double)contentBounds.Width, (double)contentBounds.Height));
-			}
-		}
+		if (_currentPage == null || _contentView == null)
+			return;
+
+		var contentBounds = _contentView.Bounds;
+		_currentPage.Measure((double)contentBounds.Width, (double)contentBounds.Height);
+		_currentPage.Arrange(new Rect(0, 0, (double)contentBounds.Width, (double)contentBounds.Height));
 	}
 
 	void BuildSidebar()
@@ -198,19 +182,28 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 		// Add items from Shell.Items (ShellItem collection)
 		foreach (var shellItem in _shell.Items)
 		{
-			if (shellItem is ShellItem item)
+			if (shellItem is not ShellItem item)
+				continue;
+
+			var sections = item.Items.ToList();
+			var allContents = sections.SelectMany(s => s.Items).ToList();
+			var hasMultipleContents = allContents.Count > 1;
+
+			// Show group header if FlyoutItem has multiple children
+			if (hasMultipleContents && !string.IsNullOrEmpty(item.Title))
 			{
-				// Each ShellItem can have multiple sections
-				foreach (var section in item.Items)
+				_sidebarContent.AddSubview(new SidebarGroupHeaderView(item.Title));
+			}
+
+			foreach (var section in sections)
+			{
+				if (section is ShellSection shellSection)
 				{
-					if (section is ShellSection shellSection)
+					foreach (var content in shellSection.Items)
 					{
-						foreach (var content in shellSection.Items)
-						{
-							AddSidebarItem(content.Title ?? shellSection.Title ?? item.Title ?? "Page",
-								content.Icon ?? shellSection.Icon ?? item.Icon,
-								shellItem, shellSection, content);
-						}
+						AddSidebarItem(content.Title ?? shellSection.Title ?? item.Title ?? "Page",
+							content.Icon ?? shellSection.Icon ?? item.Icon,
+							shellItem, shellSection, content, hasMultipleContents);
 					}
 				}
 			}
@@ -219,9 +212,9 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 		LayoutSidebarContent();
 	}
 
-	void AddSidebarItem(string title, ImageSource? icon, ShellItem shellItem, ShellSection section, ShellContent content)
+	void AddSidebarItem(string title, ImageSource? icon, ShellItem shellItem, ShellSection section, ShellContent content, bool indented)
 	{
-		var itemView = new SidebarItemView(title, () =>
+		var itemView = new SidebarItemView(title, indented, () =>
 		{
 			if (_shell == null)
 				return;
@@ -248,23 +241,38 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 		if (_contentView == null || _shell == null || MauiContext == null)
 			return;
 
+
 		// Remove old page
 		if (_currentPageView != null)
 		{
 			_currentPageView.RemoveFromSuperview();
 			_currentPageView = null;
+			_currentPage = null;
 		}
 
 		// Get the current page from Shell
 		var currentItem = _shell.CurrentItem;
-		if (currentItem?.CurrentItem?.CurrentItem is IShellContentController controller)
+		if (currentItem?.CurrentItem?.CurrentItem is ShellContent shellContent)
 		{
-			var page = controller.Page;
+			Page? page = null;
+
+			// Try to get the page from the controller (may be lazily created)
+			if (shellContent is IShellContentController controller)
+				page = controller.Page;
+
+			// If still null, create from ContentTemplate
+			if (page == null && shellContent.ContentTemplate != null)
+			{
+				page = shellContent.ContentTemplate.CreateContent() as Page;
+				if (page != null)
+					page.Parent = shellContent;
+			}
+
 			if (page != null)
 			{
+				_currentPage = page;
 				var platformView = ((IView)page).ToMacOSPlatform(MauiContext);
 				platformView.Frame = _contentView.Bounds;
-				platformView.AutoresizingMask = NSViewResizingMask.WidthSizable | NSViewResizingMask.HeightSizable;
 				_contentView.AddSubview(platformView);
 				_currentPageView = platformView;
 
@@ -321,11 +329,17 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 
 		var behavior = shell.FlyoutBehavior;
 		handler._sidebarView.Hidden = behavior == FlyoutBehavior.Disabled;
+		if (behavior == FlyoutBehavior.Locked)
+			handler._sidebarView.Hidden = false;
 	}
 
 	public static void MapIsPresented(ShellHandler handler, Shell shell)
 	{
 		if (handler._sidebarView == null)
+			return;
+
+		// When FlyoutBehavior is Locked, sidebar is always visible
+		if (shell.FlyoutBehavior == FlyoutBehavior.Locked)
 			return;
 
 		handler._sidebarView.Hidden = !shell.FlyoutIsPresented;
@@ -345,19 +359,53 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 	}
 
 	/// <summary>
+	/// A non-interactive group header label for the sidebar.
+	/// </summary>
+	class SidebarGroupHeaderView : NSView
+	{
+		readonly NSTextField _label;
+
+		public SidebarGroupHeaderView(string title)
+		{
+			_label = new NSTextField
+			{
+				StringValue = title.ToUpperInvariant(),
+				Editable = false,
+				Bordered = false,
+				DrawsBackground = false,
+				Font = NSFont.BoldSystemFontOfSize(10),
+				TextColor = NSColor.SecondaryLabel,
+				LineBreakMode = NSLineBreakMode.TruncatingTail,
+			};
+			AddSubview(_label);
+		}
+
+		public override CGSize IntrinsicContentSize => new CGSize(NSView.NoIntrinsicMetric, 28);
+
+		public override void Layout()
+		{
+			base.Layout();
+			_label.Frame = new CGRect(16, 10, Bounds.Width - 32, 14);
+		}
+	}
+
+	/// <summary>
 	/// A simple sidebar item view using native NSTextField and NSView.
 	/// </summary>
 	class SidebarItemView : NSView
 	{
 		readonly NSTextField _label;
 		readonly Action _onTap;
+		readonly bool _indented;
 		bool _isSelected;
 		NSTrackingArea? _trackingArea;
 
-		public SidebarItemView(string title, Action onTap)
+		public SidebarItemView(string title, bool indented, Action onTap)
 		{
 			_onTap = onTap;
+			_indented = indented;
 			WantsLayer = true;
+			Layer!.CornerRadius = 6;
 
 			_label = new NSTextField
 			{
@@ -373,12 +421,13 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 			AddSubview(_label);
 		}
 
-		public override CGSize IntrinsicContentSize => new CGSize(NSView.NoIntrinsicMetric, 36);
+		public override CGSize IntrinsicContentSize => new CGSize(NSView.NoIntrinsicMetric, 30);
 
 		public override void Layout()
 		{
 			base.Layout();
-			_label.Frame = new CGRect(16, 8, Bounds.Width - 32, 20);
+			var leftPad = _indented ? (nfloat)28 : (nfloat)16;
+			_label.Frame = new CGRect(leftPad, 5, Bounds.Width - leftPad - 12, 20);
 		}
 
 		public void SetSelected(bool selected)

@@ -21,124 +21,119 @@ class MacOSApp : Application
 	}
 }
 
-class MainShell : FlyoutPage
+class MainShell : Shell
 {
-	private readonly Dictionary<string, Func<Page>> _pageFactories = new()
-	{
-		["home"] = () => new HomePage(),
-		["controls"] = () => new ControlsPage(),
-		["pickers"] = () => new PickersPage(),
-		["fonts"] = () => new Pages.FontsPage(),
-		["layouts"] = () => new LayoutsPage(),
-		["alerts"] = () => new AlertsPage(),
-		["collectionview"] = () => new Pages.CollectionViewPage(),
-		["carouselview"] = () => new Pages.CarouselViewPage(),
-		["listview"] = () => new Pages.ListViewPage(),
-		["tableview"] = () => new Pages.TableViewPage(),
-		["graphics"] = () => new GraphicsPage(),
-		["gestures"] = () => new Pages.GesturesPage(),
-		["shapes"] = () => new Pages.ShapesPage(),
-		["transforms"] = () => new Pages.TransformsPage(),
-		["webview"] = () => new Pages.WebViewPage(),
-		["deviceinfo"] = () => new DeviceInfoPage(),
-		["battery"] = () => new BatteryNetworkPage(),
-		["clipboard"] = () => new ClipboardPrefsPage(),
-		["launch"] = () => new LaunchSharePage(),
-#if MACAPP
-		["blazor"] = () => new Pages.BlazorPage(),
-#endif
-		["navigation"] = () => new NavigationPage(new NavigationDemoPage()),
-		["tabbedpage"] = () => new TabbedPageDemo(),
-		["flyoutpage"] = () => new Pages.FlyoutPageDemo(),
-		["map"] = () => new Pages.MapPage(),
-	};
-
 	public MainShell()
 	{
 		Title = "macOS Demo App";
-		FlyoutLayoutBehavior = FlyoutLayoutBehavior.Split;
+		FlyoutBehavior = FlyoutBehavior.Locked;
 
-		// Empty flyout page (native sidebar ignores it)
-		Flyout = new ContentPage { Title = "Menu" };
-		Detail = new NavigationPage(new HomePage());
-		IsPresented = true;
+		// General
+		var general = new FlyoutItem { Title = "General" };
+		general.Items.Add(new ShellContent { Title = "Home", Route = "home", ContentTemplate = new DataTemplate(typeof(HomePage)) });
+		general.Items.Add(new ShellContent { Title = "Controls", Route = "controls", ContentTemplate = new DataTemplate(typeof(ControlsPage)) });
+		general.Items.Add(new ShellContent { Title = "Pickers & Search", Route = "pickers", ContentTemplate = new DataTemplate(typeof(PickersPage)) });
+		general.Items.Add(new ShellContent { Title = "Fonts", Route = "fonts", ContentTemplate = new DataTemplate(typeof(FontsPage)) });
+		general.Items.Add(new ShellContent { Title = "Layouts", Route = "layouts", ContentTemplate = new DataTemplate(typeof(LayoutsPage)) });
+		general.Items.Add(new ShellContent { Title = "Alerts & Dialogs", Route = "alerts", ContentTemplate = new DataTemplate(typeof(AlertsPage)) });
+		Items.Add(general);
 
-		// Configure native sidebar items
-		MacOSFlyoutPage.SetSidebarItems(this, new List<MacOSSidebarItem>
-		{
-			new MacOSSidebarItem
-			{
-				Title = "General",
-				Children = new List<MacOSSidebarItem>
-				{
-					new() { Title = "Home", SystemImage = "house.fill", Tag = "home" },
-					new() { Title = "Controls", SystemImage = "slider.horizontal.3", Tag = "controls" },
-					new() { Title = "Pickers & Search", SystemImage = "calendar", Tag = "pickers" },
-					new() { Title = "Fonts", SystemImage = "textformat", Tag = "fonts" },
-					new() { Title = "Layouts", SystemImage = "rectangle.3.group", Tag = "layouts" },
-					new() { Title = "Alerts & Dialogs", SystemImage = "bubble.left.and.bubble.right", Tag = "alerts" },
-				}
-			},
-			new MacOSSidebarItem
-			{
-				Title = "Lists & Collections",
-				Children = new List<MacOSSidebarItem>
-				{
-					new() { Title = "Collection View", SystemImage = "square.grid.2x2", Tag = "collectionview" },
-					new() { Title = "CarouselView", SystemImage = "rectangle.stack", Tag = "carouselview" },
-					new() { Title = "ListView", SystemImage = "list.bullet", Tag = "listview" },
-					new() { Title = "TableView", SystemImage = "tablecells", Tag = "tableview" },
-				}
-			},
-			new MacOSSidebarItem
-			{
-				Title = "Drawing & Visual",
-				Children = new List<MacOSSidebarItem>
-				{
-					new() { Title = "Graphics", SystemImage = "paintbrush", Tag = "graphics" },
-					new() { Title = "Gestures", SystemImage = "hand.tap", Tag = "gestures" },
-					new() { Title = "Shapes", SystemImage = "star", Tag = "shapes" },
-					new() { Title = "Transforms", SystemImage = "arrow.triangle.2.circlepath", Tag = "transforms" },
-				}
-			},
-			new MacOSSidebarItem
-			{
-				Title = "Platform",
-				Children = new List<MacOSSidebarItem>
-				{
-					new() { Title = "WebView", SystemImage = "globe", Tag = "webview" },
-					new() { Title = "Device & App Info", SystemImage = "iphone", Tag = "deviceinfo" },
-					new() { Title = "Battery & Network", SystemImage = "battery.100", Tag = "battery" },
-					new() { Title = "Clipboard & Storage", SystemImage = "doc.on.clipboard", Tag = "clipboard" },
-					new() { Title = "Launch & Share", SystemImage = "square.and.arrow.up", Tag = "launch" },
+		// Lists & Collections
+		var lists = new FlyoutItem { Title = "Lists & Collections" };
+		lists.Items.Add(new ShellContent { Title = "Collection View", Route = "collectionview", ContentTemplate = new DataTemplate(typeof(CollectionViewShellPage)) });
+		lists.Items.Add(new ShellContent { Title = "CarouselView", Route = "carouselview", ContentTemplate = new DataTemplate(typeof(CarouselViewPage)) });
+		lists.Items.Add(new ShellContent { Title = "ListView", Route = "listview", ContentTemplate = new DataTemplate(typeof(ListViewPage)) });
+		lists.Items.Add(new ShellContent { Title = "TableView", Route = "tableview", ContentTemplate = new DataTemplate(typeof(TableViewPage)) });
+		Items.Add(lists);
+
+		// Drawing & Visual
+		var drawing = new FlyoutItem { Title = "Drawing & Visual" };
+		drawing.Items.Add(new ShellContent { Title = "Graphics", Route = "graphics", ContentTemplate = new DataTemplate(typeof(GraphicsPage)) });
+		drawing.Items.Add(new ShellContent { Title = "Gestures", Route = "gestures", ContentTemplate = new DataTemplate(typeof(GesturesPage)) });
+		drawing.Items.Add(new ShellContent { Title = "Shapes", Route = "shapes", ContentTemplate = new DataTemplate(typeof(ShapesPage)) });
+		drawing.Items.Add(new ShellContent { Title = "Transforms", Route = "transforms", ContentTemplate = new DataTemplate(typeof(TransformsPage)) });
+		Items.Add(drawing);
+
+		// Platform
+		var platform = new FlyoutItem { Title = "Platform" };
+		platform.Items.Add(new ShellContent { Title = "WebView", Route = "webview", ContentTemplate = new DataTemplate(typeof(WebViewPage)) });
+		platform.Items.Add(new ShellContent { Title = "Device & App Info", Route = "deviceinfo", ContentTemplate = new DataTemplate(typeof(DeviceInfoPage)) });
+		platform.Items.Add(new ShellContent { Title = "Battery & Network", Route = "battery", ContentTemplate = new DataTemplate(typeof(BatteryNetworkPage)) });
+		platform.Items.Add(new ShellContent { Title = "Clipboard & Storage", Route = "clipboard", ContentTemplate = new DataTemplate(typeof(ClipboardPrefsPage)) });
+		platform.Items.Add(new ShellContent { Title = "Launch & Share", Route = "launch", ContentTemplate = new DataTemplate(typeof(LaunchSharePage)) });
 #if MACAPP
-					new() { Title = "Blazor Hybrid", SystemImage = "network", Tag = "blazor" },
+		platform.Items.Add(new ShellContent { Title = "Blazor Hybrid", Route = "blazor", ContentTemplate = new DataTemplate(typeof(BlazorPage)) });
 #endif
-				}
-			},
-			new MacOSSidebarItem
-			{
-				Title = "Navigation",
-				Children = new List<MacOSSidebarItem>
-				{
-					new() { Title = "Navigation", SystemImage = "arrow.triangle.turn.up.right.diamond", Tag = "navigation" },
-					new() { Title = "TabbedPage", SystemImage = "rectangle.split.3x1", Tag = "tabbedpage" },
-					new() { Title = "FlyoutPage", SystemImage = "sidebar.left", Tag = "flyoutpage" },
-					new() { Title = "Map", SystemImage = "map", Tag = "map" },
-				}
-			},
-		});
+		Items.Add(platform);
 
-		MacOSFlyoutPage.SetSidebarSelectionChanged(this, item =>
+		// Navigation
+		var navigation = new FlyoutItem { Title = "Navigation" };
+		navigation.Items.Add(new ShellContent { Title = "Navigation Demo", Route = "navigation", ContentTemplate = new DataTemplate(typeof(NavigationDemoPage)) });
+		navigation.Items.Add(new ShellContent { Title = "TabbedPage", Route = "tabbedpage", ContentTemplate = new DataTemplate(typeof(TabbedPageDemoShellPage)) });
+		navigation.Items.Add(new ShellContent { Title = "FlyoutPage", Route = "flyoutpage", ContentTemplate = new DataTemplate(typeof(FlyoutPageDemoShellPage)) });
+		navigation.Items.Add(new ShellContent { Title = "Map", Route = "map", ContentTemplate = new DataTemplate(typeof(MapPage)) });
+		Items.Add(navigation);
+	}
+}
+
+/// <summary>
+/// Wrapper ContentPage for CollectionViewPage (TabbedPage) since Shell requires ContentPage.
+/// Navigates to the actual TabbedPage when appearing.
+/// </summary>
+class CollectionViewShellPage : ContentPage
+{
+	public CollectionViewShellPage()
+	{
+		Title = "Collection View";
+		Content = new VerticalStackLayout
 		{
-			if (item.Tag is string tag && _pageFactories.TryGetValue(tag, out var factory))
+			VerticalOptions = LayoutOptions.Center,
+			HorizontalOptions = LayoutOptions.Center,
+			Spacing = 12,
+			Children =
 			{
-				var page = factory();
-				if (page is ContentPage cp)
-					Detail = new NavigationPage(cp);
-				else
-					Detail = page;
+				new Label { Text = "Collection View Demos", FontSize = 20, FontAttributes = FontAttributes.Bold, HorizontalTextAlignment = TextAlignment.Center },
+				new Label { Text = "Opens in a TabbedPage with multiple demos", FontSize = 14, TextColor = Colors.Gray, HorizontalTextAlignment = TextAlignment.Center },
+				new Button { Text = "Open Collection View Demos", Command = new Command(async () => await Navigation.PushAsync(new CollectionViewPage())) },
 			}
-		});
+		};
+	}
+}
+
+class TabbedPageDemoShellPage : ContentPage
+{
+	public TabbedPageDemoShellPage()
+	{
+		Title = "TabbedPage";
+		Content = new VerticalStackLayout
+		{
+			VerticalOptions = LayoutOptions.Center,
+			HorizontalOptions = LayoutOptions.Center,
+			Spacing = 12,
+			Children =
+			{
+				new Label { Text = "TabbedPage Demo", FontSize = 20, FontAttributes = FontAttributes.Bold, HorizontalTextAlignment = TextAlignment.Center },
+				new Button { Text = "Open TabbedPage Demo", Command = new Command(async () => await Navigation.PushAsync(new TabbedPageDemo())) },
+			}
+		};
+	}
+}
+
+class FlyoutPageDemoShellPage : ContentPage
+{
+	public FlyoutPageDemoShellPage()
+	{
+		Title = "FlyoutPage";
+		Content = new VerticalStackLayout
+		{
+			VerticalOptions = LayoutOptions.Center,
+			HorizontalOptions = LayoutOptions.Center,
+			Spacing = 12,
+			Children =
+			{
+				new Label { Text = "FlyoutPage Demo", FontSize = 20, FontAttributes = FontAttributes.Bold, HorizontalTextAlignment = TextAlignment.Center },
+				new Button { Text = "Open FlyoutPage Demo", Command = new Command(async () => await Navigation.PushAsync(new FlyoutPageDemo())) },
+			}
+		};
 	}
 }

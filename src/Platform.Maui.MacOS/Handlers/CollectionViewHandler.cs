@@ -36,7 +36,7 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
     readonly Dictionary<DataTemplate, Queue<IView>> _recyclePool = new();
     nfloat _estimatedItemHeight = 44;
     bool _positionsCalculated;
-    int _selectedFlatIndex = -1;
+    readonly HashSet<int> _selectedIndices = new();
 
     // Threshold: render items this far beyond the visible rect
     static readonly nfloat OverScanPixels = 200;
@@ -264,6 +264,8 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
         {
             var (mauiView, platformView) = _visibleViews[idx];
             platformView.RemoveFromSuperview();
+            if (mauiView is Element elem && VirtualView is Element parent)
+                parent.RemoveLogicalChild(elem);
             RecycleView(idx, mauiView);
             _visibleViews.Remove(idx);
         }
@@ -285,6 +287,8 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
 
             _itemsContainer.AddSubview(platformView);
             _visibleViews[idx] = (mauiView, platformView);
+            if (mauiView is Element elem && VirtualView is Element parent)
+                parent.AddLogicalChild(elem);
 
             // Measure and position
             if (!info.Measured)
@@ -471,8 +475,19 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
         }
     }
 
-    public static void MapSelectionMode(CollectionViewHandler handler, CollectionView view) { }
-    public static void MapSelectedItem(CollectionViewHandler handler, CollectionView view) { }
+    public static void MapSelectionMode(CollectionViewHandler handler, CollectionView view)
+    {
+        // Clear visual selection and reload to re-attach gesture recognizers with new mode
+        handler.ClearSelectionVisuals();
+        handler.UpdateVisibleItems();
+    }
+
+    public static void MapSelectedItem(CollectionViewHandler handler, CollectionView view)
+    {
+        // If SelectedItem is cleared programmatically, clear visuals
+        if (view is SelectableItemsView selectable && selectable.SelectedItem == null)
+            handler.ClearSelectionVisuals();
+    }
     public static void MapIsGrouped(CollectionViewHandler handler, CollectionView view)
         => handler.ReloadItems();
     public static void MapGroupHeaderTemplate(CollectionViewHandler handler, CollectionView view)
@@ -505,7 +520,11 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
 
         // Clear all visible views
         foreach (var kvp in _visibleViews)
+        {
             kvp.Value.platformView.RemoveFromSuperview();
+            if (kvp.Value.mauiView is Element elem && VirtualView is Element parent)
+                parent.RemoveLogicalChild(elem);
+        }
         _visibleViews.Clear();
         _recyclePool.Clear();
         _flatItems.Clear();
@@ -593,22 +612,84 @@ public partial class CollectionViewHandler : MacOSViewHandler<CollectionView, NS
 
     void AddSelectionGesture(NSView platformView, object item, int flatIndex)
     {
-        var selectionMode = (VirtualView as SelectableItemsView)?.SelectionMode ?? SelectionMode.None;
-        if (selectionMode == SelectionMode.None)
-            return;
+        // Remove existing click recognizers to avoid duplicates
+        if (platformView.GestureRecognizers is { Length: > 0 })
+        {
+            foreach (var g in platformView.GestureRecognizers.OfType<NSClickGestureRecognizer>().ToArray())
+                platformView.RemoveGestureRecognizer(g);
+        }
 
         var clickRecognizer = new NSClickGestureRecognizer(() =>
         {
-            if (VirtualView is SelectableItemsView selectable)
+            // Read current mode at tap time, not at setup time
+            var currentMode = (VirtualView as SelectableItemsView)?.SelectionMode ?? SelectionMode.None;
+            if (currentMode == SelectionMode.None || VirtualView is not SelectableItemsView selectable)
+                return;
+
+            if (currentMode == SelectionMode.Single)
             {
-                if (selectionMode == SelectionMode.Single)
+                var previousIndices = _selectedIndices.ToList();
+                _selectedIndices.Clear();
+                foreach (var prev in previousIndices)
+                    UpdateSelectionVisual(prev, false);
+
+                _selectedIndices.Add(flatIndex);
+                selectable.SelectedItem = item;
+                UpdateSelectionVisual(flatIndex, true);
+            }
+            else if (currentMode == SelectionMode.Multiple)
+            {
+                if (_selectedIndices.Contains(flatIndex))
                 {
-                    selectable.SelectedItem = item;
-                    _selectedFlatIndex = flatIndex;
+                    _selectedIndices.Remove(flatIndex);
+                    UpdateSelectionVisual(flatIndex, false);
                 }
+                else
+                {
+                    _selectedIndices.Add(flatIndex);
+                    UpdateSelectionVisual(flatIndex, true);
+                }
+
+                var selectedItems = new List<object>();
+                foreach (var idx in _selectedIndices)
+                {
+                    if (idx >= 0 && idx < _flatItems.Count)
+                        selectedItems.Add(_flatItems[idx].DataItem);
+                }
+                selectable.SelectedItems = selectedItems;
             }
         });
         platformView.AddGestureRecognizer(clickRecognizer);
+
+        // Apply initial selection visual if already selected
+        if (_selectedIndices.Contains(flatIndex))
+            UpdateSelectionVisual(flatIndex, true);
+    }
+
+    void UpdateSelectionVisual(int flatIndex, bool selected)
+    {
+        if (!_visibleViews.TryGetValue(flatIndex, out var entry))
+            return;
+
+        var view = entry.platformView;
+        if (!view.WantsLayer)
+            view.WantsLayer = true;
+
+        if (selected)
+        {
+            view.Layer!.BackgroundColor = NSColor.SelectedContentBackground.ColorWithAlphaComponent(0.2f).CGColor;
+        }
+        else
+        {
+            view.Layer!.BackgroundColor = null;
+        }
+    }
+
+    void ClearSelectionVisuals()
+    {
+        foreach (var idx in _selectedIndices.ToList())
+            UpdateSelectionVisual(idx, false);
+        _selectedIndices.Clear();
     }
 
     static IView? CreateItemView(object item, DataTemplate? template, CollectionView? collectionView)

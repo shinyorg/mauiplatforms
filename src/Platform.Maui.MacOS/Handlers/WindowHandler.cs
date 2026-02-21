@@ -124,6 +124,14 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
             pageView.Frame = handler._contentContainer.Bounds;
             pageView.AutoresizingMask = NSViewResizingMask.WidthSizable | NSViewResizingMask.HeightSizable;
             handler._contentContainer.AddSubview(pageView);
+
+            // Measure and arrange the content so handlers like Shell can set up layout
+            var bounds = handler._contentContainer.Bounds;
+            if (bounds.Width > 0 && bounds.Height > 0)
+            {
+                page.Measure((double)bounds.Width, (double)bounds.Height);
+                page.Arrange(new Graphics.Rect(0, 0, (double)bounds.Width, (double)bounds.Height));
+            }
         }
 
         // Subscribe to modal events on the Window
