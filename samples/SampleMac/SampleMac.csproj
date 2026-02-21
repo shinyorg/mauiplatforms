@@ -19,8 +19,9 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)"/>
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)"/>
+        <PackageReference Include="AathifMahir.Maui.MauiIcons.Cupertino" Version="5.0.0" />
+        <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="$(MauiVersion)" />
         <ProjectReference Include="..\..\src\Platform.Maui.MacOS\Platform.Maui.MacOS.csproj" />
         <ProjectReference Include="..\..\src\Platform.Maui.MacOS.BlazorWebView\Platform.Maui.MacOS.BlazorWebView.csproj" />
         <ProjectReference Include="..\..\src\Platform.Maui.Essentials.MacOS\Platform.Maui.Essentials.MacOS.csproj" />

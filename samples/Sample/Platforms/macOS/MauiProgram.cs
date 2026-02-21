@@ -7,6 +7,7 @@ using Microsoft.Maui.Platform.MacOS.Hosting;
 using Microsoft.Maui.Essentials.MacOS;
 using MauiDevFlow.Agent;
 using MauiDevFlow.Blazor;
+using MauiIcons.Cupertino;
 
 namespace Sample;
 
@@ -17,6 +18,7 @@ public static class MauiProgram
         var builder = MauiApp
             .CreateBuilder()
             .UseMauiAppMacOS<MacOSApp>()
+            .UseCupertinoMauiIcons()
             .AddMacOSEssentials()
             .AddMacOSBlazorWebView();
 

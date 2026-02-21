@@ -111,48 +111,131 @@ public class FontsPage : ContentPage
 			Margin = new Thickness(0, 16, 0, 0),
 		});
 
-		// Unicode glyph from system font
+		stack.Children.Add(new Label { Text = "Unicode glyphs (system font):", FontSize = 13 });
 		stack.Children.Add(new HorizontalStackLayout
 		{
 			Spacing = 12,
 			Children =
 			{
-				new Image
-				{
-					Source = new FontImageSource { Glyph = "★", Color = Colors.Gold, Size = 32 },
-					WidthRequest = 32, HeightRequest = 32,
-				},
-				new Image
-				{
-					Source = new FontImageSource { Glyph = "♥", Color = Colors.Red, Size = 32 },
-					WidthRequest = 32, HeightRequest = 32,
-				},
-				new Image
-				{
-					Source = new FontImageSource { Glyph = "⚡", Color = Colors.Orange, Size = 32 },
-					WidthRequest = 32, HeightRequest = 32,
-				},
-				new Image
-				{
-					Source = new FontImageSource { Glyph = "✓", Color = Colors.Green, Size = 32 },
-					WidthRequest = 32, HeightRequest = 32,
-				},
-				new Image
-				{
-					Source = new FontImageSource { Glyph = "⚙", Color = Colors.Gray, Size = 32 },
-					WidthRequest = 32, HeightRequest = 32,
-				},
-				new Label { Text = "Unicode glyphs", VerticalTextAlignment = TextAlignment.Center },
+				FontIcon("★", Colors.Gold),
+				FontIcon("♥", Colors.Red),
+				FontIcon("⚡", Colors.Orange),
+				FontIcon("✓", Colors.Green),
+				FontIcon("⚙", Colors.Gray),
+				FontIcon("✈", Colors.DodgerBlue),
+				FontIcon("⌘", Colors.Purple),
+				FontIcon("♻", Colors.Teal),
 			}
 		});
 
-		// FontImageSource on a Button
-		stack.Children.Add(new Button
+		// CupertinoIcons (MauiIcons.Cupertino) — uses the embedded Cupertino_Icons.ttf
+		stack.Children.Add(new Label
 		{
-			Text = "Button with Font Icon",
-			ImageSource = new FontImageSource { Glyph = "⬇", Color = Colors.White, Size = 18 },
+			Text = "Cupertino Icons (MauiIcons.Cupertino):",
+			FontSize = 13,
+			Margin = new Thickness(0, 8, 0, 0),
+		});
+		stack.Children.Add(new HorizontalStackLayout
+		{
+			Spacing = 12,
+			Children =
+			{
+				// Airplane=\ue900, Alarm=\ue901, Ant=\ue904, App=\ue909, Heart=\ue9a4
+				CupertinoIcon("\ue900", Colors.DodgerBlue, "Airplane"),
+				CupertinoIcon("\ue901", Colors.Orange, "Alarm"),
+				CupertinoIcon("\ue904", Colors.Brown, "Ant"),
+				CupertinoIcon("\ue909", Colors.Teal, "App"),
+				CupertinoIcon("\ue947", Colors.MediumPurple, "Bolt"),
+			}
+		});
+		stack.Children.Add(new HorizontalStackLayout
+		{
+			Spacing = 12,
+			Children =
+			{
+				// Star=\ue9fc, StarFill=\ue9fd, Gear=\ue990, GearAlt=\ue991
+				CupertinoIcon("\ue9fc", Colors.Gold, "Star"),
+				CupertinoIcon("\ue9fd", Colors.Gold, "StarFill"),
+				CupertinoIcon("\ue990", Colors.Gray, "Gear"),
+				CupertinoIcon("\ue94e", Colors.Green, "Book"),
+				CupertinoIcon("\ue950", Colors.Red, "Bookmark"),
+			}
+		});
+
+		// FontImageSource on buttons
+		stack.Children.Add(new Label
+		{
+			Text = "Buttons with font icons:",
+			FontSize = 13,
+			Margin = new Thickness(0, 8, 0, 0),
+		});
+		stack.Children.Add(new HorizontalStackLayout
+		{
+			Spacing = 8,
+			Children =
+			{
+				new Button
+				{
+					Text = " Download",
+					ImageSource = new FontImageSource { Glyph = "⬇", Color = Colors.White, Size = 16 },
+				},
+				new Button
+				{
+					Text = " Favorite",
+					ImageSource = new FontImageSource { Glyph = "★", Color = Colors.Gold, Size = 16 },
+				},
+				new Button
+				{
+					Text = " Settings",
+					ImageSource = new FontImageSource { Glyph = "⚙", Color = Colors.White, Size = 16 },
+				},
+			}
+		});
+
+		// Different sizes
+		stack.Children.Add(new Label
+		{
+			Text = "Various sizes:",
+			FontSize = 13,
+			Margin = new Thickness(0, 8, 0, 0),
+		});
+		stack.Children.Add(new HorizontalStackLayout
+		{
+			Spacing = 16,
+			VerticalOptions = LayoutOptions.End,
+			Children =
+			{
+				FontIcon("★", Colors.Gold, 16),
+				FontIcon("★", Colors.Gold, 24),
+				FontIcon("★", Colors.Gold, 32),
+				FontIcon("★", Colors.Gold, 48),
+				FontIcon("★", Colors.Gold, 64),
+			}
 		});
 
 		Content = new ScrollView { Content = stack };
 	}
+
+	static Image FontIcon(string glyph, Color color, double size = 32) => new()
+	{
+		Source = new FontImageSource { Glyph = glyph, Color = color, Size = size },
+		WidthRequest = size,
+		HeightRequest = size,
+	};
+
+	static VerticalStackLayout CupertinoIcon(string glyph, Color color, string label) => new()
+	{
+		Spacing = 2,
+		Children =
+		{
+			new Image
+			{
+				Source = new FontImageSource { Glyph = glyph, FontFamily = "CupertinoIcons", Color = color, Size = 28 },
+				WidthRequest = 28,
+				HeightRequest = 28,
+				HorizontalOptions = LayoutOptions.Center,
+			},
+			new Label { Text = label, FontSize = 10, HorizontalTextAlignment = TextAlignment.Center },
+		}
+	};
 }

@@ -142,11 +142,39 @@ public partial class ButtonHandler : MacOSViewHandler<IButton, NSButton>
 
     public static void MapImageSource(ButtonHandler handler, IButton button)
     {
-        if (button is IImage imageButton && imageButton.Source is IFileImageSource fileSource)
+        if (button is not IImage imageButton)
+            return;
+
+        if (imageButton.Source is IFileImageSource fileSource)
         {
-            var image = new AppKit.NSImage(fileSource.File);
-            handler.PlatformView.Image = image;
+            handler.PlatformView.Image = new AppKit.NSImage(fileSource.File);
             handler.PlatformView.ImagePosition = NSCellImagePosition.ImageLeft;
         }
+        else if (imageButton.Source is IFontImageSource fontSource)
+        {
+            handler.PlatformView.Image = FontImageSourceHelper.CreateImage(fontSource, handler.MauiContext);
+            handler.PlatformView.ImagePosition = NSCellImagePosition.ImageLeft;
+        }
+        else if (imageButton.Source is IUriImageSource uriSource)
+        {
+            _ = LoadButtonImageFromUri(handler, uriSource.Uri);
+        }
+        else
+        {
+            handler.PlatformView.Image = null;
+        }
+    }
+
+    static async Task LoadButtonImageFromUri(ButtonHandler handler, Uri uri)
+    {
+        try
+        {
+            using var client = new System.Net.Http.HttpClient();
+            var data = await client.GetByteArrayAsync(uri);
+            var nsImage = new AppKit.NSImage(Foundation.NSData.FromArray(data));
+            handler.PlatformView.Image = nsImage;
+            handler.PlatformView.ImagePosition = NSCellImagePosition.ImageLeft;
+        }
+        catch { }
     }
 }
