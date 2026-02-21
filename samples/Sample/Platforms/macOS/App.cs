@@ -33,6 +33,7 @@ class MainShell : Shell
 		var general = new FlyoutItem { Title = "General" };
 		general.Items.Add(MakeContent("Home", "home", "house.fill", typeof(HomePage)));
 		general.Items.Add(MakeContent("Controls", "controls", "slider.horizontal.3", typeof(ControlsPage)));
+		general.Items.Add(MakeContent("RadioButton", "rbdemo", "circle.inset.filled", typeof(RadioButtonPage)));
 		general.Items.Add(MakeContent("Pickers & Search", "pickers", "calendar", typeof(PickersPage)));
 		general.Items.Add(MakeContent("Fonts", "fonts", "textformat", typeof(FontsPage)));
 		general.Items.Add(MakeContent("Layouts", "layouts", "rectangle.3.group", typeof(LayoutsPage)));

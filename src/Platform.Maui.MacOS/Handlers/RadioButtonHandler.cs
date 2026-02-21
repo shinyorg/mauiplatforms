@@ -73,7 +73,7 @@ public partial class RadioButtonHandler : MacOSViewHandler<IRadioButton, NSButto
 
 	public static void MapContent(RadioButtonHandler handler, IRadioButton view)
 	{
-		if (view is IText text)
-			handler.PlatformView.Title = text.Text ?? string.Empty;
+		// RadioButton.Content holds the display text (IText.Text is empty for string content)
+		handler.PlatformView.Title = view.Content?.ToString() ?? string.Empty;
 	}
 }

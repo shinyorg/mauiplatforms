@@ -212,13 +212,10 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 
 	void OnShellNavigating(object? sender, ShellNavigatingEventArgs e)
 	{
-		// Navigation is handled by Shell's internal pipeline via the
-		// ShellItemHandler/ShellSectionHandler/ShellContentHandler infrastructure
 	}
 
 	void OnShellNavigated(object? sender, ShellNavigatedEventArgs e)
 	{
-		// Shell navigation completed — update our display
 		ShowCurrentPage();
 	}
 
@@ -450,6 +447,10 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 			_shell.CurrentItem = nav.Item1;
 			nav.Item1.CurrentItem = nav.Item2;
 			nav.Item2.CurrentItem = nav.Item3;
+
+			// ShowCurrentPage must be called explicitly because Shell.CurrentItem
+			// PropertyChanged won't fire when navigating within the same FlyoutItem
+			ShowCurrentPage();
 		}
 	}
 

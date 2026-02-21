@@ -118,6 +118,9 @@
         <Compile Include="..\Sample\Pages\CarouselViewPage.cs">
             <Link>Pages\CarouselViewPage.cs</Link>
         </Compile>
+        <Compile Include="..\Sample\Pages\RadioButtonPage.cs">
+            <Link>Pages\RadioButtonPage.cs</Link>
+        </Compile>
     </ItemGroup>
 
     <ItemGroup>
