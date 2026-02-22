@@ -34,6 +34,10 @@ public abstract class MacOSMauiApplication : NSApplicationDelegate, IPlatformApp
 
             _mauiApp = Services.GetRequiredService<IApplication>();
 
+            // Set up the default macOS menu bar (App, Edit, Window) before window creation
+            var menuBarOptions = Services.GetService<MacOSMenuBarOptions>();
+            MenuBarManager.SetupDefaultMenuBar(menuBarOptions);
+
             // Wire up ApplicationHandler
             var appHandler = new ApplicationHandler();
             appHandler.SetMauiContext(applicationContext);

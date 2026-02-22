@@ -1,4 +1,5 @@
 using AppKit;
+using Foundation;
 using Microsoft.Maui.Controls;
 
 namespace Microsoft.Maui.Platform.MacOS.Handlers;
@@ -10,6 +11,28 @@ namespace Microsoft.Maui.Platform.MacOS.Handlers;
 /// </summary>
 public static class MenuBarManager
 {
+    static MacOSMenuBarOptions _options = new();
+
+    /// <summary>
+    /// Sets up the default macOS menu bar with standard App, Edit, and Window menus.
+    /// Called automatically from MacOSMauiApplication.DidFinishLaunching().
+    /// </summary>
+    public static void SetupDefaultMenuBar(MacOSMenuBarOptions? options = null)
+    {
+        _options = options ?? new MacOSMenuBarOptions();
+
+        var mainMenu = new NSMenu();
+        NSApplication.SharedApplication.MainMenu = mainMenu;
+
+        AddDefaultAppMenu(mainMenu);
+
+        if (_options.IncludeDefaultMenus && _options.IncludeDefaultEditMenu)
+            AddDefaultEditMenu(mainMenu);
+
+        if (_options.IncludeDefaultMenus && _options.IncludeDefaultWindowMenu)
+            AddDefaultWindowMenu(mainMenu);
+    }
+
     public static void UpdateMenuBar(IList<MenuBarItem>? menuBarItems)
     {
         var mainMenu = NSApplication.SharedApplication.MainMenu;
@@ -28,34 +51,46 @@ public static class MenuBarManager
         else
             AddDefaultAppMenu(mainMenu);
 
-        if (menuBarItems == null)
-            return;
-
-        foreach (var menuBarItem in menuBarItems)
+        // Add custom menus from the page
+        var customTitles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (menuBarItems != null)
         {
-            var nsMenuItem = new NSMenuItem(menuBarItem.Text ?? string.Empty);
-            var submenu = new NSMenu(menuBarItem.Text ?? string.Empty);
-
-            foreach (var element in menuBarItem)
+            foreach (var menuBarItem in menuBarItems)
             {
-                switch (element)
-                {
-                    case MenuFlyoutSeparator:
-                        submenu.AddItem(NSMenuItem.SeparatorItem);
-                        break;
-                    case MenuFlyoutSubItem subItem:
-                        var subMenuItem = CreateSubMenuItem(subItem);
-                        submenu.AddItem(subMenuItem);
-                        break;
-                    case MenuFlyoutItem flyoutItem:
-                        var item = CreateMenuItem(flyoutItem);
-                        submenu.AddItem(item);
-                        break;
-                }
-            }
+                var nsMenuItem = new NSMenuItem(menuBarItem.Text ?? string.Empty);
+                var submenu = new NSMenu(menuBarItem.Text ?? string.Empty);
 
-            nsMenuItem.Submenu = submenu;
-            mainMenu.AddItem(nsMenuItem);
+                foreach (var element in menuBarItem)
+                {
+                    switch (element)
+                    {
+                        case MenuFlyoutSeparator:
+                            submenu.AddItem(NSMenuItem.SeparatorItem);
+                            break;
+                        case MenuFlyoutSubItem subItem:
+                            submenu.AddItem(CreateSubMenuItem(subItem));
+                            break;
+                        case MenuFlyoutItem flyoutItem:
+                            submenu.AddItem(CreateMenuItem(flyoutItem));
+                            break;
+                    }
+                }
+
+                nsMenuItem.Submenu = submenu;
+                mainMenu.AddItem(nsMenuItem);
+                if (menuBarItem.Text != null)
+                    customTitles.Add(menuBarItem.Text);
+            }
+        }
+
+        // Re-append default Edit/Window menus unless overridden by custom items
+        if (_options.IncludeDefaultMenus)
+        {
+            if (_options.IncludeDefaultEditMenu && !customTitles.Contains("Edit"))
+                AddDefaultEditMenu(mainMenu);
+
+            if (_options.IncludeDefaultWindowMenu && !customTitles.Contains("Window"))
+                AddDefaultWindowMenu(mainMenu);
         }
     }
 
@@ -101,19 +136,101 @@ public static class MenuBarManager
         return nsItem;
     }
 
+    static string GetAppName()
+    {
+        var infoDict = NSBundle.MainBundle.InfoDictionary;
+        if (infoDict != null)
+        {
+            if (infoDict.TryGetValue(new NSString("CFBundleName"), out var name) && name is NSString nsName)
+                return nsName.ToString();
+        }
+        return NSProcessInfo.ProcessInfo.ProcessName;
+    }
+
     static void AddDefaultAppMenu(NSMenu mainMenu)
     {
+        var appName = GetAppName();
         var appMenu = new NSMenuItem();
         var appSubmenu = new NSMenu();
 
-        var quitItem = new NSMenuItem(
-            $"Quit",
+        appSubmenu.AddItem(new NSMenuItem(
+            $"About {appName}",
+            new ObjCRuntime.Selector("orderFrontStandardAboutPanel:"),
+            string.Empty));
+
+        appSubmenu.AddItem(NSMenuItem.SeparatorItem);
+
+        var hideItem = new NSMenuItem(
+            $"Hide {appName}",
+            new ObjCRuntime.Selector("hide:"),
+            "h");
+        appSubmenu.AddItem(hideItem);
+
+        var hideOthersItem = new NSMenuItem(
+            "Hide Others",
+            new ObjCRuntime.Selector("hideOtherApplications:"),
+            "h");
+        hideOthersItem.KeyEquivalentModifierMask = NSEventModifierMask.CommandKeyMask | NSEventModifierMask.AlternateKeyMask;
+        appSubmenu.AddItem(hideOthersItem);
+
+        appSubmenu.AddItem(new NSMenuItem(
+            "Show All",
+            new ObjCRuntime.Selector("unhideAllApplications:"),
+            string.Empty));
+
+        appSubmenu.AddItem(NSMenuItem.SeparatorItem);
+
+        appSubmenu.AddItem(new NSMenuItem(
+            $"Quit {appName}",
             new ObjCRuntime.Selector("terminate:"),
-            "q");
-        appSubmenu.AddItem(quitItem);
+            "q"));
 
         appMenu.Submenu = appSubmenu;
         mainMenu.AddItem(appMenu);
+    }
+
+    static void AddDefaultEditMenu(NSMenu mainMenu)
+    {
+        var editMenuItem = new NSMenuItem("Edit");
+        var editMenu = new NSMenu("Edit");
+
+        editMenu.AddItem(new NSMenuItem("Undo", new ObjCRuntime.Selector("undo:"), "z"));
+
+        var redoItem = new NSMenuItem("Redo", new ObjCRuntime.Selector("redo:"), "z");
+        redoItem.KeyEquivalentModifierMask = NSEventModifierMask.CommandKeyMask | NSEventModifierMask.ShiftKeyMask;
+        editMenu.AddItem(redoItem);
+
+        editMenu.AddItem(NSMenuItem.SeparatorItem);
+
+        editMenu.AddItem(new NSMenuItem("Cut", new ObjCRuntime.Selector("cut:"), "x"));
+        editMenu.AddItem(new NSMenuItem("Copy", new ObjCRuntime.Selector("copy:"), "c"));
+        editMenu.AddItem(new NSMenuItem("Paste", new ObjCRuntime.Selector("paste:"), "v"));
+        editMenu.AddItem(new NSMenuItem("Delete", new ObjCRuntime.Selector("delete:"), string.Empty));
+        editMenu.AddItem(new NSMenuItem("Select All", new ObjCRuntime.Selector("selectAll:"), "a"));
+
+        editMenuItem.Submenu = editMenu;
+        mainMenu.AddItem(editMenuItem);
+    }
+
+    static void AddDefaultWindowMenu(NSMenu mainMenu)
+    {
+        var windowMenuItem = new NSMenuItem("Window");
+        var windowMenu = new NSMenu("Window");
+
+        windowMenu.AddItem(new NSMenuItem("Minimize", new ObjCRuntime.Selector("performMiniaturize:"), "m"));
+        windowMenu.AddItem(new NSMenuItem("Zoom", new ObjCRuntime.Selector("performZoom:"), string.Empty));
+
+        windowMenu.AddItem(NSMenuItem.SeparatorItem);
+
+        var fullScreenItem = new NSMenuItem("Toggle Full Screen", new ObjCRuntime.Selector("toggleFullScreen:"), "f");
+        fullScreenItem.KeyEquivalentModifierMask = NSEventModifierMask.CommandKeyMask | NSEventModifierMask.ControlKeyMask;
+        windowMenu.AddItem(fullScreenItem);
+
+        windowMenuItem.Submenu = windowMenu;
+        mainMenu.AddItem(windowMenuItem);
+
+        // Let macOS auto-add open windows to this menu
+        NSApplication.SharedApplication.WindowsMenu = windowMenu;
     }
 
     static string GetKeyEquivalent(KeyboardAccelerator accelerator)
