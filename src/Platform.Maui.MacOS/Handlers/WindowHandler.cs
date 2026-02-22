@@ -1,7 +1,9 @@
 using CoreGraphics;
+using Foundation;
 using Microsoft.Maui.ApplicationModel;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Handlers;
+using Microsoft.Maui.Platform.MacOS.Hosting;
 using AppKit;
 
 namespace Microsoft.Maui.Platform.MacOS.Handlers;
@@ -73,6 +75,34 @@ internal class FlippedNSView : NSView
     }
 }
 
+/// <summary>
+/// Delegates window close events back to the MAUI WindowHandler so that
+/// closing via the red button properly fires IWindow.Destroying() and
+/// removes the window from the tracked list.
+/// </summary>
+internal class MacOSWindowDelegate : NSWindowDelegate
+{
+    readonly WeakReference<WindowHandler> _handlerRef;
+
+    public MacOSWindowDelegate(WindowHandler handler)
+    {
+        _handlerRef = new WeakReference<WindowHandler>(handler);
+    }
+
+    public override bool WindowShouldClose(NSObject sender)
+    {
+        return true;
+    }
+
+    public override void WillClose(NSNotification notification)
+    {
+        if (!_handlerRef.TryGetTarget(out var handler))
+            return;
+
+        handler.OnWindowClosed();
+    }
+}
+
 public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
 {
     public static readonly IPropertyMapper<IWindow, WindowHandler> Mapper =
@@ -93,9 +123,29 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
     FlippedNSView? _contentContainer;
     MacOSToolbarManager? _toolbarManager;
     MacOSModalManager? _modalManager;
+    MacOSWindowDelegate? _windowDelegate;
+    static int _windowCascadeOffset;
 
     public WindowHandler() : base(Mapper)
     {
+    }
+
+    /// <summary>
+    /// Called by MacOSWindowDelegate when the NSWindow is closed (red button or programmatically).
+    /// Fires IWindow.Destroying() and removes the window from the tracked list.
+    /// </summary>
+    internal void OnWindowClosed()
+    {
+        if (VirtualView is IWindow window)
+        {
+            window.Destroying();
+
+            if (IPlatformApplication.Current is MacOSMauiApplication macApp)
+                macApp.RemoveWindow(window);
+        }
+
+        UnsubscribeModalEvents();
+        UnsubscribePageChanges();
     }
 
     protected override NSWindow CreatePlatformElement()
@@ -108,6 +158,15 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
             false);
 
         window.Center();
+
+        // Cascade additional windows so they don't stack on top of each other
+        if (_windowCascadeOffset > 0)
+        {
+            var origin = window.Frame.Location;
+            window.SetFrameOrigin(new CGPoint(origin.X + 20 * _windowCascadeOffset, origin.Y - 20 * _windowCascadeOffset));
+        }
+        _windowCascadeOffset++;
+
         window.ToolbarStyle = NSWindowToolbarStyle.Unified;
         window.TitleVisibility = NSWindowTitleVisibility.Hidden;
         window.TitlebarAppearsTransparent = true;
@@ -122,6 +181,10 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
 
         // Create the modal manager
         _modalManager = new MacOSModalManager(_contentContainer);
+
+        // Set the window delegate to handle close events
+        _windowDelegate = new MacOSWindowDelegate(this);
+        window.Delegate = _windowDelegate;
 
         window.MakeKeyAndOrderFront(null);
 

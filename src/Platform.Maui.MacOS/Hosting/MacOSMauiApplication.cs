@@ -11,11 +11,22 @@ namespace Microsoft.Maui.Platform.MacOS.Hosting;
 public abstract class MacOSMauiApplication : NSApplicationDelegate, IPlatformApplication
 {
     IApplication _mauiApp = null!;
-    IWindow? _virtualWindow;
+    readonly List<IWindow> _windows = new();
+    MacOSMauiContext? _applicationContext;
 
     public IServiceProvider Services { get; protected set; } = null!;
 
     public IApplication Application => _mauiApp;
+
+    /// <summary>
+    /// All currently tracked MAUI windows.
+    /// </summary>
+    public IReadOnlyList<IWindow> Windows => _windows;
+
+    /// <summary>
+    /// The application-scoped MAUI context, used to create window scopes.
+    /// </summary>
+    internal MacOSMauiContext? ApplicationContext => _applicationContext;
 
     protected abstract MauiApp CreateMauiApp();
 
@@ -29,6 +40,7 @@ public abstract class MacOSMauiApplication : NSApplicationDelegate, IPlatformApp
 
             var rootContext = new MacOSMauiContext(mauiApp.Services);
             var applicationContext = rootContext.MakeApplicationScope(this);
+            _applicationContext = applicationContext;
 
             Services = applicationContext.Services;
 
@@ -60,35 +72,35 @@ public abstract class MacOSMauiApplication : NSApplicationDelegate, IPlatformApp
     [Export("applicationDidBecomeActive:")]
     public void ApplicationDidBecomeActive(NSNotification notification)
     {
-        _virtualWindow?.Activated();
+        foreach (var w in _windows) w.Activated();
         FireLifecycleEvents<MacOSLifecycle.DidBecomeActive>(del => del(notification));
     }
 
     [Export("applicationDidResignActive:")]
     public void ApplicationDidResignActive(NSNotification notification)
     {
-        _virtualWindow?.Deactivated();
+        foreach (var w in _windows) w.Deactivated();
         FireLifecycleEvents<MacOSLifecycle.DidResignActive>(del => del(notification));
     }
 
     [Export("applicationDidHide:")]
     public void ApplicationDidHide(NSNotification notification)
     {
-        _virtualWindow?.Stopped();
+        foreach (var w in _windows) w.Stopped();
         FireLifecycleEvents<MacOSLifecycle.DidHide>(del => del(notification));
     }
 
     [Export("applicationDidUnhide:")]
     public void ApplicationDidUnhide(NSNotification notification)
     {
-        _virtualWindow?.Resumed();
+        foreach (var w in _windows) w.Resumed();
         FireLifecycleEvents<MacOSLifecycle.DidUnhide>(del => del(notification));
     }
 
     [Export("applicationWillTerminate:")]
     public void ApplicationWillTerminate(NSNotification notification)
     {
-        _virtualWindow?.Destroying();
+        foreach (var w in _windows.ToArray()) w.Destroying();
         FireLifecycleEvents<MacOSLifecycle.WillTerminate>(del => del(notification));
     }
 
@@ -100,8 +112,16 @@ public abstract class MacOSMauiApplication : NSApplicationDelegate, IPlatformApp
 
     private void CreatePlatformWindow(MacOSMauiContext applicationContext)
     {
-        var virtualWindow = _mauiApp.CreateWindow(null);
-        _virtualWindow = virtualWindow;
+        CreatePlatformWindow(applicationContext, null);
+    }
+
+    internal void CreatePlatformWindow(MacOSMauiContext applicationContext, Microsoft.Maui.Handlers.OpenWindowRequest? request)
+    {
+        var activationState = request?.State is IPersistedState state
+            ? new ActivationState(applicationContext, state)
+            : new ActivationState(applicationContext);
+        var virtualWindow = _mauiApp.CreateWindow(activationState);
+        AddWindow(virtualWindow);
 
         var windowContext = applicationContext.MakeWindowScope(new NSWindow());
 
@@ -112,6 +132,10 @@ public abstract class MacOSMauiApplication : NSApplicationDelegate, IPlatformApp
         virtualWindow.Created();
         virtualWindow.Activated();
     }
+
+    internal void AddWindow(IWindow window) => _windows.Add(window);
+
+    internal void RemoveWindow(IWindow window) => _windows.Remove(window);
 
     void FireLifecycleEvents<TDelegate>(Action<TDelegate> action) where TDelegate : Delegate
     {

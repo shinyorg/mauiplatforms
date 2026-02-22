@@ -1,5 +1,6 @@
 using Foundation;
 using Microsoft.Maui.Handlers;
+using Microsoft.Maui.Platform.MacOS.Hosting;
 using AppKit;
 
 namespace Microsoft.Maui.Platform.MacOS.Handlers;
@@ -29,11 +30,24 @@ public partial class ApplicationHandler : ElementHandler<IApplication, NSObject>
 
     public static void MapOpenWindow(ApplicationHandler handler, IApplication application, object? args)
     {
-        // Single-window for now, no-op for additional windows
+        if (IPlatformApplication.Current is not MacOSMauiApplication macApp)
+            return;
+
+        var appContext = macApp.ApplicationContext;
+        if (appContext == null)
+            return;
+
+        macApp.CreatePlatformWindow(appContext, args as OpenWindowRequest);
     }
 
     public static void MapCloseWindow(ApplicationHandler handler, IApplication application, object? args)
     {
-        // Single-window for now, no-op
+        if (args is not IWindow window)
+            return;
+
+        if (window.Handler?.PlatformView is NSWindow nsWindow)
+        {
+            nsWindow.Close();
+        }
     }
 }
