@@ -100,7 +100,16 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
 
     protected override NSWindow CreatePlatformElement()
     {
-        var style = NSWindowStyle.Titled | NSWindowStyle.Closable | NSWindowStyle.Resizable | NSWindowStyle.Miniaturizable | NSWindowStyle.FullSizeContentView;
+        // Read attached properties from the MAUI Window
+        var mauiWindow = VirtualView as BindableObject;
+        var fullSizeContent = mauiWindow != null ? MacOSWindow.GetFullSizeContent(mauiWindow) : true;
+        var titlebarTransparent = mauiWindow != null ? MacOSWindow.GetTitlebarTransparent(mauiWindow) : true;
+        var titleVisible = mauiWindow != null ? MacOSWindow.GetTitleVisible(mauiWindow) : false;
+
+        var style = NSWindowStyle.Titled | NSWindowStyle.Closable | NSWindowStyle.Resizable | NSWindowStyle.Miniaturizable;
+        if (fullSizeContent)
+            style |= NSWindowStyle.FullSizeContentView;
+
         var window = new NSWindow(
             new CGRect(0, 0, 1280, 720),
             style,
@@ -109,8 +118,8 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
 
         window.Center();
         window.ToolbarStyle = NSWindowToolbarStyle.Unified;
-        window.TitleVisibility = NSWindowTitleVisibility.Hidden;
-        window.TitlebarAppearsTransparent = true;
+        window.TitleVisibility = titleVisible ? NSWindowTitleVisibility.Visible : NSWindowTitleVisibility.Hidden;
+        window.TitlebarAppearsTransparent = titlebarTransparent;
 
         // Use a flipped NSView as ContentView so subviews use top-left origin
         _contentContainer = new FlippedNSView();
