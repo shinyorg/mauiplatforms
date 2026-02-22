@@ -126,6 +126,9 @@
         <Compile Include="..\Sample\Pages\FormattedTextPage.cs">
             <Link>Pages\FormattedTextPage.cs</Link>
         </Compile>
+        <Compile Include="..\Sample\Pages\MenuBarPage.cs">
+            <Link>Pages\MenuBarPage.cs</Link>
+        </Compile>
     </ItemGroup>
 
     <ItemGroup>
