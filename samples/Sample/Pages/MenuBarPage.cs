@@ -254,7 +254,13 @@ public class MenuBarPage : ContentPage
 		_statusLabel.Text = "Edit menu overridden with custom items (Find, Replace).";
 	}
 
-	void UpdateCount() => _countLabel.Text = $"Current custom menus: {MenuBarItems.Count}";
+	void UpdateCount()
+	{
+		_countLabel.Text = $"Current custom menus: {MenuBarItems.Count}";
+		// MenuBarItems is a plain List — mutating it doesn't fire property change.
+		// Force the handler to re-read the collection and rebuild the native menu.
+		Handler?.UpdateValue(nameof(ContentPage.MenuBarItems));
+	}
 
 	static Label SectionHeader(string text) => new Label
 	{
