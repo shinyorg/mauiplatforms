@@ -19,4 +19,10 @@
         <ProjectReference Include="..\Platform.Maui.MacOS\Platform.Maui.MacOS.csproj" />
     </ItemGroup>
 
+    <!-- Pack build props/targets so consuming apps automatically get blazor.webview.js in their app bundle -->
+    <ItemGroup>
+        <None Include="build\**" Pack="true" PackagePath="build" />
+        <None Include="build\**" Pack="true" PackagePath="buildTransitive" />
+    </ItemGroup>
+
 </Project>

@@ -29,6 +29,8 @@
 
     <!-- Import Platform.Maui.MacOS build targets (normally comes from NuGet package) -->
     <Import Project="..\..\src\Platform.Maui.MacOS\build\Platform.Maui.MacOS.targets" />
+    <!-- Import BlazorWebView build targets (normally comes from NuGet package) -->
+    <Import Project="..\..\src\Platform.Maui.MacOS.BlazorWebView\build\Platform.Maui.MacOS.BlazorWebView.targets" />
 
     <ItemGroup>
         <Compile Include="..\Sample\Platforms\macOS\App.cs">
