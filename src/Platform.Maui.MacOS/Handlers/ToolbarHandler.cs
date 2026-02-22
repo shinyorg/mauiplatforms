@@ -171,8 +171,12 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
         // Flexible space between left nav items and centered title
         _itemIdentifiers.Add(FlexibleSpaceId);
 
-        // Centered title (since window title is hidden)
-        _itemIdentifiers.Add(TitleId);
+        // Centered title (only when window titlebar is transparent/hidden)
+        var showToolbarTitle = _window == null || _window.TitlebarAppearsTransparent;
+        if (showToolbarTitle)
+        {
+            _itemIdentifiers.Add(TitleId);
+        }
 
         // Flexible space between title and right-side toolbar items
         _itemIdentifiers.Add(FlexibleSpaceId);

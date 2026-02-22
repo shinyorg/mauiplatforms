@@ -56,6 +56,7 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 	// Maps leaf MacOSSidebarItem → (ShellItem, ShellSection, ShellContent)
 	Dictionary<MacOSSidebarItem, (ShellItem, ShellSection, ShellContent)>? _itemNavMap;
 	bool _isUpdatingSelection;
+	NSVisualEffectView? _contentTitlebarBlur;
 
 	public ShellHandler() : base(Mapper, CommandMapper)
 	{
@@ -140,11 +141,20 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 		_contentView.WantsLayer = true;
 		_contentView.Layer!.MasksToBounds = true;
 
+		// Blur/fade overlay at top of content area (under titlebar region)
+		_contentTitlebarBlur = new NSVisualEffectView
+		{
+			BlendingMode = NSVisualEffectBlendingMode.WithinWindow,
+			Material = NSVisualEffectMaterial.HeaderView,
+			State = NSVisualEffectState.Active,
+		};
+
 		// Draggable divider between sidebar and content
 		_dividerView = new DividerView(this);
 
 		_container.AddSubview(_sidebarView);
 		_container.AddSubview(_contentView);
+		_contentView.AddSubview(_contentTitlebarBlur);
 		_container.AddSubview(_dividerView);
 
 		return _container;
@@ -238,10 +248,21 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 
 	nfloat GetTitlebarHeight()
 	{
-		// The traffic light buttons (close/minimize/maximize) need ~28px clearance.
-		// SafeAreaInsets.Top and ContentLayoutRect both return the full unified
-		// toolbar height (52px) which is too much when TitlebarAppearsTransparent
-		// is set and TitleVisibility is hidden.
+		var window = _container?.Window;
+		if (window == null)
+			return 28;
+
+		// When TitlebarAppearsTransparent=true and TitleVisibility=Hidden,
+		// we only need clearance for the traffic light buttons (~28px).
+		// When the titlebar is visible (opaque), use the actual titlebar height
+		// from the difference between frame and content layout rect.
+		if (!window.TitlebarAppearsTransparent)
+		{
+			var frame = window.ContentView?.Frame ?? window.Frame;
+			var contentRect = window.ContentLayoutRect;
+			return (nfloat)(frame.Height - contentRect.Height);
+		}
+
 		return 28;
 	}
 
@@ -288,6 +309,16 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 		var contentX = sidebarWidth + 1;
 		var contentWidth = rect.Width - contentX;
 		_contentView.Frame = new CGRect(contentX, 0, contentWidth, rect.Height);
+
+		// Position the titlebar blur overlay at the top of the content area
+		if (_contentTitlebarBlur != null)
+		{
+			var blurHeight = GetTitlebarHeight();
+			_contentTitlebarBlur.Frame = new CGRect(0, 0, contentWidth, blurHeight);
+			// Ensure it's always on top of page content
+			_contentTitlebarBlur.RemoveFromSuperview();
+			_contentView.AddSubview(_contentTitlebarBlur);
+		}
 
 		if (_currentPageView != null)
 		{
