@@ -11,12 +11,13 @@ namespace Microsoft.Maui.Platform.MacOS.Handlers;
 /// </summary>
 public class MacOSToolbarManager : NSObject, INSToolbarDelegate
 {
-    const string ToolbarId = "MauiToolbar";
+    const string ToolbarIdPrefix = "MauiToolbar_";
     const string ItemIdPrefix = "MauiToolbarItem_";
     const string FlexibleSpaceId = "NSToolbarFlexibleSpaceItem";
     const string SidebarToggleId = "MauiSidebarToggle";
     const string BackButtonId = "MauiBackButton";
     const string TitleId = "MauiTitle";
+    static int _toolbarCounter;
 
     NSWindow? _window;
     NSToolbar? _toolbar;
@@ -30,7 +31,8 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
     public void AttachToWindow(NSWindow window)
     {
         _window = window;
-        _toolbar = new NSToolbar(ToolbarId)
+        var toolbarId = $"{ToolbarIdPrefix}{_toolbarCounter++}";
+        _toolbar = new NSToolbar(toolbarId)
         {
             Delegate = this,
             DisplayMode = NSToolbarDisplayMode.Icon,
