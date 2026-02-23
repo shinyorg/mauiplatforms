@@ -221,12 +221,18 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
         // Shell with NSSplitViewController: set as window's contentViewController
         // so the system provides proper sidebar titlebar integration (traffic lights
         // inside the sidebar, behind-window vibrancy, inset rounded corners).
-        if (page is Shell && pageHandler is ShellHandler shellHandler && shellHandler.SplitViewController != null)
+        NSSplitViewController? splitVC = null;
+        if (page is Shell && pageHandler is ShellHandler shellHandler)
+            splitVC = shellHandler.SplitViewController;
+        else if (page is FlyoutPage && pageHandler is FlyoutPageHandler flyoutHandler)
+            splitVC = flyoutHandler.PlatformView.SplitViewController;
+
+        if (splitVC != null)
         {
             // Preserve the window frame — setting contentViewController can resize it
             var savedFrame = handler.PlatformView.Frame;
 
-            handler.PlatformView.ContentViewController = shellHandler.SplitViewController;
+            handler.PlatformView.ContentViewController = splitVC;
 
             // Restore the original window frame
             handler.PlatformView.SetFrame(savedFrame, true);

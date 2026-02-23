@@ -9,6 +9,23 @@ namespace Microsoft.Maui.Platform.MacOS;
 public static class MacOSFlyoutPage
 {
 	/// <summary>
+	/// When true, FlyoutPage uses NSSplitViewController for the native inset sidebar
+	/// appearance with behind-window vibrancy and traffic lights inside the sidebar.
+	/// </summary>
+	public static readonly BindableProperty UseNativeSidebarProperty =
+		BindableProperty.CreateAttached(
+			"UseNativeSidebar",
+			typeof(bool),
+			typeof(MacOSFlyoutPage),
+			false);
+
+	public static bool GetUseNativeSidebar(BindableObject obj)
+		=> (bool)obj.GetValue(UseNativeSidebarProperty);
+
+	public static void SetUseNativeSidebar(BindableObject obj, bool value)
+		=> obj.SetValue(UseNativeSidebarProperty, value);
+
+	/// <summary>
 	/// Provides structured sidebar items for the native NSOutlineView source list.
 	/// </summary>
 	public static readonly BindableProperty SidebarItemsProperty =

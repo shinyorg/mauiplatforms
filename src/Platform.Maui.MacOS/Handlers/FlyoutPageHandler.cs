@@ -8,10 +8,12 @@ namespace Microsoft.Maui.Platform.MacOS.Handlers;
 
 /// <summary>
 /// Container view for FlyoutPage that uses NSSplitView for a native macOS sidebar experience.
+/// When <paramref name="useNativeSidebar"/> is true, uses NSSplitViewController for
+/// inset sidebar with behind-window vibrancy and titlebar integration.
 /// </summary>
 public class FlyoutContainerView : MacOSContainerView, INSSplitViewDelegate
 {
-    readonly NSSplitView _splitView;
+    NSSplitView _splitView;
     readonly NSView _flyoutContainer;
     readonly NSView _detailContainer;
 
@@ -19,6 +21,17 @@ public class FlyoutContainerView : MacOSContainerView, INSSplitViewDelegate
     NSView? _currentDetailView;
     bool _initialDividerSet;
     NSLayoutConstraint? _flyoutWidthConstraint;
+
+    // NSSplitViewController mode (native sidebar)
+    NSSplitViewController? _splitViewController;
+    NSSplitViewItem? _sidebarSplitItem;
+    readonly bool _useNativeSidebar;
+
+    /// <summary>
+    /// Exposes the NSSplitViewController so WindowHandler can set it as
+    /// the window's contentViewController for titlebar integration.
+    /// </summary>
+    internal NSSplitViewController? SplitViewController => _splitViewController;
 
     public Action<CGRect>? OnFlyoutLayout { get; set; }
     public Action<CGRect>? OnDetailLayout { get; set; }
@@ -30,46 +43,107 @@ public class FlyoutContainerView : MacOSContainerView, INSSplitViewDelegate
         set
         {
             _flyoutWidth = value;
-            if (_flyoutWidthConstraint != null)
-                _flyoutWidthConstraint.Constant = (nfloat)value;
-            _splitView.SetPositionOfDivider((nfloat)value, 0);
+            if (_useNativeSidebar && _sidebarSplitItem != null)
+            {
+                _splitViewController?.SplitView?.SetPositionOfDivider((nfloat)value, 0);
+            }
+            else
+            {
+                if (_flyoutWidthConstraint != null)
+                    _flyoutWidthConstraint.Constant = (nfloat)value;
+                _splitView.SetPositionOfDivider((nfloat)value, 0);
+            }
         }
     }
 
-    public FlyoutContainerView()
+    public FlyoutContainerView(bool useNativeSidebar = false)
     {
-        _flyoutContainer = new NSView { WantsLayer = true, TranslatesAutoresizingMaskIntoConstraints = false };
-        _detailContainer = new NSView { WantsLayer = true };
+        _useNativeSidebar = useNativeSidebar;
 
-        _splitView = new NSSplitView
+        if (_useNativeSidebar)
         {
-            IsVertical = true,
-            DividerStyle = NSSplitViewDividerStyle.Thin,
-            TranslatesAutoresizingMaskIntoConstraints = false,
-            Delegate = this,
-        };
+            // NSSplitViewController mode — inset sidebar with vibrancy
+            _flyoutContainer = new NSVisualEffectView
+            {
+                BlendingMode = NSVisualEffectBlendingMode.BehindWindow,
+                Material = NSVisualEffectMaterial.Sidebar,
+                State = NSVisualEffectState.FollowsWindowActiveState,
+            };
+            _detailContainer = new FlippedDocumentView();
+            _detailContainer.WantsLayer = true;
+            ((FlippedDocumentView)_detailContainer).Layer!.MasksToBounds = true;
 
-        _splitView.AddArrangedSubview(_flyoutContainer);
-        _splitView.AddArrangedSubview(_detailContainer);
+            // Observe frame changes to re-layout MAUI content
+            _detailContainer.PostsFrameChangedNotifications = true;
+            Foundation.NSNotificationCenter.DefaultCenter.AddObserver(
+                NSView.FrameChangedNotification, OnDetailFrameChanged, _detailContainer);
 
-        // Pin flyout width with a high-priority constraint
-        _flyoutWidthConstraint = _flyoutContainer.WidthAnchor.ConstraintEqualTo((nfloat)_flyoutWidth);
-        _flyoutWidthConstraint.Priority = (float)NSLayoutPriority.DefaultHigh; // 750
-        _flyoutWidthConstraint.Active = true;
+            _splitViewController = new NSSplitViewController();
 
-        // Flyout keeps its width; detail absorbs all resize
-        _splitView.SetHoldingPriority(251, 0);
-        _splitView.SetHoldingPriority(249, 1);
+            var sidebarVC = new NSViewController { View = _flyoutContainer };
+            var contentVC = new NSViewController { View = _detailContainer };
 
-        AddSubview(_splitView);
+            _sidebarSplitItem = NSSplitViewItem.CreateSidebar(sidebarVC);
+            _sidebarSplitItem.MinimumThickness = 150;
+            _sidebarSplitItem.MaximumThickness = 400;
+            _sidebarSplitItem.CanCollapse = false;
+            _sidebarSplitItem.AllowsFullHeightLayout = true;
+            _sidebarSplitItem.TitlebarSeparatorStyle = NSTitlebarSeparatorStyle.None;
 
-        NSLayoutConstraint.ActivateConstraints(new[]
+            var contentItem = NSSplitViewItem.CreateContentList(contentVC);
+            contentItem.TitlebarSeparatorStyle = NSTitlebarSeparatorStyle.Line;
+
+            _splitViewController.AddSplitViewItem(_sidebarSplitItem);
+            _splitViewController.AddSplitViewItem(contentItem);
+
+            _splitView = _splitViewController.SplitView;
+
+            // Embed the split view controller's view
+            var splitVCView = _splitViewController.View;
+            splitVCView.TranslatesAutoresizingMaskIntoConstraints = false;
+            AddSubview(splitVCView);
+            NSLayoutConstraint.ActivateConstraints(new[]
+            {
+                splitVCView.TopAnchor.ConstraintEqualTo(TopAnchor),
+                splitVCView.LeadingAnchor.ConstraintEqualTo(LeadingAnchor),
+                splitVCView.TrailingAnchor.ConstraintEqualTo(TrailingAnchor),
+                splitVCView.BottomAnchor.ConstraintEqualTo(BottomAnchor),
+            });
+        }
+        else
         {
-            _splitView.TopAnchor.ConstraintEqualTo(TopAnchor),
-            _splitView.LeadingAnchor.ConstraintEqualTo(LeadingAnchor),
-            _splitView.TrailingAnchor.ConstraintEqualTo(TrailingAnchor),
-            _splitView.BottomAnchor.ConstraintEqualTo(BottomAnchor),
-        });
+            // Plain NSSplitView mode (original behavior)
+            _flyoutContainer = new NSView { WantsLayer = true, TranslatesAutoresizingMaskIntoConstraints = false };
+            _detailContainer = new NSView { WantsLayer = true };
+
+            _splitView = new NSSplitView
+            {
+                IsVertical = true,
+                DividerStyle = NSSplitViewDividerStyle.Thin,
+                TranslatesAutoresizingMaskIntoConstraints = false,
+                Delegate = this,
+            };
+
+            _splitView.AddArrangedSubview(_flyoutContainer);
+            _splitView.AddArrangedSubview(_detailContainer);
+
+            _flyoutWidthConstraint = _flyoutContainer.WidthAnchor.ConstraintEqualTo((nfloat)_flyoutWidth);
+            _flyoutWidthConstraint.Priority = (float)NSLayoutPriority.DefaultHigh;
+            _flyoutWidthConstraint.Active = true;
+
+            _splitView.SetHoldingPriority(251, 0);
+            _splitView.SetHoldingPriority(249, 1);
+
+            AddSubview(_splitView);
+
+            NSLayoutConstraint.ActivateConstraints(new[]
+            {
+                _splitView.TopAnchor.ConstraintEqualTo(TopAnchor),
+                _splitView.LeadingAnchor.ConstraintEqualTo(LeadingAnchor),
+                _splitView.TrailingAnchor.ConstraintEqualTo(TrailingAnchor),
+                _splitView.BottomAnchor.ConstraintEqualTo(BottomAnchor),
+            });
+        }
     }
 
     public void ShowFlyout(NSView view)
@@ -94,6 +168,12 @@ public class FlyoutContainerView : MacOSContainerView, INSSplitViewDelegate
 
     public void SetFlyoutVisible(bool visible)
     {
+        if (_useNativeSidebar && _sidebarSplitItem != null)
+        {
+            _sidebarSplitItem.Collapsed = !visible;
+            return;
+        }
+
         if (visible)
         {
             if (_splitView.IsSubviewCollapsed(_flyoutContainer))
@@ -103,6 +183,19 @@ public class FlyoutContainerView : MacOSContainerView, INSSplitViewDelegate
         {
             _splitView.SetPositionOfDivider(0, 0);
         }
+    }
+
+    void OnDetailFrameChanged(Foundation.NSNotification notification)
+    {
+        if (_currentDetailView == null)
+            return;
+
+        var bounds = _detailContainer.Bounds;
+        if (bounds.Width <= 0 || bounds.Height <= 0)
+            return;
+
+        _currentDetailView.Frame = bounds;
+        OnDetailLayout?.Invoke(bounds);
     }
 
     public override void Layout()
@@ -170,7 +263,9 @@ public partial class FlyoutPageHandler : MacOSViewHandler<IFlyoutView, FlyoutCon
 
     protected override FlyoutContainerView CreatePlatformView()
     {
-        var view = new FlyoutContainerView();
+        bool useNative = VirtualView is Microsoft.Maui.Controls.FlyoutPage fp
+            && MacOSFlyoutPage.GetUseNativeSidebar(fp);
+        var view = new FlyoutContainerView(useNative);
         view.OnFlyoutLayout = OnFlyoutLayout;
         view.OnDetailLayout = OnDetailLayout;
         return view;

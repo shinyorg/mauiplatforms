@@ -172,10 +172,13 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
 
         if (!needsToolbar)
         {
-            // When a Shell sidebar is active, the toolbar must remain attached
-            // (even if empty) for AllowsFullHeightLayout to extend the sidebar
-            // under the titlebar.  Only detach when there is no sidebar.
-            if (_shell == null)
+            // When a sidebar split view controller is active (Shell or FlyoutPage
+            // with UseNativeSidebar), the toolbar must remain attached (even if empty)
+            // for AllowsFullHeightLayout to extend the sidebar under the titlebar.
+            bool hasNativeSidebar = _shell != null
+                || (_flyoutPage != null && MacOSFlyoutPage.GetUseNativeSidebar(_flyoutPage));
+
+            if (!hasNativeSidebar)
             {
                 if (_window?.Toolbar != null)
                     _window.Toolbar = null;
