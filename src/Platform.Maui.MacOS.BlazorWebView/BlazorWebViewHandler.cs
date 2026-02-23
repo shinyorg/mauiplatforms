@@ -1,4 +1,5 @@
 using System.Globalization;
+using AppKit;
 using CoreGraphics;
 using Foundation;
 using Microsoft.AspNetCore.Components;
@@ -15,7 +16,10 @@ namespace Microsoft.Maui.Platform.MacOS.Handlers;
 public partial class BlazorWebViewHandler : MacOSViewHandler<MacOSBlazorWebView, WKWebView>
 {
     public static readonly IPropertyMapper<MacOSBlazorWebView, BlazorWebViewHandler> Mapper =
-        new PropertyMapper<MacOSBlazorWebView, BlazorWebViewHandler>(ViewMapper);
+        new PropertyMapper<MacOSBlazorWebView, BlazorWebViewHandler>(ViewMapper)
+        {
+            [nameof(MacOSBlazorWebView.ContentInsets)] = MapContentInsets,
+        };
 
     internal static string AppOrigin { get; } = "app://0.0.0.1/";
     internal static Uri AppOriginUri { get; } = new(AppOrigin);
@@ -75,6 +79,10 @@ public partial class BlazorWebViewHandler : MacOSViewHandler<MacOSBlazorWebView,
     {
         base.ConnectHandler(platformView);
         StartWebViewCoreIfPossible();
+
+        // Apply initial content insets
+        if (VirtualView is MacOSBlazorWebView macView)
+            MapContentInsets(this, macView);
     }
 
     protected override void DisconnectHandler(WKWebView platformView)
@@ -146,6 +154,46 @@ public partial class BlazorWebViewHandler : MacOSViewHandler<MacOSBlazorWebView,
         var height = double.IsPositiveInfinity(heightConstraint) ? 400 : heightConstraint;
         return new Size(width, height);
     }
+
+    public static void MapContentInsets(BlazorWebViewHandler handler, MacOSBlazorWebView view)
+    {
+        if (handler.PlatformView == null)
+            return;
+
+        var insets = view.ContentInsets;
+
+        // Skip if all insets are zero (default)
+        if (insets.Top == 0 && insets.Left == 0 && insets.Bottom == 0 && insets.Right == 0)
+            return;
+
+        var wkWebView = handler.PlatformView;
+
+        // Use objc_msgSend to call setObscuredContentInsets: directly (macOS 14+)
+        var selector = new ObjCRuntime.Selector("setObscuredContentInsets:");
+        if (wkWebView.RespondsToSelector(selector))
+        {
+            _objc_msgSend_NSEdgeInsets(wkWebView.Handle, selector.Handle,
+                new NSEdgeInsets((nfloat)insets.Top, (nfloat)insets.Left,
+                                (nfloat)insets.Bottom, (nfloat)insets.Right));
+            return;
+        }
+
+        // Fallback: _setTopContentInset: (private, older macOS versions)
+        if (insets.Top > 0)
+        {
+            var topSelector = new ObjCRuntime.Selector("_setTopContentInset:");
+            if (wkWebView.RespondsToSelector(topSelector))
+            {
+                _objc_msgSend_nfloat(wkWebView.Handle, topSelector.Handle, (nfloat)insets.Top);
+            }
+        }
+    }
+
+    [System.Runtime.InteropServices.DllImport(ObjCRuntime.Constants.ObjectiveCLibrary, EntryPoint = "objc_msgSend")]
+    static extern void _objc_msgSend_nfloat(IntPtr receiver, IntPtr selector, nfloat arg1);
+
+    [System.Runtime.InteropServices.DllImport(ObjCRuntime.Constants.ObjectiveCLibrary, EntryPoint = "objc_msgSend")]
+    static extern void _objc_msgSend_NSEdgeInsets(IntPtr receiver, IntPtr selector, NSEdgeInsets arg1);
 
     sealed class WebViewScriptMessageHandler : NSObject, IWKScriptMessageHandler
     {
