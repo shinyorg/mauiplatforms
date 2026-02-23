@@ -316,22 +316,31 @@ public partial class BlazorWebViewHandler : MacOSViewHandler<MacOSBlazorWebView,
             if (!window.StyleMask.HasFlag(NSWindowStyle.FullSizeContentView))
                 return;
 
-            // Titlebar height = frame height - content layout rect height
-            var titlebarHeight = window.Frame.Height - window.ContentLayoutRect.Height;
-            if (titlebarHeight <= 0)
-                titlebarHeight = 38; // sensible default
+            // The draggable zone covers the titlebar + toolbar area.
+            // frame.Height - contentLayoutRect.Height gives that combined height.
+            var overlayHeight = window.Frame.Height - window.ContentLayoutRect.Height;
+            if (overlayHeight <= 0)
+                overlayHeight = 38;
+
+            // Add overlay to the window's themeFrame (the top-level content view)
+            // so it covers the titlebar/toolbar zone even when the WebView is
+            // positioned below the toolbar by a split view controller.
+            // The overlay passes through events that land on toolbar items.
+            var themeFrame = window.ContentView?.Superview;
+            if (themeFrame == null)
+                return;
 
             _titlebarDragOverlay?.RemoveFromSuperview();
-            _titlebarDragOverlay = new TitlebarDragOverlayView(titlebarHeight);
+            _titlebarDragOverlay = new TitlebarDragOverlayView(overlayHeight);
             _titlebarDragOverlay.TranslatesAutoresizingMaskIntoConstraints = false;
-            webView.AddSubview(_titlebarDragOverlay);
+            themeFrame.AddSubview(_titlebarDragOverlay, NSWindowOrderingMode.Above, null);
 
             NSLayoutConstraint.ActivateConstraints(new[]
             {
-                _titlebarDragOverlay.LeadingAnchor.ConstraintEqualTo(webView.LeadingAnchor),
-                _titlebarDragOverlay.TrailingAnchor.ConstraintEqualTo(webView.TrailingAnchor),
-                _titlebarDragOverlay.TopAnchor.ConstraintEqualTo(webView.TopAnchor),
-                _titlebarDragOverlay.HeightAnchor.ConstraintEqualTo(titlebarHeight),
+                _titlebarDragOverlay.LeadingAnchor.ConstraintEqualTo(themeFrame.LeadingAnchor),
+                _titlebarDragOverlay.TrailingAnchor.ConstraintEqualTo(themeFrame.TrailingAnchor),
+                _titlebarDragOverlay.TopAnchor.ConstraintEqualTo(themeFrame.TopAnchor),
+                _titlebarDragOverlay.HeightAnchor.ConstraintEqualTo(overlayHeight),
             });
         }
 
@@ -378,14 +387,33 @@ public partial class BlazorWebViewHandler : MacOSViewHandler<MacOSBlazorWebView,
             // Convert point to our coordinate space
             var localPoint = ConvertPointFromView(point, Superview);
 
-            // Only capture events in the titlebar zone (top of the view)
-            if (localPoint.Y >= 0 && localPoint.Y <= _titlebarHeight
-                && localPoint.X >= 0 && localPoint.X <= Frame.Width)
+            // Only intercept events in our overlay zone
+            if (localPoint.Y < 0 || localPoint.Y > _titlebarHeight
+                || localPoint.X < 0 || localPoint.X > Frame.Width)
             {
-                return this;
+                return null!;
             }
 
-            return null!;
+            // Check if there's a toolbar item under this point — if so, pass through
+            // so toolbar buttons remain clickable
+            var window = Window;
+            if (window?.Toolbar != null)
+            {
+                // Convert to window coordinates and check if any toolbar item view
+                // contains this point
+                var windowPoint = ConvertPointToView(localPoint, null);
+                foreach (var item in window.Toolbar.Items)
+                {
+                    if (item.View != null && item.View.Window != null)
+                    {
+                        var itemPoint = item.View.ConvertPointFromView(windowPoint, null);
+                        if (item.View.Bounds.Contains(itemPoint))
+                            return null!; // let the toolbar item handle it
+                    }
+                }
+            }
+
+            return this;
         }
 
         public override void MouseDown(NSEvent theEvent)
