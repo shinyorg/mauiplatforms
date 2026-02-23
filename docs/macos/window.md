@@ -61,6 +61,30 @@ MacOSWindow.SetTitleVisibility(window, MacOSTitleVisibility.Hidden);
 | `Visible` | Show the title text (default) |
 | `Hidden` | Hide the title text |
 
+## Titlebar Separator Style
+
+Control the separator line between the titlebar/toolbar and the window content:
+
+```csharp
+MacOSWindow.SetTitlebarSeparatorStyle(window, MacOSTitlebarSeparatorStyle.None);
+```
+
+| Value | Description |
+|-------|-------------|
+| `Automatic` | System decides based on scroll position (default) |
+| `None` | No separator line — seamless transition from toolbar to content |
+| `Line` | Always show a thin separator line |
+
+> **Note:** Set this property in `OnAppearing` (not the constructor) — the `Window` must be available.
+
+```csharp
+protected override void OnAppearing()
+{
+    base.OnAppearing();
+    MacOSWindow.SetTitlebarSeparatorStyle(Window, MacOSTitlebarSeparatorStyle.None);
+}
+```
+
 ## Example: Modern App Appearance
 
 Combine these properties for a modern, unified look:
@@ -82,6 +106,7 @@ MacOSWindow.SetTitleVisibility(window, MacOSTitleVisibility.Hidden);
 | `TitlebarStyle` | `MacOSTitlebarStyle` | `Automatic` | Toolbar/titlebar integration style |
 | `TitlebarTransparent` | `bool` | `false` | Transparent titlebar |
 | `TitleVisibility` | `MacOSTitleVisibility` | `Visible` | Show/hide title text |
+| `TitlebarSeparatorStyle` | `MacOSTitlebarSeparatorStyle` | `Automatic` | Separator between toolbar and content |
 
 ### MacOSTitlebarStyle Enum
 
@@ -99,6 +124,14 @@ MacOSWindow.SetTitleVisibility(window, MacOSTitleVisibility.Hidden);
 |-------|-------------------|-------------|
 | `Visible` | `.Visible` | Title shown |
 | `Hidden` | `.Hidden` | Title hidden |
+
+### MacOSTitlebarSeparatorStyle Enum
+
+| Value | NSTitlebarSeparatorStyle | Description |
+|-------|--------------------------|-------------|
+| `Automatic` | `.Automatic` | System decides |
+| `None` | `.None` | No separator line |
+| `Line` | `.Line` | Always show separator |
 
 ## Common Patterns
 

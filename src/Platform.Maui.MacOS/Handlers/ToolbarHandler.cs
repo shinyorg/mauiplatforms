@@ -27,6 +27,7 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
     const string GroupIdPrefix = "MauiGroup_";
     const string ShareId = "MauiShareItem";
     const string PopUpIdPrefix = "MauiPopUp_";
+    const string ViewIdPrefix = "MauiView_";
     const nint SidebarItemTagOffset = 100000;
     static int _toolbarCounter;
 
@@ -59,6 +60,7 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
     readonly List<MacOSToolbarItemGroup> _groupItems = new();
     MacOSShareToolbarItem? _shareItem;
     readonly List<MacOSPopUpToolbarItem> _popUpItems = new();
+    readonly List<MacOSViewToolbarItem> _viewItems = new();
     bool _isRefreshing;
 
     public void AttachToWindow(NSWindow window)
@@ -214,7 +216,6 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
         CleanupSearchItem();
 
         bool hasBackButton = ShouldShowBackButton();
-        bool hasFlyoutToggle = _flyoutPage != null;
 
         // Resolve search item — can come from explicit layout or page-level property
         _searchItem = _currentPage != null ? MacOSToolbar.GetSearchItem(_currentPage) : null;
@@ -230,6 +231,9 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
         if (groupItems != null) _groupItems.AddRange(groupItems);
         var popUpItems = _currentPage != null ? MacOSToolbar.GetPopUpItems(_currentPage) : null;
         if (popUpItems != null) _popUpItems.AddRange(popUpItems);
+        _viewItems.Clear();
+        var viewItems = _currentPage != null ? MacOSToolbar.GetViewItems(_currentPage) : null;
+        if (viewItems != null) _viewItems.AddRange(viewItems);
 
         // Check for explicit layouts on the current page
         var explicitSidebarLayout = _currentPage != null
@@ -309,14 +313,15 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
         }
 
         bool hasSpecialItems = _searchItem != null || _menuItems.Count > 0
-            || _groupItems.Count > 0 || _shareItem != null || _popUpItems.Count > 0;
+            || _groupItems.Count > 0 || _shareItem != null || _popUpItems.Count > 0
+            || _viewItems.Count > 0;
         bool hasContentItems = contentItems.Count > 0 || hasExplicitContentLayout || hasSpecialItems;
         bool hasSidebarItems = hasExplicitSidebarLayout
             || sidebarLeading.Count > 0 || sidebarCenter.Count > 0 || sidebarTrailing.Count > 0;
         bool hasToolbarItems = hasContentItems || hasSidebarItems;
 
         // Only show the toolbar if there's meaningful content
-        bool needsToolbar = hasBackButton || hasFlyoutToggle || hasToolbarItems;
+        bool needsToolbar = hasBackButton || hasToolbarItems;
 
         if (!needsToolbar)
         {
@@ -352,9 +357,6 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
         // === Build toolbar item list ===
 
         // Sidebar area items (before tracking separator)
-        if (hasFlyoutToggle)
-            _itemIdentifiers.Add(SidebarToggleId);
-
         if (hasBackButton)
             _itemIdentifiers.Add(BackButtonId);
 
@@ -569,6 +571,9 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
             for (int pi = 0; pi < _popUpItems.Count; pi++)
                 if (_popUpItems[pi].Placement == MacOSToolbarItemPlacement.Content)
                     _itemIdentifiers.Add($"{PopUpIdPrefix}{pi}");
+            for (int vi = 0; vi < _viewItems.Count; vi++)
+                if (_viewItems[vi].Placement == MacOSToolbarItemPlacement.Content)
+                    _itemIdentifiers.Add($"{ViewIdPrefix}{vi}");
         }
 
 
@@ -732,6 +737,14 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
                 return CreatePopUpToolbarItem(itemIdentifier, _popUpItems[pIdx]);
         }
 
+        // Custom view toolbar items
+        if (itemIdentifier.StartsWith(ViewIdPrefix))
+        {
+            var indexStr = itemIdentifier.Substring(ViewIdPrefix.Length);
+            if (int.TryParse(indexStr, out int vIdx) && vIdx >= 0 && vIdx < _viewItems.Count)
+                return CreateViewToolbarItem(itemIdentifier, _viewItems[vIdx]);
+        }
+
         if (itemIdentifier.StartsWith(SidebarItemIdPrefix))
         {
             var indexStr = itemIdentifier.Substring(SidebarItemIdPrefix.Length);
@@ -770,8 +783,6 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
             PaletteLabel = mauiItem.Text ?? string.Empty,
             ToolTip = toolTip,
             Enabled = mauiItem.IsEnabled,
-            Target = this,
-            Action = new ObjCRuntime.Selector("toolbarItemClicked:"),
             Tag = effectiveTag,
             Bordered = MacOSToolbarItem.GetIsBordered(mauiItem),
         };
@@ -788,14 +799,6 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
                 (nfloat)tintColor.Red, (nfloat)tintColor.Green,
                 (nfloat)tintColor.Blue, (nfloat)tintColor.Alpha);
 
-        var button = new NSButton
-        {
-            BezelStyle = NSBezelStyle.TexturedRounded,
-            Tag = effectiveTag,
-            Target = this,
-            Action = new ObjCRuntime.Selector("toolbarItemClicked:"),
-        };
-
         // Check for SF Symbol icon via MacOSToolbarItem or IconImageSource
         var iconSource = mauiItem.IconImageSource;
         NSImage? image = null;
@@ -804,17 +807,33 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
 
         if (image != null)
         {
-            button.Image = image;
-            button.Title = string.Empty;
-            button.ImagePosition = NSCellImagePosition.ImageOnly;
+            // Icon items: use native NSToolbarItem rendering (Action/Target works)
+            nsItem.Image = image;
+            nsItem.Target = this;
+            nsItem.Action = new ObjCRuntime.Selector("toolbarItemClicked:");
         }
         else
         {
-            button.Title = mauiItem.Text ?? string.Empty;
+            // Text-only items: need an NSButton view for visible text rendering.
+            // Use Activated event on the button since Action/Target on view-based
+            // toolbar items doesn't dispatch reliably in .NET macOS bindings.
+            var button = new NSButton
+            {
+                BezelStyle = NSBezelStyle.TexturedRounded,
+                Title = mauiItem.Text ?? string.Empty,
+            };
+            button.SetButtonType(NSButtonType.MomentaryPushIn);
+
+            var capturedMauiItem = mauiItem;
+            button.Activated += (s, e) =>
+            {
+                if (capturedMauiItem.IsEnabled)
+                    ((IMenuItemController)capturedMauiItem).Activate();
+            };
+
+            nsItem.View = button;
         }
 
-        button.SetButtonType(NSButtonType.MomentaryPushIn);
-        nsItem.View = button;
         return nsItem;
     }
 
@@ -976,11 +995,17 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
             ShowsIndicator = menuItem.ShowsIndicator,
         };
 
+        NSImage? image = null;
         if (!string.IsNullOrEmpty(menuItem.Icon))
-        {
-            var image = NSImage.GetSystemSymbol(menuItem.Icon, null);
-            if (image != null) nsMenuItem.Image = image;
-        }
+            image = NSImage.GetSystemSymbol(menuItem.Icon, null);
+
+        if (image != null)
+            nsMenuItem.Image = image;
+
+        // ShowsTitle: set the title directly on the toolbar item — modern macOS
+        // renders icon + title together with native hover/click states when Bordered.
+        if (menuItem.ShowsTitle && !string.IsNullOrEmpty(menuItem.Text))
+            nsMenuItem.Title = menuItem.Text;
 
         nsMenuItem.Menu = BuildNSMenu(menuItem.Items);
         return nsMenuItem;
@@ -1031,81 +1056,57 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
 
     NSToolbarItem CreateGroupToolbarItem(string identifier, MacOSToolbarItemGroup group)
     {
-        var titles = new string[group.Segments.Count];
-        var images = new NSImage?[group.Segments.Count];
         var labels = new string[group.Segments.Count];
-        bool hasImages = false;
+        var images = new NSImage?[group.Segments.Count];
 
         for (int i = 0; i < group.Segments.Count; i++)
         {
             var seg = group.Segments[i];
-            titles[i] = seg.Text ?? string.Empty;
             labels[i] = seg.Label ?? seg.Text ?? string.Empty;
             if (!string.IsNullOrEmpty(seg.Icon))
-            {
                 images[i] = NSImage.GetSystemSymbol(seg.Icon, null);
-                if (images[i] != null) hasImages = true;
-            }
         }
 
-        var selMode = group.SelectionMode switch
+        // Skip NSToolbarItemGroup.Create entirely — its action/target never fires
+        // in .NET bindings. Instead, create a plain NSToolbarItem with our own
+        // NSSegmentedControl as its view.
+        var segControl = new NSSegmentedControl();
+        segControl.SegmentCount = group.Segments.Count;
+        segControl.SegmentStyle = NSSegmentStyle.Automatic;
+        segControl.TrackingMode = group.SelectionMode switch
         {
-            MacOSToolbarGroupSelectionMode.SelectOne => NSToolbarItemGroupSelectionMode.SelectOne,
-            MacOSToolbarGroupSelectionMode.SelectAny => NSToolbarItemGroupSelectionMode.SelectAny,
-            MacOSToolbarGroupSelectionMode.Momentary => NSToolbarItemGroupSelectionMode.Momentary,
-            _ => NSToolbarItemGroupSelectionMode.SelectOne,
+            MacOSToolbarGroupSelectionMode.SelectOne => NSSegmentSwitchTracking.SelectOne,
+            MacOSToolbarGroupSelectionMode.SelectAny => NSSegmentSwitchTracking.SelectAny,
+            _ => NSSegmentSwitchTracking.Momentary,
         };
-
-        NSToolbarItemGroup nsGroup;
-        if (hasImages)
+        for (int i = 0; i < group.Segments.Count; i++)
         {
-            var validImages = images.Select(img => img ?? new NSImage()).ToArray();
-            nsGroup = NSToolbarItemGroup.Create(identifier, validImages, selMode, labels, this,
-                new ObjCRuntime.Selector("groupItemClicked:"));
+            var seg = group.Segments[i];
+            segControl.SetLabel(seg.Text ?? string.Empty, i);
+            if (!string.IsNullOrEmpty(seg.Icon) && images[i] != null)
+                segControl.SetImage(images[i]!, i);
+            segControl.SetEnabled(seg.IsEnabled, i);
         }
-        else
-        {
-            nsGroup = NSToolbarItemGroup.Create(identifier, titles, selMode, labels, this,
-                new ObjCRuntime.Selector("groupItemClicked:"));
-        }
-
-        nsGroup.Label = group.Label ?? string.Empty;
-        nsGroup.PaletteLabel = group.Label ?? string.Empty;
-
-        // Set representation
-        nsGroup.ControlRepresentation = group.Representation switch
-        {
-            MacOSToolbarGroupRepresentation.Expanded => NSToolbarItemGroupControlRepresentation.Expanded,
-            MacOSToolbarGroupRepresentation.Collapsed => NSToolbarItemGroupControlRepresentation.Collapsed,
-            _ => NSToolbarItemGroupControlRepresentation.Automatic,
-        };
-
-        // Set initial selection
         if (group.SelectionMode == MacOSToolbarGroupSelectionMode.SelectOne && group.SelectedIndex >= 0)
-            nsGroup.SelectedIndex = group.SelectedIndex;
+            segControl.SelectedSegment = group.SelectedIndex;
 
-        return nsGroup;
-    }
-
-    [Export("groupItemClicked:")]
-    void OnGroupItemClicked(NSObject sender)
-    {
-        // Find which group was clicked by checking the sender's identifier
-        if (sender is NSToolbarItemGroup nsGroup)
+        var capturedGroup = group;
+        segControl.Activated += (s, e) =>
         {
-            var identifier = nsGroup.Identifier;
-            if (identifier.StartsWith(GroupIdPrefix) &&
-                int.TryParse(identifier.Substring(GroupIdPrefix.Length), out int gIdx) &&
-                gIdx >= 0 && gIdx < _groupItems.Count)
-            {
-                var group = _groupItems[gIdx];
-                var selected = new bool[group.Segments.Count];
-                for (int i = 0; i < group.Segments.Count; i++)
-                    selected[i] = nsGroup.GetSelected((nint)i);
-                group.SelectedIndex = (int)nsGroup.SelectedIndex;
-                group.RaiseSelectionChanged((int)nsGroup.SelectedIndex, selected);
-            }
-        }
+            var sc = (NSSegmentedControl)s!;
+            var selected = new bool[capturedGroup.Segments.Count];
+            for (int i = 0; i < capturedGroup.Segments.Count; i++)
+                selected[i] = sc.IsSelectedForSegment(i);
+            capturedGroup.SelectedIndex = (int)sc.SelectedSegment;
+            capturedGroup.RaiseSelectionChanged((int)sc.SelectedSegment, selected);
+        };
+
+        var nsItem = new NSToolbarItem(identifier);
+        nsItem.View = segControl;
+        nsItem.Label = group.Label ?? string.Empty;
+        nsItem.PaletteLabel = group.Label ?? string.Empty;
+
+        return nsItem;
     }
 
     // ── Share Toolbar Item ─────────────────────────────────────────────
@@ -1177,6 +1178,98 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
         };
 
         nsItem.View = button;
+        return nsItem;
+    }
+
+    // ── Custom View Toolbar Item ───────────────────────────────────────
+
+    NSToolbarItem CreateViewToolbarItem(string identifier, MacOSViewToolbarItem viewItem)
+    {
+        var nsItem = new NSToolbarItem(identifier)
+        {
+            Label = viewItem.Label ?? string.Empty,
+            PaletteLabel = viewItem.Label ?? string.Empty,
+        };
+
+        if (viewItem.View == null)
+            return nsItem;
+
+        // Get the MAUI handler's platform view
+        var mauiView = viewItem.View;
+
+        // Ensure the view has a handler by setting its parent to the current page
+        if (mauiView.Handler == null && _currentPage?.Handler?.MauiContext is IMauiContext mauiContext)
+        {
+            mauiView.Parent = _currentPage;
+            var handler = mauiView.ToHandler(mauiContext);
+        }
+
+        if (mauiView.Handler?.PlatformView is NSView platformView)
+        {
+            // Measure the MAUI view to get its desired size
+            nfloat toolbarHeight = 28;
+            var measured = mauiView.Measure(
+                viewItem.MaxWidth > 0 ? viewItem.MaxWidth : 400,
+                toolbarHeight);
+            var desiredWidth = (nfloat)Math.Ceiling(measured.Width);
+            var desiredHeight = toolbarHeight;
+
+            // Fallback: if MAUI measure returns 0, ask the native view
+            if (desiredWidth <= 0)
+            {
+                var fittingSize = platformView.FittingSize;
+                if (fittingSize.Width > 0)
+                    desiredWidth = (nfloat)Math.Ceiling(fittingSize.Width);
+                else
+                    desiredWidth = 150; // reasonable fallback
+            }
+
+            // Apply min/max bounds
+            if (viewItem.MinWidth > 0 && desiredWidth < viewItem.MinWidth)
+                desiredWidth = (nfloat)viewItem.MinWidth;
+            if (viewItem.MaxWidth > 0 && desiredWidth > viewItem.MaxWidth)
+                desiredWidth = (nfloat)viewItem.MaxWidth;
+
+            // Arrange the MAUI view at measured size
+            mauiView.Arrange(new Microsoft.Maui.Graphics.Rect(0, 0, desiredWidth, desiredHeight));
+
+            NSView itemView;
+            if (viewItem.ShowsToolbarButtonStyle)
+            {
+                // Wrap in an NSButton for native toolbar hover/click states
+                var button = new NSButton(new CoreGraphics.CGRect(0, 0, desiredWidth, desiredHeight));
+                button.BezelStyle = NSBezelStyle.TexturedRounded;
+                button.Bordered = true;
+                button.Title = string.Empty;
+                button.SetButtonType(NSButtonType.MomentaryPushIn);
+                button.ImagePosition = NSCellImagePosition.NoImage;
+
+                button.AddSubview(platformView);
+                platformView.TranslatesAutoresizingMaskIntoConstraints = false;
+                platformView.LeadingAnchor.ConstraintEqualTo(button.LeadingAnchor).Active = true;
+                platformView.TrailingAnchor.ConstraintEqualTo(button.TrailingAnchor).Active = true;
+                platformView.CenterYAnchor.ConstraintEqualTo(button.CenterYAnchor).Active = true;
+                platformView.HeightAnchor.ConstraintEqualTo(desiredHeight).Active = true;
+
+                var capturedViewItem = viewItem;
+                button.Activated += (_, _) => capturedViewItem.RaiseClicked();
+
+                itemView = button;
+            }
+            else
+            {
+                // Place the MAUI view directly — handle interactions via MAUI gestures
+                platformView.Frame = new CoreGraphics.CGRect(0, 0, desiredWidth, desiredHeight);
+                itemView = platformView;
+            }
+
+            nsItem.View = itemView;
+            nsItem.MinSize = new CoreGraphics.CGSize(desiredWidth, desiredHeight);
+            nsItem.MaxSize = new CoreGraphics.CGSize(
+                viewItem.MaxWidth > 0 ? (nfloat)viewItem.MaxWidth : desiredWidth,
+                desiredHeight);
+        }
+
         return nsItem;
     }
 

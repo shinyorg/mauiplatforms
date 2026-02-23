@@ -132,6 +132,7 @@ new MacOSMenuItem
 | `Text` | `string` | `""` | Button label |
 | `Icon` | `string?` | `null` | SF Symbol name |
 | `ShowsIndicator` | `bool` | `true` | Show dropdown chevron |
+| `ShowsTitle` | `bool` | `false` | Display icon and text side-by-side in the toolbar button |
 | `Items` | `List<MacOSMenuItem>` | `[]` | Menu items |
 | `Placement` | `MacOSToolbarItemPlacement` | `Content` | Toolbar area |
 
@@ -311,6 +312,108 @@ MacOSToolbar.SetPopUpItems(page, new List<MacOSPopUpToolbarItem> { format });
 |-------|------|-------------|
 | `SelectionChanged` | `MacOSToolbarGroupSelectionChangedEventArgs` | Selection changed |
 
+### Showing Icon + Title
+
+By default, menu toolbar items show only the icon. Set `ShowsTitle = true` to display both:
+
+```csharp
+var menu = new MacOSMenuToolbarItem
+{
+    Text = "My Identity",
+    Icon = "apple.logo",
+    ShowsTitle = true,
+    Items = new List<MacOSMenuItem>
+    {
+        new MacOSMenuItem { Text = "Profile" },
+        new MacOSMenuItem { Text = "Sign Out" },
+    }
+};
+```
+
+---
+
+## Custom View (MacOSViewToolbarItem)
+
+Embed any MAUI `View` in the toolbar. The view is measured and arranged at the toolbar's standard height (28pt).
+
+```csharp
+var viewItem = new MacOSViewToolbarItem
+{
+    Label = "Progress",
+    View = new HorizontalStackLayout
+    {
+        Spacing = 6,
+        Padding = new Thickness(8, 0),
+        VerticalOptions = LayoutOptions.Center,
+        Children =
+        {
+            new Label { Text = "Build:", FontSize = 12, VerticalOptions = LayoutOptions.Center },
+            new ProgressBar { Progress = 0.6, WidthRequest = 80, VerticalOptions = LayoutOptions.Center },
+            new Label { Text = "60%", FontSize = 12, VerticalOptions = LayoutOptions.Center },
+        }
+    },
+};
+
+MacOSToolbar.SetViewItems(page, new List<MacOSViewToolbarItem> { viewItem });
+```
+
+### Button Style (Hover/Click States)
+
+Set `ShowsToolbarButtonStyle = true` to wrap the view in a native toolbar button that provides hover highlighting and click states:
+
+```csharp
+var viewItem = new MacOSViewToolbarItem
+{
+    Label = "Status",
+    ShowsToolbarButtonStyle = true,
+    View = new Label
+    {
+        Text = "Ready",
+        Padding = new Thickness(8, 0),
+        VerticalTextAlignment = TextAlignment.Center,
+    },
+};
+
+viewItem.Clicked += (s, e) =>
+{
+    Console.WriteLine("Custom view toolbar item clicked");
+};
+```
+
+When `ShowsToolbarButtonStyle` is `false` (default), the MAUI view is placed directly — handle interactions via MAUI gesture recognizers or interactive controls (buttons, etc.) within the view.
+
+### Sizing
+
+The toolbar item auto-sizes to the MAUI view's measured width. Use `MinWidth` and `MaxWidth` to constrain:
+
+```csharp
+var viewItem = new MacOSViewToolbarItem
+{
+    MinWidth = 100,  // minimum width in points
+    MaxWidth = 300,  // maximum width in points
+    View = myView,
+};
+```
+
+The MAUI view controls all internal padding — the handler adds none.
+
+### Properties
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `View` | `View?` | `null` | The MAUI view to display |
+| `Label` | `string?` | `null` | Label for customization palette and overflow |
+| `MinWidth` | `double` | `0` | Minimum width (0 = auto) |
+| `MaxWidth` | `double` | `0` | Maximum width (0 = no limit) |
+| `ShowsToolbarButtonStyle` | `bool` | `false` | Wrap in native toolbar button for hover/click |
+| `Placement` | `MacOSToolbarItemPlacement` | `Content` | Toolbar area |
+
+### Events
+
+| Event | Description |
+|-------|-------------|
+| `Clicked` | Fired when clicked (requires `ShowsToolbarButtonStyle = true`) |
+
 ---
 
 ## Using in Explicit Layouts
@@ -342,5 +445,6 @@ Set these on a `ContentPage` to add items to the toolbar:
 | `MacOSToolbar.ItemGroups` | `IList<MacOSToolbarItemGroup>?` | Segmented controls |
 | `MacOSToolbar.ShareItem` | `MacOSShareToolbarItem?` | Share button |
 | `MacOSToolbar.PopUpItems` | `IList<MacOSPopUpToolbarItem>?` | Popup buttons |
+| `MacOSToolbar.ViewItems` | `IList<MacOSViewToolbarItem>?` | Custom MAUI views |
 | `MacOSToolbar.SidebarLayout` | `IList<MacOSToolbarLayoutItem>?` | Explicit sidebar layout |
 | `MacOSToolbar.ContentLayout` | `IList<MacOSToolbarLayoutItem>?` | Explicit content layout |

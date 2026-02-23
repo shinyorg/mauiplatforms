@@ -2,7 +2,11 @@
 
 Build native macOS sidebar navigation using `NSSplitViewController` with behind-window vibrancy, SF Symbol icons, and structured source-list groups.
 
-## Shell Sidebar
+## Setup
+
+There are two sidebar implementations: **Shell sidebar** and **FlyoutPage sidebar**. Both use `NSSplitViewController` with `NSOutlineView` source-list styling.
+
+### Shell Sidebar
 
 Enable the native sidebar on a `Shell`:
 
@@ -10,6 +14,31 @@ Enable the native sidebar on a `Shell`:
 var shell = new Shell();
 MacOSShell.SetUseNativeSidebar(shell, true);
 ```
+
+`UseNativeSidebar` is an opt-in flag. When `true`, the `ShellHandler` creates an `NSOutlineView` with source-list styling and behind-window vibrancy. When `false` (default), the Shell uses a standard MAUI flyout layout.
+
+### FlyoutPage Sidebar
+
+For `FlyoutPage`, you must **register the handler** and **opt in** to the native sidebar:
+
+```csharp
+// MauiProgram.cs — register the handler (required)
+builder.ConfigureMauiHandlers(handlers =>
+{
+    handlers.AddHandler<FlyoutPage, NativeSidebarFlyoutPageHandler>();
+});
+```
+
+```csharp
+// Page code — opt in to NSSplitViewController sidebar (required)
+var flyoutPage = new FlyoutPage();
+MacOSFlyoutPage.SetUseNativeSidebar(flyoutPage, true);
+```
+
+> **Important:** Both steps are required for `FlyoutPage`:
+> - **Handler registration** replaces the default `FlyoutPageHandler` with `NativeSidebarFlyoutPageHandler`
+> - **`UseNativeSidebar = true`** opts the specific `FlyoutPage` instance into `NSSplitViewController` with sidebar vibrancy and traffic lights inside the sidebar
+> - Without `UseNativeSidebar`, the handler uses a plain `NSSplitView` without source-list styling
 
 The sidebar renders `ShellItem` and `ShellSection` entries in an `NSOutlineView` source list. Sections with multiple `ShellContent` children appear as expandable groups.
 
@@ -100,6 +129,8 @@ MacOSFlyoutPage.SetSidebarSelectionChanged(flyoutPage, item =>
 ```csharp
 MacOSFlyoutPage.SetSelectedItem(flyoutPage, items[0].Children[1]);
 ```
+
+> **Note:** Programmatic selection via `SetSelectedItem` or `SelectSidebarItem` does **not** trigger the `SidebarSelectionChanged` callback. This is intentional — it prevents infinite loops when you update the detail page in the selection callback, which would otherwise re-trigger the callback. If you need to respond to programmatic selections, update your UI directly after calling `SetSelectedItem`.
 
 ## MacOSSidebarItem
 

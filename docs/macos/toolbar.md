@@ -32,11 +32,13 @@ page.ToolbarItems.Add(new ToolbarItem
 
 ### SF Symbol Icons
 
-Use SF Symbol names as `IconImageSource` for native icons:
+Use SF Symbol names directly as `IconImageSource` for native icons:
 
 ```csharp
 new ToolbarItem { Text = "Share", IconImageSource = "square.and.arrow.up" }
 ```
+
+> **Tip:** Any string passed as `IconImageSource` is automatically resolved as an SF Symbol name via `NSImage.GetSystemSymbol()`. You don't need a custom image file or post-processing — just use the SF Symbol name directly (e.g., `"plus.circle"`, `"gear"`, `"square.and.arrow.up"`). If no matching SF Symbol is found, it falls back to loading a file with that name. Browse available symbols in Apple's [SF Symbols app](https://developer.apple.com/sf-symbols/).
 
 ## Sidebar Placement
 

@@ -278,3 +278,4 @@ builder.AddMacOSEssentials();
 - **Window size**: Set initial window size via `Window.Width` and `Window.Height` in your `App.CreateWindow()`
 - **Debug**: Use `open MyApp.app` to launch — the app runs independently of the terminal
 - **Hot reload**: Not currently supported — rebuild and relaunch for changes
+- **MainThread**: `MainThread.BeginInvokeOnMainThread()` is **not supported** — use `Dispatcher.Dispatch()` or `MainThreadHelper.BeginInvokeOnMainThread()` instead (see [Controls & Platform Notes](controls.md#dispatcher--threading))

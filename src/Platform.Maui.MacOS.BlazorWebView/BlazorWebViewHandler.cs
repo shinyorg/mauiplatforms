@@ -1,4 +1,5 @@
 using System.Globalization;
+using AppKit;
 using CoreGraphics;
 using Foundation;
 using Microsoft.AspNetCore.Components;
@@ -15,7 +16,10 @@ namespace Microsoft.Maui.Platform.MacOS.Handlers;
 public partial class BlazorWebViewHandler : MacOSViewHandler<MacOSBlazorWebView, WKWebView>
 {
     public static readonly IPropertyMapper<MacOSBlazorWebView, BlazorWebViewHandler> Mapper =
-        new PropertyMapper<MacOSBlazorWebView, BlazorWebViewHandler>(ViewMapper);
+        new PropertyMapper<MacOSBlazorWebView, BlazorWebViewHandler>(ViewMapper)
+        {
+            [nameof(MacOSBlazorWebView.ContentInsets)] = MapContentInsets,
+        };
 
     internal static string AppOrigin { get; } = "app://0.0.0.1/";
     internal static Uri AppOriginUri { get; } = new(AppOrigin);
@@ -68,6 +72,9 @@ public partial class BlazorWebViewHandler : MacOSViewHandler<MacOSBlazorWebView,
         var webview = new WKWebView(CGRect.Empty, config);
         config.Preferences.SetValueForKey(NSObject.FromObject(true), new NSString("developerExtrasEnabled"));
 
+        // Allow transparent backgrounds — the page CSS controls what's visible
+        webview.SetValueForKey(NSObject.FromObject(false), new NSString("drawsBackground"));
+
         return webview;
     }
 
@@ -75,10 +82,21 @@ public partial class BlazorWebViewHandler : MacOSViewHandler<MacOSBlazorWebView,
     {
         base.ConnectHandler(platformView);
         StartWebViewCoreIfPossible();
+
+        // Apply initial content insets
+        if (VirtualView is MacOSBlazorWebView macView)
+            MapContentInsets(this, macView);
+
+        // Install titlebar drag overlay so the window is draggable
+        // even when WKWebView covers the titlebar area (FullSizeContentView)
+        InstallTitlebarDragOverlay(platformView);
     }
 
     protected override void DisconnectHandler(WKWebView platformView)
     {
+        _titlebarDragOverlay?.RemoveFromSuperview();
+        _titlebarDragOverlay = null;
+
         platformView.StopLoading();
 
         if (_webviewManager != null)
@@ -146,6 +164,46 @@ public partial class BlazorWebViewHandler : MacOSViewHandler<MacOSBlazorWebView,
         var height = double.IsPositiveInfinity(heightConstraint) ? 400 : heightConstraint;
         return new Size(width, height);
     }
+
+    public static void MapContentInsets(BlazorWebViewHandler handler, MacOSBlazorWebView view)
+    {
+        if (handler.PlatformView == null)
+            return;
+
+        var insets = view.ContentInsets;
+
+        // Skip if all insets are zero (default)
+        if (insets.Top == 0 && insets.Left == 0 && insets.Bottom == 0 && insets.Right == 0)
+            return;
+
+        var wkWebView = handler.PlatformView;
+
+        // Use objc_msgSend to call setObscuredContentInsets: directly (macOS 14+)
+        var selector = new ObjCRuntime.Selector("setObscuredContentInsets:");
+        if (wkWebView.RespondsToSelector(selector))
+        {
+            _objc_msgSend_NSEdgeInsets(wkWebView.Handle, selector.Handle,
+                new NSEdgeInsets((nfloat)insets.Top, (nfloat)insets.Left,
+                                (nfloat)insets.Bottom, (nfloat)insets.Right));
+            return;
+        }
+
+        // Fallback: _setTopContentInset: (private, older macOS versions)
+        if (insets.Top > 0)
+        {
+            var topSelector = new ObjCRuntime.Selector("_setTopContentInset:");
+            if (wkWebView.RespondsToSelector(topSelector))
+            {
+                _objc_msgSend_nfloat(wkWebView.Handle, topSelector.Handle, (nfloat)insets.Top);
+            }
+        }
+    }
+
+    [System.Runtime.InteropServices.DllImport(ObjCRuntime.Constants.ObjectiveCLibrary, EntryPoint = "objc_msgSend")]
+    static extern void _objc_msgSend_nfloat(IntPtr receiver, IntPtr selector, nfloat arg1);
+
+    [System.Runtime.InteropServices.DllImport(ObjCRuntime.Constants.ObjectiveCLibrary, EntryPoint = "objc_msgSend")]
+    static extern void _objc_msgSend_NSEdgeInsets(IntPtr receiver, IntPtr selector, NSEdgeInsets arg1);
 
     sealed class WebViewScriptMessageHandler : NSObject, IWKScriptMessageHandler
     {
@@ -236,6 +294,117 @@ public partial class BlazorWebViewHandler : MacOSViewHandler<MacOSBlazorWebView,
         [Export("webView:stopURLSchemeTask:")]
         public void StopUrlSchemeTask(WKWebView webView, IWKUrlSchemeTask urlSchemeTask)
         {
+        }
+    }
+
+    TitlebarDragOverlayView? _titlebarDragOverlay;
+
+    void InstallTitlebarDragOverlay(WKWebView webView)
+    {
+        // Defer until the view is in a window so we can read the titlebar height
+        void TryInstall()
+        {
+            var window = webView.Window;
+            if (window == null)
+            {
+                // View isn't in a window yet — observe via viewDidMoveToWindow
+                webView.AddObserver(new TitlebarWindowObserver(this, webView),
+                    new NSString("window"), NSKeyValueObservingOptions.New, IntPtr.Zero);
+                return;
+            }
+
+            if (!window.StyleMask.HasFlag(NSWindowStyle.FullSizeContentView))
+                return;
+
+            // Titlebar height = frame height - content layout rect height
+            var titlebarHeight = window.Frame.Height - window.ContentLayoutRect.Height;
+            if (titlebarHeight <= 0)
+                titlebarHeight = 38; // sensible default
+
+            _titlebarDragOverlay?.RemoveFromSuperview();
+            _titlebarDragOverlay = new TitlebarDragOverlayView(titlebarHeight);
+            _titlebarDragOverlay.TranslatesAutoresizingMaskIntoConstraints = false;
+            webView.AddSubview(_titlebarDragOverlay);
+
+            NSLayoutConstraint.ActivateConstraints(new[]
+            {
+                _titlebarDragOverlay.LeadingAnchor.ConstraintEqualTo(webView.LeadingAnchor),
+                _titlebarDragOverlay.TrailingAnchor.ConstraintEqualTo(webView.TrailingAnchor),
+                _titlebarDragOverlay.TopAnchor.ConstraintEqualTo(webView.TopAnchor),
+                _titlebarDragOverlay.HeightAnchor.ConstraintEqualTo(titlebarHeight),
+            });
+        }
+
+        TryInstall();
+    }
+
+    sealed class TitlebarWindowObserver : NSObject
+    {
+        readonly BlazorWebViewHandler _handler;
+        readonly WKWebView _webView;
+
+        public TitlebarWindowObserver(BlazorWebViewHandler handler, WKWebView webView)
+        {
+            _handler = handler;
+            _webView = webView;
+        }
+
+        public override void ObserveValue(NSString keyPath, NSObject ofObject,
+            NSDictionary change, IntPtr context)
+        {
+            if (_webView.Window != null)
+            {
+                _webView.RemoveObserver(this, new NSString("window"));
+                _handler.InstallTitlebarDragOverlay(_webView);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Transparent overlay that captures mouse events in the titlebar zone
+    /// and initiates window drag. All other events pass through to the WKWebView.
+    /// </summary>
+    sealed class TitlebarDragOverlayView : NSView
+    {
+        readonly nfloat _titlebarHeight;
+
+        public TitlebarDragOverlayView(nfloat titlebarHeight)
+        {
+            _titlebarHeight = titlebarHeight;
+        }
+
+        public override NSView HitTest(CGPoint point)
+        {
+            // Convert point to our coordinate space
+            var localPoint = ConvertPointFromView(point, Superview);
+
+            // Only capture events in the titlebar zone (top of the view)
+            if (localPoint.Y >= 0 && localPoint.Y <= _titlebarHeight
+                && localPoint.X >= 0 && localPoint.X <= Frame.Width)
+            {
+                return this;
+            }
+
+            return null!;
+        }
+
+        public override void MouseDown(NSEvent theEvent)
+        {
+            Window?.PerformWindowDrag(theEvent);
+        }
+
+        public override void MouseDragged(NSEvent theEvent)
+        {
+            // Already handled by PerformWindowDrag
+        }
+
+        public override void MouseUp(NSEvent theEvent)
+        {
+            // Double-click on titlebar should zoom the window
+            if (theEvent.ClickCount == 2)
+            {
+                Window?.PerformZoom(this);
+            }
         }
     }
 }

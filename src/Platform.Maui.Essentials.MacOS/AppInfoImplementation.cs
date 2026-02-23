@@ -40,7 +40,7 @@ class AppInfoImplementation : IAppInfo
 
     public void ShowSettingsUI()
     {
-        MainThread.BeginInvokeOnMainThread(() =>
+        MainThreadHelper.BeginInvokeOnMainThread(() =>
         {
             NSWorkspace.SharedWorkspace.OpenUrl(new NSUrl("x-apple.systempreferences:"));
         });

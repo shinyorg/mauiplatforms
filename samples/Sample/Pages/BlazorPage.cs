@@ -1,4 +1,5 @@
 #if MACAPP
+using Microsoft.Maui.Platform.MacOS;
 using Microsoft.Maui.Platform.MacOS.Controls;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
@@ -14,7 +15,7 @@ public class BlazorPage : ContentPage
 		var blazorWebView = new MacOSBlazorWebView
 		{
 			HostPage = "wwwroot/index.html",
-			HeightRequest = 500,
+			ContentInsets = new Thickness(0, 52, 0, 0),
 		};
 		blazorWebView.RootComponents.Add(new BlazorRootComponent
 		{
@@ -22,21 +23,32 @@ public class BlazorPage : ContentPage
 			ComponentType = typeof(SampleMac.Components.Counter),
 		});
 
-		Content = new VerticalStackLayout
+		Content = blazorWebView;
+
+		// Toolbar items (text-only, no icons — uses NSButton view path)
+		ToolbarItems.Add(new ToolbarItem("Sep: None", null, () =>
 		{
-			Spacing = 8,
-			Children =
-			{
-				new Label
-				{
-					Text = "Blazor Hybrid on macOS (WebKit)",
-					FontSize = 18,
-					FontAttributes = FontAttributes.Bold,
-					HorizontalTextAlignment = TextAlignment.Center,
-				},
-				blazorWebView,
-			}
-		};
+			if (Window is BindableObject w)
+				MacOSWindow.SetTitlebarSeparatorStyle(w, MacOSTitlebarSeparatorStyle.None);
+		}));
+		ToolbarItems.Add(new ToolbarItem("Sep: Line", null, () =>
+		{
+			if (Window is BindableObject w)
+				MacOSWindow.SetTitlebarSeparatorStyle(w, MacOSTitlebarSeparatorStyle.Line);
+		}));
+		ToolbarItems.Add(new ToolbarItem("Sep: Auto", null, () =>
+		{
+			if (Window is BindableObject w)
+				MacOSWindow.SetTitlebarSeparatorStyle(w, MacOSTitlebarSeparatorStyle.Automatic);
+		}));
+	}
+
+	protected override void OnAppearing()
+	{
+		base.OnAppearing();
+		// Set initial separator style to None for seamless titlebar
+		if (Window is BindableObject w)
+			MacOSWindow.SetTitlebarSeparatorStyle(w, MacOSTitlebarSeparatorStyle.None);
 	}
 }
 #endif

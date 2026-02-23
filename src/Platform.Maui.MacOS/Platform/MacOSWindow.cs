@@ -38,6 +38,22 @@ public enum MacOSTitleVisibility
 }
 
 /// <summary>
+/// Controls the separator line between the titlebar/toolbar and the window content.
+/// Maps to NSTitlebarSeparatorStyle.
+/// </summary>
+public enum MacOSTitlebarSeparatorStyle
+{
+	/// <summary>macOS decides based on context (shows line when content scrolls under titlebar).</summary>
+	Automatic = 0,
+
+	/// <summary>No separator line — seamless blend between titlebar and content.</summary>
+	None = 1,
+
+	/// <summary>Always shows a thin separator line.</summary>
+	Line = 2,
+}
+
+/// <summary>
 /// Attached properties for configuring NSWindow titlebar appearance on macOS.
 /// </summary>
 /// <example>
@@ -117,4 +133,22 @@ public static class MacOSWindow
 
 	public static void SetFullSizeContentView(BindableObject obj, bool value)
 		=> obj.SetValue(FullSizeContentViewProperty, value);
+
+	/// <summary>
+	/// Controls the separator line between the titlebar/toolbar and window content.
+	/// Defaults to <see cref="MacOSTitlebarSeparatorStyle.Automatic"/>.
+	/// Use <see cref="MacOSTitlebarSeparatorStyle.None"/> for a seamless look.
+	/// </summary>
+	public static readonly BindableProperty TitlebarSeparatorStyleProperty =
+		BindableProperty.CreateAttached(
+			"TitlebarSeparatorStyle",
+			typeof(MacOSTitlebarSeparatorStyle),
+			typeof(MacOSWindow),
+			MacOSTitlebarSeparatorStyle.Automatic);
+
+	public static MacOSTitlebarSeparatorStyle GetTitlebarSeparatorStyle(BindableObject obj)
+		=> (MacOSTitlebarSeparatorStyle)obj.GetValue(TitlebarSeparatorStyleProperty);
+
+	public static void SetTitlebarSeparatorStyle(BindableObject obj, MacOSTitlebarSeparatorStyle value)
+		=> obj.SetValue(TitlebarSeparatorStyleProperty, value);
 }

@@ -128,14 +128,35 @@ All support standard macOS text editing behaviors (spell check, auto-correct, Se
 
 ## Dispatcher & Threading
 
-The platform provides a main-thread dispatcher using `DispatchQueue.MainQueue`:
+The platform provides a main-thread dispatcher using `DispatchQueue.MainQueue`.
+
+> **⚠️ Important:** `MainThread.BeginInvokeOnMainThread()` and `MainThread.InvokeOnMainThreadAsync()` from `Microsoft.Maui.ApplicationModel` will throw `NotImplementedInReferenceAssemblyException` on macOS AppKit. Use `Dispatcher` or `IDispatcher` instead:
 
 ```csharp
-MainThread.BeginInvokeOnMainThread(() =>
+// ✅ Correct — use Dispatcher (available on any BindableObject / View)
+Dispatcher.Dispatch(() =>
 {
-    // Update UI on the main thread
     myLabel.Text = "Updated";
 });
+
+// ✅ Correct — use IDispatcher from DI
+var dispatcher = serviceProvider.GetRequiredService<IDispatcher>();
+dispatcher.Dispatch(() => { /* UI work */ });
+
+// ✅ Correct — use MainThreadHelper from Essentials package
+MainThreadHelper.BeginInvokeOnMainThread(() => { /* UI work */ });
+
+// ❌ Throws NotImplementedInReferenceAssemblyException
+// MainThread.BeginInvokeOnMainThread(() => { });
+```
+
+The `MainThreadHelper` class in `Microsoft.Maui.Essentials.MacOS` provides a familiar static API as an alternative:
+
+```csharp
+using Microsoft.Maui.Essentials.MacOS;
+
+if (!MainThreadHelper.IsMainThread)
+    MainThreadHelper.BeginInvokeOnMainThread(UpdateUI);
 ```
 
 Animation tickers use `NSTimer` for smooth AppKit-thread animation timing.

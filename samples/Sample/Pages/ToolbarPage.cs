@@ -64,6 +64,10 @@ public class ToolbarPage : ContentPage
 
 					CreateInfoCard(),
 
+					SectionHeader("Status"),
+					_countLabel,
+					_statusLabel,
+
 					SectionHeader("Add Items"),
 					CreateAddButtons(),
 
@@ -98,6 +102,9 @@ public class ToolbarPage : ContentPage
 
 					SectionHeader("System Toolbar Items (macOS)"),
 					CreateSystemItemButtons(),
+
+					SectionHeader("Custom View (macOS)"),
+					CreateCustomViewButtons(),
 #endif
 
 					SectionHeader("Manage Items"),
@@ -105,10 +112,6 @@ public class ToolbarPage : ContentPage
 
 					SectionHeader("Open in Sidebar Window"),
 					CreateSidebarWindowButtons(),
-
-					SectionHeader("Status"),
-					_countLabel,
-					_statusLabel,
 
 					SectionHeader("Current Items"),
 					_itemsList,
@@ -143,11 +146,12 @@ public class ToolbarPage : ContentPage
 		var addText = MakeButton("Add Text Item", AppColors.AccentBlue, (s, e) =>
 		{
 			_itemCount++;
-			var item = new ToolbarItem($"Item {_itemCount}", null, () =>
-				SetStatus($"Clicked: Item {_itemCount}"));
+			var captured = _itemCount;
+			var item = new ToolbarItem($"Item {captured}", null, () =>
+				SetStatus($"Clicked: Item {captured}"));
 			ToolbarItems.Add(item);
 			RefreshDisplay();
-			SetStatus($"Added text item: Item {_itemCount}");
+			SetStatus($"Added text item: Item {captured}");
 		});
 
 		var addDisabled = MakeButton("Add Disabled Item", AppColors.AccentPurple, (s, e) =>
@@ -593,13 +597,34 @@ public class ToolbarPage : ContentPage
 			SetStatus("Added Actions menu with submenu");
 		});
 
+		var addMenuWithTitle = MakeButton("Add Menu with Icon+Title", AppColors.AccentPurple, (s, e) =>
+		{
+			var menu = new MacOSMenuToolbarItem
+			{
+				Text = "My Identity",
+				Icon = "apple.logo",
+				ShowsTitle = true,
+				ShowsIndicator = true,
+			};
+			menu.Items.Add(new MacOSMenuItem { Text = "Identity A", Icon = "person" });
+			menu.Items.Add(new MacOSMenuItem { Text = "Identity B", Icon = "person.2" });
+			menu.Items.Add(new MacOSMenuItem { IsSeparator = true });
+			menu.Items.Add(new MacOSMenuItem { Text = "Manage…", Icon = "gear" });
+
+			foreach (var item in menu.Items.Where(i => !i.IsSeparator))
+				item.Clicked += (_, _) => SetStatus($"Identity: {item.Text}");
+
+			MacOSToolbar.SetMenuItems(this, new List<MacOSMenuToolbarItem> { menu });
+			SetStatus("Added icon+title menu toolbar item");
+		});
+
 		var clearMenus = MakeButton("Clear Menus", AppColors.AccentRed, (s, e) =>
 		{
 			MacOSToolbar.SetMenuItems(this, null);
 			SetStatus("Cleared menu toolbar items");
 		});
 
-		return new VerticalStackLayout { Spacing = 8, Children = { addMenu, addMenuWithSub, clearMenus } };
+		return new VerticalStackLayout { Spacing = 8, Children = { addMenu, addMenuWithSub, addMenuWithTitle, clearMenus } };
 	}
 
 	View CreateGroupButtons()
@@ -940,6 +965,61 @@ public class ToolbarPage : ContentPage
 		FontSize = 22,
 		FontAttributes = FontAttributes.Bold,
 	}.WithSectionStyle();
+
+	View CreateCustomViewButtons()
+	{
+		var addLabel = MakeButton("Add View (no border)", AppColors.AccentBlue, (s, e) =>
+		{
+			var label = new Label
+			{
+				Text = "Status: Ready",
+				FontSize = 13,
+				VerticalTextAlignment = TextAlignment.Center,
+				Padding = new Thickness(4, 0),
+			};
+			var viewItem = new MacOSViewToolbarItem
+			{
+				Label = "Status",
+				View = label,
+			};
+			MacOSToolbar.SetViewItems(this, new List<MacOSViewToolbarItem> { viewItem });
+			SetStatus("Added borderless custom view to toolbar");
+		});
+
+		var addStack = MakeButton("Add View (button style)", AppColors.AccentGreen, (s, e) =>
+		{
+			var progress = new ProgressBar { Progress = 0.6, WidthRequest = 80, VerticalOptions = LayoutOptions.Center };
+			var stack = new HorizontalStackLayout
+			{
+				Spacing = 6,
+				Padding = new Thickness(8, 0),
+				VerticalOptions = LayoutOptions.Center,
+				Children =
+				{
+					new Label { Text = "Build:", FontSize = 12, VerticalOptions = LayoutOptions.Center, VerticalTextAlignment = TextAlignment.Center },
+					progress,
+					new Label { Text = "60%", FontSize = 12, VerticalOptions = LayoutOptions.Center, VerticalTextAlignment = TextAlignment.Center },
+				}
+			};
+			var viewItem = new MacOSViewToolbarItem
+			{
+				Label = "Progress",
+				ShowsToolbarButtonStyle = true,
+				View = stack,
+			};
+			viewItem.Clicked += (_, _) => SetStatus("Progress view clicked!");
+			MacOSToolbar.SetViewItems(this, new List<MacOSViewToolbarItem> { viewItem });
+			SetStatus("Added button-style custom view to toolbar");
+		});
+
+		var clearViews = MakeButton("Clear Views", AppColors.AccentRed, (s, e) =>
+		{
+			MacOSToolbar.SetViewItems(this, null);
+			SetStatus("Cleared custom view toolbar items");
+		});
+
+		return new VerticalStackLayout { Spacing = 8, Children = { addLabel, addStack, clearViews } };
+	}
 }
 
 #if MACAPP

@@ -115,6 +115,7 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
             [MacOSWindow.TitlebarTransparentProperty.PropertyName] = MapTitlebarTransparent,
             [MacOSWindow.TitleVisibilityProperty.PropertyName] = MapTitleVisibility,
             [MacOSWindow.FullSizeContentViewProperty.PropertyName] = MapFullSizeContentView,
+            [MacOSWindow.TitlebarSeparatorStyleProperty.PropertyName] = MapTitlebarSeparatorStyle,
         };
 
     FlippedNSView? _contentContainer;
@@ -496,6 +497,15 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
             nsWindow.StyleMask |= NSWindowStyle.FullSizeContentView;
         else
             nsWindow.StyleMask &= ~NSWindowStyle.FullSizeContentView;
+    }
+
+    public static void MapTitlebarSeparatorStyle(WindowHandler handler, IWindow window)
+    {
+        if (handler.PlatformView == null || window is not BindableObject bo)
+            return;
+
+        var style = MacOSWindow.GetTitlebarSeparatorStyle(bo);
+        handler.PlatformView.TitlebarSeparatorStyle = (NSTitlebarSeparatorStyle)(int)style;
     }
 
     public static void MapMinMaxSize(WindowHandler handler, IWindow window)

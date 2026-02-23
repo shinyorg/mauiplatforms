@@ -389,6 +389,14 @@ public class MacOSMenuToolbarItem : BindableObject
 		BindableProperty.Create(nameof(ShowsIndicator), typeof(bool), typeof(MacOSMenuToolbarItem), true);
 	public bool ShowsIndicator { get => (bool)GetValue(ShowsIndicatorProperty); set => SetValue(ShowsIndicatorProperty, value); }
 
+	/// <summary>
+	/// When true, shows both the icon and text side-by-side in the toolbar button face.
+	/// By default, only the icon is shown and text appears as the label underneath.
+	/// </summary>
+	public static readonly BindableProperty ShowsTitleProperty =
+		BindableProperty.Create(nameof(ShowsTitle), typeof(bool), typeof(MacOSMenuToolbarItem), false);
+	public bool ShowsTitle { get => (bool)GetValue(ShowsTitleProperty); set => SetValue(ShowsTitleProperty, value); }
+
 	/// <summary>The menu items to display in the dropdown.</summary>
 	public IList<MacOSMenuItem> Items { get; } = new List<MacOSMenuItem>();
 
@@ -550,6 +558,50 @@ public class MacOSPopUpToolbarItem : BindableObject
 	internal void RaiseSelectionChanged(int index) => SelectionChanged?.Invoke(this, index);
 }
 
+// ── Custom View Toolbar Item ──────────────────────────────────────────
+
+/// <summary>
+/// A toolbar item that hosts an arbitrary MAUI <see cref="View"/> as its content.
+/// The view is constrained to the toolbar height and an optional min/max width.
+/// </summary>
+public class MacOSViewToolbarItem : BindableObject
+{
+	/// <summary>The MAUI view to display in the toolbar.</summary>
+	public static readonly BindableProperty ViewProperty =
+		BindableProperty.Create(nameof(View), typeof(View), typeof(MacOSViewToolbarItem), null);
+	public View? View { get => (View?)GetValue(ViewProperty); set => SetValue(ViewProperty, value); }
+
+	/// <summary>Label shown in the customization palette and overflow menu.</summary>
+	public string? Label { get; set; }
+
+	/// <summary>
+	/// Minimum width for the toolbar item. 0 means auto-size to content.
+	/// </summary>
+	public static readonly BindableProperty MinWidthProperty =
+		BindableProperty.Create(nameof(MinWidth), typeof(double), typeof(MacOSViewToolbarItem), 0.0);
+	public double MinWidth { get => (double)GetValue(MinWidthProperty); set => SetValue(MinWidthProperty, value); }
+
+	/// <summary>
+	/// Maximum width for the toolbar item. 0 means no maximum.
+	/// </summary>
+	public static readonly BindableProperty MaxWidthProperty =
+		BindableProperty.Create(nameof(MaxWidth), typeof(double), typeof(MacOSViewToolbarItem), 0.0);
+	public double MaxWidth { get => (double)GetValue(MaxWidthProperty); set => SetValue(MaxWidthProperty, value); }
+
+	/// <summary>
+	/// When true, wraps the view in a borderless NSButton that provides native
+	/// toolbar hover highlighting and click states. The Clicked event fires on click.
+	/// When false, the view is placed directly — handle interactions via MAUI gestures.
+	/// </summary>
+	public bool ShowsToolbarButtonStyle { get; set; }
+
+	public MacOSToolbarItemPlacement Placement { get; set; } = MacOSToolbarItemPlacement.Content;
+
+	/// <summary>Fired when the toolbar item is clicked (requires ShowsToolbarButtonStyle = true).</summary>
+	public event EventHandler? Clicked;
+	internal void RaiseClicked() => Clicked?.Invoke(this, EventArgs.Empty);
+}
+
 /// <summary>
 /// Attached properties for configuring the macOS toolbar layout at the page level.
 /// </summary>
@@ -654,6 +706,16 @@ public static class MacOSToolbar
 		=> (IList<MacOSPopUpToolbarItem>?)obj.GetValue(PopUpItemsProperty);
 	public static void SetPopUpItems(BindableObject obj, IList<MacOSPopUpToolbarItem>? value)
 		=> obj.SetValue(PopUpItemsProperty, value);
+
+	/// <summary>Custom view toolbar items to add.</summary>
+	public static readonly BindableProperty ViewItemsProperty =
+		BindableProperty.CreateAttached("ViewItems", typeof(IList<MacOSViewToolbarItem>),
+			typeof(MacOSToolbar), defaultValue: null, propertyChanged: OnToolbarAttachedPropertyChanged);
+
+	public static IList<MacOSViewToolbarItem>? GetViewItems(BindableObject obj)
+		=> (IList<MacOSViewToolbarItem>?)obj.GetValue(ViewItemsProperty);
+	public static void SetViewItems(BindableObject obj, IList<MacOSViewToolbarItem>? value)
+		=> obj.SetValue(ViewItemsProperty, value);
 
 	/// <summary>
 	/// Forces the ToolbarHandler to refresh by triggering a ToolbarItems
