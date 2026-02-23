@@ -389,6 +389,14 @@ public class MacOSMenuToolbarItem : BindableObject
 		BindableProperty.Create(nameof(ShowsIndicator), typeof(bool), typeof(MacOSMenuToolbarItem), true);
 	public bool ShowsIndicator { get => (bool)GetValue(ShowsIndicatorProperty); set => SetValue(ShowsIndicatorProperty, value); }
 
+	/// <summary>
+	/// When true, shows both the icon and text side-by-side in the toolbar button face.
+	/// By default, only the icon is shown and text appears as the label underneath.
+	/// </summary>
+	public static readonly BindableProperty ShowsTitleProperty =
+		BindableProperty.Create(nameof(ShowsTitle), typeof(bool), typeof(MacOSMenuToolbarItem), false);
+	public bool ShowsTitle { get => (bool)GetValue(ShowsTitleProperty); set => SetValue(ShowsTitleProperty, value); }
+
 	/// <summary>The menu items to display in the dropdown.</summary>
 	public IList<MacOSMenuItem> Items { get; } = new List<MacOSMenuItem>();
 

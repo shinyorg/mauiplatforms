@@ -594,13 +594,34 @@ public class ToolbarPage : ContentPage
 			SetStatus("Added Actions menu with submenu");
 		});
 
+		var addMenuWithTitle = MakeButton("Add Menu with Icon+Title", AppColors.AccentPurple, (s, e) =>
+		{
+			var menu = new MacOSMenuToolbarItem
+			{
+				Text = "My Identity",
+				Icon = "apple.logo",
+				ShowsTitle = true,
+				ShowsIndicator = true,
+			};
+			menu.Items.Add(new MacOSMenuItem { Text = "Identity A", Icon = "person" });
+			menu.Items.Add(new MacOSMenuItem { Text = "Identity B", Icon = "person.2" });
+			menu.Items.Add(new MacOSMenuItem { IsSeparator = true });
+			menu.Items.Add(new MacOSMenuItem { Text = "Manage…", Icon = "gear" });
+
+			foreach (var item in menu.Items.Where(i => !i.IsSeparator))
+				item.Clicked += (_, _) => SetStatus($"Identity: {item.Text}");
+
+			MacOSToolbar.SetMenuItems(this, new List<MacOSMenuToolbarItem> { menu });
+			SetStatus("Added icon+title menu toolbar item");
+		});
+
 		var clearMenus = MakeButton("Clear Menus", AppColors.AccentRed, (s, e) =>
 		{
 			MacOSToolbar.SetMenuItems(this, null);
 			SetStatus("Cleared menu toolbar items");
 		});
 
-		return new VerticalStackLayout { Spacing = 8, Children = { addMenu, addMenuWithSub, clearMenus } };
+		return new VerticalStackLayout { Spacing = 8, Children = { addMenu, addMenuWithSub, addMenuWithTitle, clearMenus } };
 	}
 
 	View CreateGroupButtons()

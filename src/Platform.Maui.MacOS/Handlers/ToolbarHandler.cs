@@ -978,10 +978,40 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
             ShowsIndicator = menuItem.ShowsIndicator,
         };
 
+        NSImage? image = null;
         if (!string.IsNullOrEmpty(menuItem.Icon))
+            image = NSImage.GetSystemSymbol(menuItem.Icon, null);
+
+        if (menuItem.ShowsTitle && image != null && !string.IsNullOrEmpty(menuItem.Text))
         {
-            var image = NSImage.GetSystemSymbol(menuItem.Icon, null);
-            if (image != null) nsMenuItem.Image = image;
+            // Show icon + text side-by-side in the toolbar button
+            var stack = new NSStackView
+            {
+                Orientation = NSUserInterfaceLayoutOrientation.Horizontal,
+                Spacing = 4,
+                Alignment = NSLayoutAttribute.CenterY,
+                Distribution = NSStackViewDistribution.Fill,
+                EdgeInsets = new NSEdgeInsets(4, 8, 4, 8),
+            };
+            var imageView = new NSImageView { Image = image };
+            imageView.SetContentHuggingPriorityForOrientation(750, NSLayoutConstraintOrientation.Horizontal);
+            var label = new NSTextField
+            {
+                StringValue = menuItem.Text,
+                Editable = false,
+                Bordered = false,
+                DrawsBackground = false,
+                Font = NSFont.SystemFontOfSize(NSFont.SystemFontSize),
+                TextColor = NSColor.Label,
+            };
+            label.SetContentHuggingPriorityForOrientation(250, NSLayoutConstraintOrientation.Horizontal);
+            stack.AddArrangedSubview(imageView);
+            stack.AddArrangedSubview(label);
+            nsMenuItem.View = stack;
+        }
+        else if (image != null)
+        {
+            nsMenuItem.Image = image;
         }
 
         nsMenuItem.Menu = BuildNSMenu(menuItem.Items);
