@@ -6,7 +6,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
 
         <PackageVersion>0.1.0-alpha-0001</PackageVersion>
-        <MacOSPackageVersion>0.2.0-beta.7</MacOSPackageVersion>
+        <MacOSPackageVersion>0.2.0-beta.8</MacOSPackageVersion>
         <TvOSPackageVersion>0.1.0-alpha-0001</TvOSPackageVersion>
         <Description>MAUI Platforms</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
