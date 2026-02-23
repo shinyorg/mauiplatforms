@@ -1,5 +1,6 @@
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
+using Microsoft.Maui.Platform.MacOS;
 
 namespace Sample.Pages;
 
@@ -22,7 +23,27 @@ class MultiWindowPage : ContentPage
 		openBtn.Clicked += (s, e) =>
 		{
 			Application.Current?.OpenWindow(new Window(new SecondaryWindowPage()));
-			// Window creation is deferred; update count on next tick
+			Dispatcher.Dispatch(UpdateWindowCount);
+		};
+
+		var openCompactBtn = new Button { Text = "Open Compact Titlebar Window" };
+		openCompactBtn.Clicked += (s, e) =>
+		{
+			var win = new Window(new SecondaryWindowPage { Title = "Compact Window" });
+			MacOSWindow.SetTitlebarStyle(win, MacOSTitlebarStyle.UnifiedCompact);
+			MacOSWindow.SetTitleVisibility(win, MacOSTitleVisibility.Visible);
+			Application.Current?.OpenWindow(win);
+			Dispatcher.Dispatch(UpdateWindowCount);
+		};
+
+		var openExpandedBtn = new Button { Text = "Open Expanded Titlebar Window" };
+		openExpandedBtn.Clicked += (s, e) =>
+		{
+			var win = new Window(new SecondaryWindowPage { Title = "Expanded Window" });
+			MacOSWindow.SetTitlebarStyle(win, MacOSTitlebarStyle.Expanded);
+			MacOSWindow.SetTitleVisibility(win, MacOSTitleVisibility.Visible);
+			MacOSWindow.SetTitlebarTransparent(win, false);
+			Application.Current?.OpenWindow(win);
 			Dispatcher.Dispatch(UpdateWindowCount);
 		};
 
@@ -49,6 +70,8 @@ class MultiWindowPage : ContentPage
 				},
 				_windowCountLabel,
 				openBtn,
+				openCompactBtn,
+				openExpandedBtn,
 				closeBtn,
 			}
 		};
