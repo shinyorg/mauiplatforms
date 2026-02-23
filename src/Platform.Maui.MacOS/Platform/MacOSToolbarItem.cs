@@ -625,7 +625,7 @@ public static class MacOSToolbar
 		=> (IList<MacOSToolbarLayoutItem>?)obj.GetValue(SidebarLayoutProperty);
 
 	public static void SetSidebarLayout(BindableObject obj, IList<MacOSToolbarLayoutItem>? value)
-		=> obj.SetValue(SidebarLayoutProperty, value);
+		=> obj.SetValue(SidebarLayoutProperty, value ?? new List<MacOSToolbarLayoutItem>());
 
 	/// <summary>
 	/// When set on a <see cref="Page"/>, defines the exact layout of the content toolbar area
@@ -645,7 +645,7 @@ public static class MacOSToolbar
 		=> (IList<MacOSToolbarLayoutItem>?)obj.GetValue(ContentLayoutProperty);
 
 	public static void SetContentLayout(BindableObject obj, IList<MacOSToolbarLayoutItem>? value)
-		=> obj.SetValue(ContentLayoutProperty, value);
+		=> obj.SetValue(ContentLayoutProperty, value ?? new List<MacOSToolbarLayoutItem>());
 
 	/// <summary>
 	/// When set on a <see cref="Page"/>, adds a native <see cref="NSSearchToolbarItem"/>
