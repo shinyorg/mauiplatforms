@@ -70,9 +70,14 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 	{
 		_useNativeSidebar = VirtualView is Shell shell && MacOSShell.GetUseNativeSidebar(shell);
 
-		// Sidebar — keep transparent so the system-provided sidebar vibrancy
-		// from NSSplitViewItem.CreateSidebar() shows through
-		_sidebarView = new NSView();
+		// Sidebar — use NSVisualEffectView for behind-window vibrancy
+		// (translucent background that blends with content behind the window)
+		_sidebarView = new NSVisualEffectView
+		{
+			BlendingMode = NSVisualEffectBlendingMode.BehindWindow,
+			Material = NSVisualEffectMaterial.Sidebar,
+			State = NSVisualEffectState.FollowsWindowActiveState,
+		};
 
 		if (_useNativeSidebar)
 		{
