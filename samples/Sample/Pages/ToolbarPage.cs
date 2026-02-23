@@ -11,6 +11,7 @@ public class ToolbarPage : ContentPage
 	readonly Label _statusLabel;
 	readonly Label _countLabel;
 	readonly VerticalStackLayout _itemsList;
+	readonly Label _searchStatusLabel;
 	int _itemCount;
 
 	public ToolbarPage()
@@ -30,6 +31,12 @@ public class ToolbarPage : ContentPage
 		}.WithPrimaryText();
 
 		_itemsList = new VerticalStackLayout { Spacing = 4 };
+
+		_searchStatusLabel = new Label
+		{
+			Text = "Search: (none)",
+			FontSize = 14,
+		}.WithSecondaryText();
 
 		Content = new ScrollView
 		{
@@ -70,6 +77,11 @@ public class ToolbarPage : ContentPage
 #if MACAPP
 					SectionHeader("Explicit Layout (macOS)"),
 					CreateExplicitLayoutButtons(),
+#endif
+
+#if MACAPP
+					SectionHeader("Search Toolbar (macOS)"),
+					CreateSearchButtons(),
 #endif
 
 					SectionHeader("Manage Items"),
@@ -409,6 +421,112 @@ public class ToolbarPage : ContentPage
 		});
 
 		return new VerticalStackLayout { Spacing = 8, Children = { desc, setLayout, setSpaced, setComplex, setBothLayouts, clearLayout } };
+	}
+
+	View CreateSearchButtons()
+	{
+		var desc = new Label
+		{
+			Text = "Add a native macOS search field to the toolbar. Starts as a magnifying glass " +
+				"icon and expands into a search field when clicked (like Finder, Notes, Mail).",
+			FontSize = 12,
+		}.WithSecondaryText();
+
+		var addContentSearch = MakeButton("Add Search to Content Area", AppColors.AccentBlue, (s, e) =>
+		{
+			var search = new MacOSSearchToolbarItem
+			{
+				Placeholder = "Search items…",
+				Placement = MacOSToolbarItemPlacement.Content,
+			};
+			search.TextChanged += (_, args) =>
+			{
+				_searchStatusLabel.Text = $"Search: \"{args.NewTextValue}\"";
+			};
+			search.SearchCommitted += (_, text) =>
+			{
+				SetStatus($"Search committed: \"{text}\"");
+			};
+			search.SearchStarted += (_, _) =>
+			{
+				SetStatus("Search field expanded");
+			};
+			search.SearchEnded += (_, _) =>
+			{
+				SetStatus("Search field collapsed");
+				_searchStatusLabel.Text = "Search: (none)";
+			};
+			MacOSToolbar.SetSearchItem(this, search);
+			SetStatus("Added search to content toolbar area");
+		});
+
+		var addSidebarSearch = MakeButton("Add Search to Sidebar Area", AppColors.AccentGreen, (s, e) =>
+		{
+			var search = new MacOSSearchToolbarItem
+			{
+				Placeholder = "Filter sidebar…",
+				Placement = MacOSToolbarItemPlacement.Sidebar,
+				PreferredWidth = 150,
+			};
+			search.TextChanged += (_, args) =>
+			{
+				_searchStatusLabel.Text = $"Search: \"{args.NewTextValue}\"";
+			};
+			search.SearchCommitted += (_, text) =>
+			{
+				SetStatus($"Sidebar search committed: \"{text}\"");
+			};
+			MacOSToolbar.SetSearchItem(this, search);
+			SetStatus("Added search to sidebar toolbar area");
+		});
+
+		var addSearchWithLayout = MakeButton("Search + Explicit Layout", AppColors.AccentPurple, (s, e) =>
+		{
+			// Create a toolbar item and a search item, then use explicit layout to position them
+			var addBtn = new ToolbarItem { Text = "Add", IconImageSource = "plus" };
+			addBtn.Clicked += (_, _) => SetStatus("Add clicked (with search layout)");
+			ToolbarItems.Add(addBtn);
+
+			var search = new MacOSSearchToolbarItem
+			{
+				Placeholder = "Find…",
+				Placement = MacOSToolbarItemPlacement.Content,
+			};
+			search.TextChanged += (_, args) =>
+			{
+				_searchStatusLabel.Text = $"Search: \"{args.NewTextValue}\"";
+			};
+			search.SearchCommitted += (_, text) =>
+			{
+				SetStatus($"Search committed: \"{text}\"");
+			};
+			MacOSToolbar.SetSearchItem(this, search);
+
+			MacOSToolbar.SetContentLayout(this, new MacOSToolbarLayoutItem[]
+			{
+				MacOSToolbarLayoutItem.FlexibleSpace,
+				MacOSToolbarLayoutItem.Title,
+				MacOSToolbarLayoutItem.FlexibleSpace,
+				MacOSToolbarLayoutItem.Search(search),
+				MacOSToolbarLayoutItem.Item(addBtn),
+			});
+			RefreshDisplay();
+			SetStatus("Added search + add button with explicit content layout");
+		});
+
+		var removeSearch = MakeButton("Remove Search", AppColors.AccentRed, (s, e) =>
+		{
+			MacOSToolbar.SetSearchItem(this, null);
+			MacOSToolbar.SetContentLayout(this, null);
+			_searchStatusLabel.Text = "Search: (none)";
+			SetStatus("Removed search toolbar item");
+		});
+
+		return new VerticalStackLayout
+		{
+			Spacing = 8,
+			Children = { desc, addContentSearch, addSidebarSearch, addSearchWithLayout, removeSearch, _searchStatusLabel }
+		};
 	}
 #endif
 

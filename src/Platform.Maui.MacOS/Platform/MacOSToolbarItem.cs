@@ -81,6 +81,12 @@ public abstract class MacOSToolbarLayoutItem
 
 	/// <summary>References a <see cref="ToolbarItem"/> that must also be in the page's ToolbarItems collection.</summary>
 	public static MacOSToolbarLayoutItem Item(ToolbarItem item) => new ToolbarItemLayoutRef(item);
+
+	/// <summary>
+	/// A native macOS search field that starts as a magnifying glass icon and expands
+	/// into an inline search field when clicked.
+	/// </summary>
+	public static MacOSToolbarLayoutItem Search(MacOSSearchToolbarItem search) => new SearchLayoutRef(search);
 }
 
 /// <summary>The kind of spacer in a toolbar layout.</summary>
@@ -106,6 +112,91 @@ public sealed class TitleLayoutItem : MacOSToolbarLayoutItem
 	internal TitleLayoutItem() { }
 }
 
+/// <summary>A reference to a <see cref="MacOSSearchToolbarItem"/> in the toolbar layout.</summary>
+public sealed class SearchLayoutRef : MacOSToolbarLayoutItem
+{
+	public MacOSSearchToolbarItem SearchItem { get; }
+	internal SearchLayoutRef(MacOSSearchToolbarItem item) => SearchItem = item;
+}
+
+/// <summary>
+/// A native macOS search toolbar item that starts as a magnifying glass icon and
+/// expands into an inline search field when clicked (like Apple Notes, Finder, Mail).
+/// Use with <see cref="MacOSToolbarLayoutItem.Search"/> in explicit toolbar layouts,
+/// or attach to a page with <see cref="MacOSToolbar.SearchItemProperty"/>.
+/// </summary>
+public class MacOSSearchToolbarItem : BindableObject
+{
+	/// <summary>Placeholder text shown in the search field when empty.</summary>
+	public static readonly BindableProperty PlaceholderProperty =
+		BindableProperty.Create(nameof(Placeholder), typeof(string), typeof(MacOSSearchToolbarItem), "Search");
+
+	public string Placeholder
+	{
+		get => (string)GetValue(PlaceholderProperty);
+		set => SetValue(PlaceholderProperty, value);
+	}
+
+	/// <summary>The current search text.</summary>
+	public static readonly BindableProperty TextProperty =
+		BindableProperty.Create(nameof(Text), typeof(string), typeof(MacOSSearchToolbarItem), string.Empty,
+			propertyChanged: (b, o, n) => ((MacOSSearchToolbarItem)b).OnTextChanged((string)o, (string)n));
+
+	public string Text
+	{
+		get => (string)GetValue(TextProperty);
+		set => SetValue(TextProperty, value);
+	}
+
+	/// <summary>The preferred width of the search field when expanded.</summary>
+	public static readonly BindableProperty PreferredWidthProperty =
+		BindableProperty.Create(nameof(PreferredWidth), typeof(double), typeof(MacOSSearchToolbarItem), 200.0);
+
+	public double PreferredWidth
+	{
+		get => (double)GetValue(PreferredWidthProperty);
+		set => SetValue(PreferredWidthProperty, value);
+	}
+
+	/// <summary>
+	/// Whether pressing Escape while the search field has focus collapses it back to an icon.
+	/// Defaults to <c>true</c>.
+	/// </summary>
+	public static readonly BindableProperty ResignsFirstResponderWithCancelProperty =
+		BindableProperty.Create(nameof(ResignsFirstResponderWithCancel), typeof(bool), typeof(MacOSSearchToolbarItem), true);
+
+	public bool ResignsFirstResponderWithCancel
+	{
+		get => (bool)GetValue(ResignsFirstResponderWithCancelProperty);
+		set => SetValue(ResignsFirstResponderWithCancelProperty, value);
+	}
+
+	/// <summary>
+	/// Toolbar placement for this search item. Defaults to <see cref="MacOSToolbarItemPlacement.Content"/>.
+	/// Also used when there is no explicit layout.
+	/// </summary>
+	public MacOSToolbarItemPlacement Placement { get; set; } = MacOSToolbarItemPlacement.Content;
+
+	/// <summary>Fired when the search text changes.</summary>
+	public event EventHandler<TextChangedEventArgs>? TextChanged;
+
+	/// <summary>Fired when the user presses Return/Enter to commit a search.</summary>
+	public event EventHandler<string>? SearchCommitted;
+
+	/// <summary>Fired when the search field is opened (expanded).</summary>
+	public event EventHandler? SearchStarted;
+
+	/// <summary>Fired when the search field is dismissed (collapsed).</summary>
+	public event EventHandler? SearchEnded;
+
+	internal void RaiseSearchCommitted(string text) => SearchCommitted?.Invoke(this, text);
+	internal void RaiseSearchStarted() => SearchStarted?.Invoke(this, EventArgs.Empty);
+	internal void RaiseSearchEnded() => SearchEnded?.Invoke(this, EventArgs.Empty);
+
+	void OnTextChanged(string oldValue, string newValue)
+		=> TextChanged?.Invoke(this, new TextChangedEventArgs(oldValue, newValue));
+}
+
 /// <summary>
 /// Attached properties for configuring the macOS toolbar layout at the page level.
 /// </summary>
@@ -122,7 +213,8 @@ public static class MacOSToolbar
 			"SidebarLayout",
 			typeof(IList<MacOSToolbarLayoutItem>),
 			typeof(MacOSToolbar),
-			defaultValue: null);
+			defaultValue: null,
+			propertyChanged: OnToolbarAttachedPropertyChanged);
 
 	public static IList<MacOSToolbarLayoutItem>? GetSidebarLayout(BindableObject obj)
 		=> (IList<MacOSToolbarLayoutItem>?)obj.GetValue(SidebarLayoutProperty);
@@ -141,11 +233,48 @@ public static class MacOSToolbar
 			"ContentLayout",
 			typeof(IList<MacOSToolbarLayoutItem>),
 			typeof(MacOSToolbar),
-			defaultValue: null);
+			defaultValue: null,
+			propertyChanged: OnToolbarAttachedPropertyChanged);
 
 	public static IList<MacOSToolbarLayoutItem>? GetContentLayout(BindableObject obj)
 		=> (IList<MacOSToolbarLayoutItem>?)obj.GetValue(ContentLayoutProperty);
 
 	public static void SetContentLayout(BindableObject obj, IList<MacOSToolbarLayoutItem>? value)
 		=> obj.SetValue(ContentLayoutProperty, value);
+
+	/// <summary>
+	/// When set on a <see cref="Page"/>, adds a native <see cref="NSSearchToolbarItem"/>
+	/// to the toolbar. Use <see cref="MacOSSearchToolbarItem.Placement"/> to control
+	/// where it appears, or include it in an explicit layout with
+	/// <see cref="MacOSToolbarLayoutItem.Search"/>.
+	/// </summary>
+	public static readonly BindableProperty SearchItemProperty =
+		BindableProperty.CreateAttached(
+			"SearchItem",
+			typeof(MacOSSearchToolbarItem),
+			typeof(MacOSToolbar),
+			defaultValue: null,
+			propertyChanged: OnToolbarAttachedPropertyChanged);
+
+	public static MacOSSearchToolbarItem? GetSearchItem(BindableObject obj)
+		=> (MacOSSearchToolbarItem?)obj.GetValue(SearchItemProperty);
+
+	public static void SetSearchItem(BindableObject obj, MacOSSearchToolbarItem? value)
+		=> obj.SetValue(SearchItemProperty, value);
+
+	/// <summary>
+	/// Forces the ToolbarHandler to refresh by triggering a ToolbarItems
+	/// collection change, since attached property changes on Page aren't
+	/// reliably detected by the handler's PropertyChanged subscription.
+	/// </summary>
+	static void OnToolbarAttachedPropertyChanged(BindableObject bindable, object? oldValue, object? newValue)
+	{
+		if (bindable is Page page && page.ToolbarItems != null)
+		{
+			// Add and remove a sentinel item to trigger CollectionChanged
+			var sentinel = new ToolbarItem();
+			page.ToolbarItems.Add(sentinel);
+			page.ToolbarItems.Remove(sentinel);
+		}
+	}
 }

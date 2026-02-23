@@ -22,6 +22,7 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
     const string TrackingSeparatorId = "MauiTrackingSeparator";
     const string BackButtonId = "MauiBackButton";
     const string TitleId = "MauiTitle";
+    const string SearchId = "MauiSearchItem";
     const nint SidebarItemTagOffset = 100000;
     static int _toolbarCounter;
 
@@ -35,6 +36,8 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
     NavigationPage? _navigationPage;
     Shell? _shell;
     NSSplitView? _splitView;
+    MacOSSearchToolbarItem? _searchItem;
+    NSSearchToolbarItem? _nativeSearchItem;
 
     public void AttachToWindow(NSWindow window)
     {
@@ -182,9 +185,13 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
         _items.Clear();
         _sidebarItems.Clear();
         _itemIdentifiers.Clear();
+        CleanupSearchItem();
 
         bool hasBackButton = ShouldShowBackButton();
         bool hasFlyoutToggle = _flyoutPage != null;
+
+        // Resolve search item — can come from explicit layout or page-level property
+        _searchItem = _currentPage != null ? MacOSToolbar.GetSearchItem(_currentPage) : null;
 
         // Check for explicit layouts on the current page
         var explicitSidebarLayout = _currentPage != null
@@ -323,6 +330,10 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
                     itemRef.ToolbarItem.PropertyChanged += OnToolbarItemPropertyChanged;
                     sidebarIdx++;
                 }
+                else if (entry is SearchLayoutRef)
+                {
+                    _itemIdentifiers.Add(SearchId);
+                }
                 else if (entry is SpacerLayoutItem spacer)
                 {
                     _itemIdentifiers.Add(spacer.Kind switch
@@ -374,6 +385,10 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
                 item.PropertyChanged += OnToolbarItemPropertyChanged;
                 sidebarIdx++;
             }
+
+            // Search item in sidebar (convenience mode — only when placed in sidebar)
+            if (_searchItem != null && _searchItem.Placement != MacOSToolbarItemPlacement.Content)
+                _itemIdentifiers.Add(SearchId);
         }
 
         // Tracking separator — divides sidebar area from content area
@@ -394,6 +409,10 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
                     _itemIdentifiers.Add(id);
                     itemRef.ToolbarItem.PropertyChanged += OnToolbarItemPropertyChanged;
                     contentIdx++;
+                }
+                else if (entry is SearchLayoutRef)
+                {
+                    _itemIdentifiers.Add(SearchId);
                 }
                 else if (entry is TitleLayoutItem)
                 {
@@ -437,6 +456,10 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
                 item.PropertyChanged += OnToolbarItemPropertyChanged;
                 contentIdx++;
             }
+
+            // Search item in content area (convenience mode — only when placed in content)
+            if (_searchItem != null && _searchItem.Placement == MacOSToolbarItemPlacement.Content)
+                _itemIdentifiers.Add(SearchId);
         }
 
         // Attach toolbar if not already attached
@@ -558,6 +581,12 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
             return nsItem;
         }
 
+        // Native search toolbar item
+        if (itemIdentifier == SearchId && _searchItem != null)
+        {
+            return CreateSearchToolbarItem();
+        }
+
         if (itemIdentifier.StartsWith(SidebarItemIdPrefix))
         {
             var indexStr = itemIdentifier.Substring(SidebarItemIdPrefix.Length);
@@ -636,6 +665,7 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
         {
             FlexibleSpaceId, FixedSpaceId, SeparatorId,
             BackButtonId, SidebarToggleId, TitleId, TrackingSeparatorId,
+            SearchId,
         };
         return ids.Distinct().ToArray();
     }
@@ -696,8 +726,77 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
         }
     }
 
+    NSToolbarItem CreateSearchToolbarItem()
+    {
+        var nsSearchItem = new NSSearchToolbarItem(SearchId);
+        _nativeSearchItem = nsSearchItem;
+
+        var searchField = nsSearchItem.SearchField;
+        if (_searchItem != null)
+        {
+            if (!string.IsNullOrEmpty(_searchItem.Placeholder))
+                searchField.PlaceholderString = _searchItem.Placeholder;
+            if (_searchItem.PreferredWidth > 0)
+                nsSearchItem.PreferredWidthForSearchField = (nfloat)_searchItem.PreferredWidth;
+            nsSearchItem.ResignsFirstResponderWithCancel = _searchItem.ResignsFirstResponderWithCancel;
+            if (!string.IsNullOrEmpty(_searchItem.Text))
+                searchField.StringValue = _searchItem.Text;
+        }
+
+        // Subscribe to text changes via NSTextField.Changed notification
+        searchField.Changed += OnSearchFieldTextChanged;
+
+        // Subscribe to search field delegate events
+        searchField.SearchingStarted += OnSearchFieldStarted;
+        searchField.SearchingEnded += OnSearchFieldEnded;
+
+        // Subscribe to Enter/Return via the text field action
+        nsSearchItem.Target = this;
+        nsSearchItem.Action = new ObjCRuntime.Selector("searchItemAction:");
+
+        return nsSearchItem;
+    }
+
+    [Export("searchItemAction:")]
+    void OnSearchItemAction(NSObject sender)
+    {
+        if (_searchItem == null || _nativeSearchItem == null) return;
+        var text = _nativeSearchItem.SearchField.StringValue ?? string.Empty;
+        _searchItem.Text = text;
+        _searchItem.RaiseSearchCommitted(text);
+    }
+
+    void OnSearchFieldTextChanged(object? sender, EventArgs e)
+    {
+        if (_searchItem == null || _nativeSearchItem == null) return;
+        _searchItem.Text = _nativeSearchItem.SearchField.StringValue ?? string.Empty;
+    }
+
+    void OnSearchFieldStarted(object? sender, EventArgs e)
+    {
+        _searchItem?.RaiseSearchStarted();
+    }
+
+    void OnSearchFieldEnded(object? sender, EventArgs e)
+    {
+        _searchItem?.RaiseSearchEnded();
+    }
+
+    void CleanupSearchItem()
+    {
+        if (_nativeSearchItem != null)
+        {
+            _nativeSearchItem.SearchField.Changed -= OnSearchFieldTextChanged;
+            _nativeSearchItem.SearchField.SearchingStarted -= OnSearchFieldStarted;
+            _nativeSearchItem.SearchField.SearchingEnded -= OnSearchFieldEnded;
+            _nativeSearchItem = null;
+        }
+        _searchItem = null;
+    }
+
     public void Detach()
     {
+        CleanupSearchItem();
         SetPage(null);
         if (_window != null)
         {
