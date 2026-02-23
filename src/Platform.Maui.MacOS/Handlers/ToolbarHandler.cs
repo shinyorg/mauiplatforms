@@ -770,8 +770,6 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
             PaletteLabel = mauiItem.Text ?? string.Empty,
             ToolTip = toolTip,
             Enabled = mauiItem.IsEnabled,
-            Target = this,
-            Action = new ObjCRuntime.Selector("toolbarItemClicked:"),
             Tag = effectiveTag,
             Bordered = MacOSToolbarItem.GetIsBordered(mauiItem),
         };
@@ -788,14 +786,6 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
                 (nfloat)tintColor.Red, (nfloat)tintColor.Green,
                 (nfloat)tintColor.Blue, (nfloat)tintColor.Alpha);
 
-        var button = new NSButton
-        {
-            BezelStyle = NSBezelStyle.TexturedRounded,
-            Tag = effectiveTag,
-            Target = this,
-            Action = new ObjCRuntime.Selector("toolbarItemClicked:"),
-        };
-
         // Check for SF Symbol icon via MacOSToolbarItem or IconImageSource
         var iconSource = mauiItem.IconImageSource;
         NSImage? image = null;
@@ -804,17 +794,33 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
 
         if (image != null)
         {
-            button.Image = image;
-            button.Title = string.Empty;
-            button.ImagePosition = NSCellImagePosition.ImageOnly;
+            // Icon items: use native NSToolbarItem rendering (Action/Target works)
+            nsItem.Image = image;
+            nsItem.Target = this;
+            nsItem.Action = new ObjCRuntime.Selector("toolbarItemClicked:");
         }
         else
         {
-            button.Title = mauiItem.Text ?? string.Empty;
+            // Text-only items: need an NSButton view for visible text rendering.
+            // Use Activated event on the button since Action/Target on view-based
+            // toolbar items doesn't dispatch reliably in .NET macOS bindings.
+            var button = new NSButton
+            {
+                BezelStyle = NSBezelStyle.TexturedRounded,
+                Title = mauiItem.Text ?? string.Empty,
+            };
+            button.SetButtonType(NSButtonType.MomentaryPushIn);
+
+            var capturedMauiItem = mauiItem;
+            button.Activated += (s, e) =>
+            {
+                if (capturedMauiItem.IsEnabled)
+                    ((IMenuItemController)capturedMauiItem).Activate();
+            };
+
+            nsItem.View = button;
         }
 
-        button.SetButtonType(NSButtonType.MomentaryPushIn);
-        nsItem.View = button;
         return nsItem;
     }
 
@@ -1031,93 +1037,57 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
 
     NSToolbarItem CreateGroupToolbarItem(string identifier, MacOSToolbarItemGroup group)
     {
-        var titles = new string[group.Segments.Count];
-        var images = new NSImage?[group.Segments.Count];
         var labels = new string[group.Segments.Count];
-        bool hasImages = false;
+        var images = new NSImage?[group.Segments.Count];
 
         for (int i = 0; i < group.Segments.Count; i++)
         {
             var seg = group.Segments[i];
-            titles[i] = seg.Text ?? string.Empty;
             labels[i] = seg.Label ?? seg.Text ?? string.Empty;
             if (!string.IsNullOrEmpty(seg.Icon))
-            {
                 images[i] = NSImage.GetSystemSymbol(seg.Icon, null);
-                if (images[i] != null) hasImages = true;
-            }
         }
 
-        var selMode = group.SelectionMode switch
+        // Skip NSToolbarItemGroup.Create entirely — its action/target never fires
+        // in .NET bindings. Instead, create a plain NSToolbarItem with our own
+        // NSSegmentedControl as its view.
+        var segControl = new NSSegmentedControl();
+        segControl.SegmentCount = group.Segments.Count;
+        segControl.SegmentStyle = NSSegmentStyle.Automatic;
+        segControl.TrackingMode = group.SelectionMode switch
         {
-            MacOSToolbarGroupSelectionMode.SelectOne => NSToolbarItemGroupSelectionMode.SelectOne,
-            MacOSToolbarGroupSelectionMode.SelectAny => NSToolbarItemGroupSelectionMode.SelectAny,
-            MacOSToolbarGroupSelectionMode.Momentary => NSToolbarItemGroupSelectionMode.Momentary,
-            _ => NSToolbarItemGroupSelectionMode.SelectOne,
+            MacOSToolbarGroupSelectionMode.SelectOne => NSSegmentSwitchTracking.SelectOne,
+            MacOSToolbarGroupSelectionMode.SelectAny => NSSegmentSwitchTracking.SelectAny,
+            _ => NSSegmentSwitchTracking.Momentary,
         };
-
-        NSToolbarItemGroup nsGroup;
-        if (hasImages)
+        for (int i = 0; i < group.Segments.Count; i++)
         {
-            var validImages = images.Select(img => img ?? new NSImage()).ToArray();
-            nsGroup = NSToolbarItemGroup.Create(identifier, validImages, selMode, labels, this,
-                new ObjCRuntime.Selector("groupItemClicked:"));
+            var seg = group.Segments[i];
+            segControl.SetLabel(seg.Text ?? string.Empty, i);
+            if (!string.IsNullOrEmpty(seg.Icon) && images[i] != null)
+                segControl.SetImage(images[i]!, i);
+            segControl.SetEnabled(seg.IsEnabled, i);
         }
-        else
-        {
-            nsGroup = NSToolbarItemGroup.Create(identifier, titles, selMode, labels, this,
-                new ObjCRuntime.Selector("groupItemClicked:"));
-        }
+        if (group.SelectionMode == MacOSToolbarGroupSelectionMode.SelectOne && group.SelectedIndex >= 0)
+            segControl.SelectedSegment = group.SelectedIndex;
 
-        nsGroup.Label = group.Label ?? string.Empty;
-        nsGroup.PaletteLabel = group.Label ?? string.Empty;
-
-        // Wire selection change via Activated event on the group
         var capturedGroup = group;
-        var capturedNsGroup = nsGroup;
-        nsGroup.Activated += (s, e) =>
+        segControl.Activated += (s, e) =>
         {
+            var sc = (NSSegmentedControl)s!;
             var selected = new bool[capturedGroup.Segments.Count];
             for (int i = 0; i < capturedGroup.Segments.Count; i++)
-                selected[i] = capturedNsGroup.GetSelected((nint)i);
-            capturedGroup.SelectedIndex = (int)capturedNsGroup.SelectedIndex;
-            capturedGroup.RaiseSelectionChanged((int)capturedNsGroup.SelectedIndex, selected);
+                selected[i] = sc.IsSelectedForSegment(i);
+            capturedGroup.SelectedIndex = (int)sc.SelectedSegment;
+            capturedGroup.RaiseSelectionChanged((int)sc.SelectedSegment, selected);
         };
 
-        // Set representation
-        nsGroup.ControlRepresentation = group.Representation switch
-        {
-            MacOSToolbarGroupRepresentation.Expanded => NSToolbarItemGroupControlRepresentation.Expanded,
-            MacOSToolbarGroupRepresentation.Collapsed => NSToolbarItemGroupControlRepresentation.Collapsed,
-            _ => NSToolbarItemGroupControlRepresentation.Automatic,
-        };
+        var nsItem = new NSToolbarItem(identifier);
+        nsItem.View = segControl;
+        nsItem.Label = group.Label ?? string.Empty;
+        nsItem.PaletteLabel = group.Label ?? string.Empty;
 
-        // Set initial selection
-        if (group.SelectionMode == MacOSToolbarGroupSelectionMode.SelectOne && group.SelectedIndex >= 0)
-            nsGroup.SelectedIndex = group.SelectedIndex;
-
-        return nsGroup;
-    }
-
-    [Export("groupItemClicked:")]
-    void OnGroupItemClicked(NSObject sender)
-    {
-        // Find which group was clicked by checking the sender's identifier
-        if (sender is NSToolbarItemGroup nsGroup)
-        {
-            var identifier = nsGroup.Identifier;
-            if (identifier.StartsWith(GroupIdPrefix) &&
-                int.TryParse(identifier.Substring(GroupIdPrefix.Length), out int gIdx) &&
-                gIdx >= 0 && gIdx < _groupItems.Count)
-            {
-                var group = _groupItems[gIdx];
-                var selected = new bool[group.Segments.Count];
-                for (int i = 0; i < group.Segments.Count; i++)
-                    selected[i] = nsGroup.GetSelected((nint)i);
-                group.SelectedIndex = (int)nsGroup.SelectedIndex;
-                group.RaiseSelectionChanged((int)nsGroup.SelectedIndex, selected);
-            }
-        }
+        return nsItem;
     }
 
     // ── Share Toolbar Item ─────────────────────────────────────────────

@@ -25,34 +25,30 @@ public class BlazorPage : ContentPage
 
 		Content = blazorWebView;
 
-		// Toolbar group to toggle titlebar separator style
-		var separatorGroup = new MacOSToolbarItemGroup
+		// Toolbar items (text-only, no icons — uses NSButton view path)
+		ToolbarItems.Add(new ToolbarItem("Sep: None", null, () =>
 		{
-			Label = "Separator",
-			SelectionMode = MacOSToolbarGroupSelectionMode.SelectOne,
-			Representation = MacOSToolbarGroupRepresentation.Expanded,
-			SelectedIndex = 0,
-			Segments =
-			{
-				new MacOSToolbarGroupSegment { Text = "Auto" },
-				new MacOSToolbarGroupSegment { Text = "None" },
-				new MacOSToolbarGroupSegment { Text = "Line" },
-			}
-		};
-		separatorGroup.SelectionChanged += (s, e) =>
+			if (Window is BindableObject w)
+				MacOSWindow.SetTitlebarSeparatorStyle(w, MacOSTitlebarSeparatorStyle.None);
+		}));
+		ToolbarItems.Add(new ToolbarItem("Sep: Line", null, () =>
 		{
-			var window = Application.Current?.Windows?.FirstOrDefault();
-			if (window?.Handler?.PlatformView is not AppKit.NSWindow nsWindow) return;
+			if (Window is BindableObject w)
+				MacOSWindow.SetTitlebarSeparatorStyle(w, MacOSTitlebarSeparatorStyle.Line);
+		}));
+		ToolbarItems.Add(new ToolbarItem("Sep: Auto", null, () =>
+		{
+			if (Window is BindableObject w)
+				MacOSWindow.SetTitlebarSeparatorStyle(w, MacOSTitlebarSeparatorStyle.Automatic);
+		}));
+	}
 
-			nsWindow.TitlebarSeparatorStyle = e.SelectedIndex switch
-			{
-				1 => AppKit.NSTitlebarSeparatorStyle.None,
-				2 => AppKit.NSTitlebarSeparatorStyle.Line,
-				_ => AppKit.NSTitlebarSeparatorStyle.Automatic,
-			};
-		};
-
-		MacOSToolbar.SetItemGroups(this, new List<MacOSToolbarItemGroup> { separatorGroup });
+	protected override void OnAppearing()
+	{
+		base.OnAppearing();
+		// Set initial separator style to None for seamless titlebar
+		if (Window is BindableObject w)
+			MacOSWindow.SetTitlebarSeparatorStyle(w, MacOSTitlebarSeparatorStyle.None);
 	}
 }
 #endif

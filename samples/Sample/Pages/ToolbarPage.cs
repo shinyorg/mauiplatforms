@@ -64,6 +64,10 @@ public class ToolbarPage : ContentPage
 
 					CreateInfoCard(),
 
+					SectionHeader("Status"),
+					_countLabel,
+					_statusLabel,
+
 					SectionHeader("Add Items"),
 					CreateAddButtons(),
 
@@ -106,10 +110,6 @@ public class ToolbarPage : ContentPage
 					SectionHeader("Open in Sidebar Window"),
 					CreateSidebarWindowButtons(),
 
-					SectionHeader("Status"),
-					_countLabel,
-					_statusLabel,
-
 					SectionHeader("Current Items"),
 					_itemsList,
 				}
@@ -143,11 +143,12 @@ public class ToolbarPage : ContentPage
 		var addText = MakeButton("Add Text Item", AppColors.AccentBlue, (s, e) =>
 		{
 			_itemCount++;
-			var item = new ToolbarItem($"Item {_itemCount}", null, () =>
-				SetStatus($"Clicked: Item {_itemCount}"));
+			var captured = _itemCount;
+			var item = new ToolbarItem($"Item {captured}", null, () =>
+				SetStatus($"Clicked: Item {captured}"));
 			ToolbarItems.Add(item);
 			RefreshDisplay();
-			SetStatus($"Added text item: Item {_itemCount}");
+			SetStatus($"Added text item: Item {captured}");
 		});
 
 		var addDisabled = MakeButton("Add Disabled Item", AppColors.AccentPurple, (s, e) =>
