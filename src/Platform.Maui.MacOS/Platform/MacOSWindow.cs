@@ -98,4 +98,23 @@ public static class MacOSWindow
 
 	public static void SetTitleVisibility(BindableObject obj, MacOSTitleVisibility value)
 		=> obj.SetValue(TitleVisibilityProperty, value);
+
+	/// <summary>
+	/// When true, the window content extends behind the titlebar (edge-to-edge).
+	/// When false, content is positioned below the titlebar.
+	/// Defaults to true. Set to false for windows where BlazorWebView or other content
+	/// should not overlap the titlebar area.
+	/// </summary>
+	public static readonly BindableProperty FullSizeContentViewProperty =
+		BindableProperty.CreateAttached(
+			"FullSizeContentView",
+			typeof(bool),
+			typeof(MacOSWindow),
+			true);
+
+	public static bool GetFullSizeContentView(BindableObject obj)
+		=> (bool)obj.GetValue(FullSizeContentViewProperty);
+
+	public static void SetFullSizeContentView(BindableObject obj, bool value)
+		=> obj.SetValue(FullSizeContentViewProperty, value);
 }

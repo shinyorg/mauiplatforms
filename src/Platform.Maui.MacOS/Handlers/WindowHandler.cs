@@ -114,6 +114,7 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
             [MacOSWindow.TitlebarStyleProperty.PropertyName] = MapTitlebarStyle,
             [MacOSWindow.TitlebarTransparentProperty.PropertyName] = MapTitlebarTransparent,
             [MacOSWindow.TitleVisibilityProperty.PropertyName] = MapTitleVisibility,
+            [MacOSWindow.FullSizeContentViewProperty.PropertyName] = MapFullSizeContentView,
         };
 
     FlippedNSView? _contentContainer;
@@ -158,7 +159,16 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
 
     protected override NSWindow CreatePlatformElement()
     {
-        var style = NSWindowStyle.Titled | NSWindowStyle.Closable | NSWindowStyle.Resizable | NSWindowStyle.Miniaturizable | NSWindowStyle.FullSizeContentView;
+        var style = NSWindowStyle.Titled | NSWindowStyle.Closable | NSWindowStyle.Resizable | NSWindowStyle.Miniaturizable;
+
+        // FullSizeContentView lets content extend behind the titlebar (edge-to-edge).
+        // Default is true; set MacOSWindow.FullSizeContentView to false to keep content below titlebar.
+        bool fullSizeContent = true;
+        if (VirtualView is Window w)
+            fullSizeContent = MacOSWindow.GetFullSizeContentView(w);
+        if (fullSizeContent)
+            style |= NSWindowStyle.FullSizeContentView;
+
         var window = new NSWindow(
             new CGRect(0, 0, 1280, 720),
             style,
@@ -472,6 +482,20 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
             return;
 
         handler.PlatformView.TitleVisibility = (NSWindowTitleVisibility)(int)MacOSWindow.GetTitleVisibility(bo);
+    }
+
+    public static void MapFullSizeContentView(WindowHandler handler, IWindow window)
+    {
+        if (handler.PlatformView == null || window is not BindableObject bo)
+            return;
+
+        var nsWindow = handler.PlatformView;
+        bool fullSize = MacOSWindow.GetFullSizeContentView(bo);
+
+        if (fullSize)
+            nsWindow.StyleMask |= NSWindowStyle.FullSizeContentView;
+        else
+            nsWindow.StyleMask &= ~NSWindowStyle.FullSizeContentView;
     }
 
     public static void MapMinMaxSize(WindowHandler handler, IWindow window)
