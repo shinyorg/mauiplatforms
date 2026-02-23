@@ -1,4 +1,6 @@
+using System.Windows.Input;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Graphics;
 
 namespace Microsoft.Maui.Platform.MacOS;
 
@@ -27,6 +29,19 @@ public enum MacOSToolbarItemPlacement
 	SidebarTrailing = 3,
 }
 
+/// <summary>Visibility priority for toolbar items when space is limited.</summary>
+public enum MacOSToolbarItemVisibilityPriority
+{
+	/// <summary>Standard priority (default).</summary>
+	Standard = 0,
+	/// <summary>Low priority — hidden first when space is tight.</summary>
+	Low = -1000,
+	/// <summary>High priority — kept visible longer.</summary>
+	High = 1000,
+	/// <summary>User priority — always visible.</summary>
+	User = 2000,
+}
+
 /// <summary>
 /// Attached properties for configuring macOS-specific toolbar item behavior.
 /// </summary>
@@ -49,6 +64,65 @@ public static class MacOSToolbarItem
 
 	public static void SetPlacement(BindableObject obj, MacOSToolbarItemPlacement value)
 		=> obj.SetValue(PlacementProperty, value);
+
+	/// <summary>Whether the toolbar button shows a bordered/bezel appearance.</summary>
+	public static readonly BindableProperty IsBorderedProperty =
+		BindableProperty.CreateAttached("IsBordered", typeof(bool), typeof(MacOSToolbarItem), true);
+
+	public static bool GetIsBordered(BindableObject obj) => (bool)obj.GetValue(IsBorderedProperty);
+	public static void SetIsBordered(BindableObject obj, bool value) => obj.SetValue(IsBorderedProperty, value);
+
+	/// <summary>Badge text/count displayed on the toolbar item icon.</summary>
+	public static readonly BindableProperty BadgeProperty =
+		BindableProperty.CreateAttached("Badge", typeof(string), typeof(MacOSToolbarItem), null);
+
+	public static string? GetBadge(BindableObject obj) => (string?)obj.GetValue(BadgeProperty);
+	public static void SetBadge(BindableObject obj, string? value) => obj.SetValue(BadgeProperty, value);
+
+	/// <summary>Tint color for the toolbar button background.</summary>
+	public static readonly BindableProperty BackgroundTintColorProperty =
+		BindableProperty.CreateAttached("BackgroundTintColor", typeof(Color), typeof(MacOSToolbarItem), null);
+
+	public static Color? GetBackgroundTintColor(BindableObject obj) => (Color?)obj.GetValue(BackgroundTintColorProperty);
+	public static void SetBackgroundTintColor(BindableObject obj, Color? value) => obj.SetValue(BackgroundTintColorProperty, value);
+
+	/// <summary>Tooltip text override (defaults to ToolbarItem.Text if not set).</summary>
+	public static readonly BindableProperty ToolTipProperty =
+		BindableProperty.CreateAttached("ToolTip", typeof(string), typeof(MacOSToolbarItem), null);
+
+	public static string? GetToolTip(BindableObject obj) => (string?)obj.GetValue(ToolTipProperty);
+	public static void SetToolTip(BindableObject obj, string? value) => obj.SetValue(ToolTipProperty, value);
+
+	/// <summary>Visibility priority when toolbar space is limited.</summary>
+	public static readonly BindableProperty VisibilityPriorityProperty =
+		BindableProperty.CreateAttached("VisibilityPriority", typeof(MacOSToolbarItemVisibilityPriority),
+			typeof(MacOSToolbarItem), MacOSToolbarItemVisibilityPriority.Standard);
+
+	public static MacOSToolbarItemVisibilityPriority GetVisibilityPriority(BindableObject obj)
+		=> (MacOSToolbarItemVisibilityPriority)obj.GetValue(VisibilityPriorityProperty);
+
+	public static void SetVisibilityPriority(BindableObject obj, MacOSToolbarItemVisibilityPriority value)
+		=> obj.SetValue(VisibilityPriorityProperty, value);
+}
+
+/// <summary>Identifies a built-in system toolbar item provided by AppKit.</summary>
+public enum SystemItemKind
+{
+	ToggleSidebar,
+	ToggleInspector,
+	CloudSharing,
+	Print,
+	ShowColors,
+	ShowFonts,
+	WritingTools,
+	InspectorTrackingSeparator,
+}
+
+/// <summary>A built-in system toolbar item (e.g., sidebar toggle, print, writing tools).</summary>
+public sealed class SystemItemLayoutItem : MacOSToolbarLayoutItem
+{
+	public SystemItemKind Kind { get; }
+	internal SystemItemLayoutItem(SystemItemKind kind) => Kind = kind;
 }
 
 /// <summary>
@@ -79,6 +153,32 @@ public abstract class MacOSToolbarLayoutItem
 	/// <summary>The page title label (centered by default). Use in content layouts to position the title.</summary>
 	public static readonly MacOSToolbarLayoutItem Title = new TitleLayoutItem();
 
+	// --- System toolbar items ---
+
+	/// <summary>Standard sidebar toggle button (provided by AppKit).</summary>
+	public static readonly MacOSToolbarLayoutItem ToggleSidebar = new SystemItemLayoutItem(SystemItemKind.ToggleSidebar);
+
+	/// <summary>Inspector panel toggle button.</summary>
+	public static readonly MacOSToolbarLayoutItem ToggleInspector = new SystemItemLayoutItem(SystemItemKind.ToggleInspector);
+
+	/// <summary>iCloud sharing button.</summary>
+	public static readonly MacOSToolbarLayoutItem CloudSharing = new SystemItemLayoutItem(SystemItemKind.CloudSharing);
+
+	/// <summary>Standard print button.</summary>
+	public static readonly MacOSToolbarLayoutItem Print = new SystemItemLayoutItem(SystemItemKind.Print);
+
+	/// <summary>Opens the system color picker panel.</summary>
+	public static readonly MacOSToolbarLayoutItem ShowColors = new SystemItemLayoutItem(SystemItemKind.ShowColors);
+
+	/// <summary>Opens the system font panel.</summary>
+	public static readonly MacOSToolbarLayoutItem ShowFonts = new SystemItemLayoutItem(SystemItemKind.ShowFonts);
+
+	/// <summary>Apple Intelligence writing tools button.</summary>
+	public static readonly MacOSToolbarLayoutItem WritingTools = new SystemItemLayoutItem(SystemItemKind.WritingTools);
+
+	/// <summary>Tracking separator for an inspector panel (right side).</summary>
+	public static readonly MacOSToolbarLayoutItem InspectorTrackingSeparator = new SystemItemLayoutItem(SystemItemKind.InspectorTrackingSeparator);
+
 	/// <summary>References a <see cref="ToolbarItem"/> that must also be in the page's ToolbarItems collection.</summary>
 	public static MacOSToolbarLayoutItem Item(ToolbarItem item) => new ToolbarItemLayoutRef(item);
 
@@ -87,6 +187,18 @@ public abstract class MacOSToolbarLayoutItem
 	/// into an inline search field when clicked.
 	/// </summary>
 	public static MacOSToolbarLayoutItem Search(MacOSSearchToolbarItem search) => new SearchLayoutRef(search);
+
+	/// <summary>A dropdown menu button in the toolbar.</summary>
+	public static MacOSToolbarLayoutItem Menu(MacOSMenuToolbarItem menu) => new MenuLayoutRef(menu);
+
+	/// <summary>A segmented control / grouped items in the toolbar.</summary>
+	public static MacOSToolbarLayoutItem Group(MacOSToolbarItemGroup group) => new GroupLayoutRef(group);
+
+	/// <summary>The system share button in the toolbar.</summary>
+	public static MacOSToolbarLayoutItem Share(MacOSShareToolbarItem share) => new ShareLayoutRef(share);
+
+	/// <summary>A dropdown popup selector in the toolbar.</summary>
+	public static MacOSToolbarLayoutItem PopUp(MacOSPopUpToolbarItem popup) => new PopUpLayoutRef(popup);
 }
 
 /// <summary>The kind of spacer in a toolbar layout.</summary>
@@ -117,6 +229,34 @@ public sealed class SearchLayoutRef : MacOSToolbarLayoutItem
 {
 	public MacOSSearchToolbarItem SearchItem { get; }
 	internal SearchLayoutRef(MacOSSearchToolbarItem item) => SearchItem = item;
+}
+
+/// <summary>A reference to a <see cref="MacOSMenuToolbarItem"/> in the toolbar layout.</summary>
+public sealed class MenuLayoutRef : MacOSToolbarLayoutItem
+{
+	public MacOSMenuToolbarItem MenuItem { get; }
+	internal MenuLayoutRef(MacOSMenuToolbarItem item) => MenuItem = item;
+}
+
+/// <summary>A reference to a <see cref="MacOSToolbarItemGroup"/> in the toolbar layout.</summary>
+public sealed class GroupLayoutRef : MacOSToolbarLayoutItem
+{
+	public MacOSToolbarItemGroup Group { get; }
+	internal GroupLayoutRef(MacOSToolbarItemGroup group) => Group = group;
+}
+
+/// <summary>A reference to a <see cref="MacOSShareToolbarItem"/> in the toolbar layout.</summary>
+public sealed class ShareLayoutRef : MacOSToolbarLayoutItem
+{
+	public MacOSShareToolbarItem ShareItem { get; }
+	internal ShareLayoutRef(MacOSShareToolbarItem item) => ShareItem = item;
+}
+
+/// <summary>A reference to a <see cref="MacOSPopUpToolbarItem"/> in the toolbar layout.</summary>
+public sealed class PopUpLayoutRef : MacOSToolbarLayoutItem
+{
+	public MacOSPopUpToolbarItem PopUpItem { get; }
+	internal PopUpLayoutRef(MacOSPopUpToolbarItem item) => PopUpItem = item;
 }
 
 /// <summary>
@@ -197,6 +337,219 @@ public class MacOSSearchToolbarItem : BindableObject
 		=> TextChanged?.Invoke(this, new TextChangedEventArgs(oldValue, newValue));
 }
 
+// ── Menu Toolbar Item ──────────────────────────────────────────────────
+
+/// <summary>A single item in a <see cref="MacOSMenuToolbarItem"/> dropdown menu.</summary>
+public class MacOSMenuItem
+{
+	public string Text { get; set; } = string.Empty;
+
+	/// <summary>SF Symbol icon name (e.g., "doc.text").</summary>
+	public string? Icon { get; set; }
+
+	public bool IsEnabled { get; set; } = true;
+
+	/// <summary>Whether this item shows a checkmark.</summary>
+	public bool IsChecked { get; set; }
+
+	/// <summary>Keyboard shortcut (e.g., "s" for Cmd+S). Use with <see cref="KeyEquivalentModifiers"/>.</summary>
+	public string? KeyEquivalent { get; set; }
+
+	public ICommand? Command { get; set; }
+	public object? CommandParameter { get; set; }
+
+	/// <summary>Nested submenu items.</summary>
+	public IList<MacOSMenuItem> SubItems { get; } = new List<MacOSMenuItem>();
+
+	/// <summary>If true, renders as a separator line instead of a menu item.</summary>
+	public bool IsSeparator { get; set; }
+
+	public event EventHandler? Clicked;
+	internal void RaiseClicked() => Clicked?.Invoke(this, EventArgs.Empty);
+}
+
+/// <summary>
+/// A toolbar button that opens a dropdown menu when clicked
+/// (like sort/filter menus in Finder, Mail).
+/// Wraps <c>NSMenuToolbarItem</c>.
+/// </summary>
+public class MacOSMenuToolbarItem : BindableObject
+{
+	public static readonly BindableProperty TextProperty =
+		BindableProperty.Create(nameof(Text), typeof(string), typeof(MacOSMenuToolbarItem), string.Empty);
+	public string Text { get => (string)GetValue(TextProperty); set => SetValue(TextProperty, value); }
+
+	/// <summary>SF Symbol icon name.</summary>
+	public static readonly BindableProperty IconProperty =
+		BindableProperty.Create(nameof(Icon), typeof(string), typeof(MacOSMenuToolbarItem), null);
+	public string? Icon { get => (string?)GetValue(IconProperty); set => SetValue(IconProperty, value); }
+
+	/// <summary>Whether to show the dropdown chevron indicator (default: true).</summary>
+	public static readonly BindableProperty ShowsIndicatorProperty =
+		BindableProperty.Create(nameof(ShowsIndicator), typeof(bool), typeof(MacOSMenuToolbarItem), true);
+	public bool ShowsIndicator { get => (bool)GetValue(ShowsIndicatorProperty); set => SetValue(ShowsIndicatorProperty, value); }
+
+	/// <summary>The menu items to display in the dropdown.</summary>
+	public IList<MacOSMenuItem> Items { get; } = new List<MacOSMenuItem>();
+
+	public MacOSToolbarItemPlacement Placement { get; set; } = MacOSToolbarItemPlacement.Content;
+}
+
+// ── Toolbar Item Group ─────────────────────────────────────────────────
+
+/// <summary>Selection behavior for a toolbar item group.</summary>
+public enum MacOSToolbarGroupSelectionMode
+{
+	/// <summary>Radio-button style — exactly one segment selected at a time (like Finder view modes).</summary>
+	SelectOne,
+	/// <summary>Toggle style — any number of segments can be selected.</summary>
+	SelectAny,
+	/// <summary>Button-press style — segments light up momentarily, no persistent selection.</summary>
+	Momentary,
+}
+
+/// <summary>How the group is visually represented in the toolbar.</summary>
+public enum MacOSToolbarGroupRepresentation
+{
+	/// <summary>System decides based on available space.</summary>
+	Automatic,
+	/// <summary>Always show as individual separate buttons.</summary>
+	Expanded,
+	/// <summary>Always show as a compact segmented control.</summary>
+	Collapsed,
+}
+
+/// <summary>A single segment in a <see cref="MacOSToolbarItemGroup"/>.</summary>
+public class MacOSToolbarGroupSegment
+{
+	public string? Text { get; set; }
+	/// <summary>SF Symbol icon name.</summary>
+	public string? Icon { get; set; }
+	/// <summary>Accessibility label for VoiceOver.</summary>
+	public string? Label { get; set; }
+	/// <summary>Whether this segment is selected (for <see cref="MacOSToolbarGroupSelectionMode.SelectAny"/>).</summary>
+	public bool IsSelected { get; set; }
+	public bool IsEnabled { get; set; } = true;
+}
+
+/// <summary>Event args for toolbar item group selection changes.</summary>
+public class MacOSToolbarGroupSelectionChangedEventArgs : EventArgs
+{
+	public int SelectedIndex { get; }
+	/// <summary>Array of selected states for each segment (useful for SelectAny mode).</summary>
+	public bool[] SelectedSegments { get; }
+	public MacOSToolbarGroupSelectionChangedEventArgs(int selectedIndex, bool[] selectedSegments)
+	{
+		SelectedIndex = selectedIndex;
+		SelectedSegments = selectedSegments;
+	}
+}
+
+/// <summary>
+/// A group of toolbar items rendered as a segmented control or individual buttons.
+/// Wraps <c>NSToolbarItemGroup</c>.
+/// </summary>
+public class MacOSToolbarItemGroup : BindableObject
+{
+	public IList<MacOSToolbarGroupSegment> Segments { get; } = new List<MacOSToolbarGroupSegment>();
+
+	public static readonly BindableProperty SelectionModeProperty =
+		BindableProperty.Create(nameof(SelectionMode), typeof(MacOSToolbarGroupSelectionMode),
+			typeof(MacOSToolbarItemGroup), MacOSToolbarGroupSelectionMode.SelectOne);
+	public MacOSToolbarGroupSelectionMode SelectionMode
+	{
+		get => (MacOSToolbarGroupSelectionMode)GetValue(SelectionModeProperty);
+		set => SetValue(SelectionModeProperty, value);
+	}
+
+	public static readonly BindableProperty RepresentationProperty =
+		BindableProperty.Create(nameof(Representation), typeof(MacOSToolbarGroupRepresentation),
+			typeof(MacOSToolbarItemGroup), MacOSToolbarGroupRepresentation.Automatic);
+	public MacOSToolbarGroupRepresentation Representation
+	{
+		get => (MacOSToolbarGroupRepresentation)GetValue(RepresentationProperty);
+		set => SetValue(RepresentationProperty, value);
+	}
+
+	public static readonly BindableProperty SelectedIndexProperty =
+		BindableProperty.Create(nameof(SelectedIndex), typeof(int), typeof(MacOSToolbarItemGroup), 0);
+	public int SelectedIndex
+	{
+		get => (int)GetValue(SelectedIndexProperty);
+		set => SetValue(SelectedIndexProperty, value);
+	}
+
+	public static readonly BindableProperty LabelProperty =
+		BindableProperty.Create(nameof(Label), typeof(string), typeof(MacOSToolbarItemGroup), string.Empty);
+	public string Label { get => (string)GetValue(LabelProperty); set => SetValue(LabelProperty, value); }
+
+	public MacOSToolbarItemPlacement Placement { get; set; } = MacOSToolbarItemPlacement.Content;
+
+	public event EventHandler<MacOSToolbarGroupSelectionChangedEventArgs>? SelectionChanged;
+	internal void RaiseSelectionChanged(int selectedIndex, bool[] selectedSegments)
+		=> SelectionChanged?.Invoke(this, new MacOSToolbarGroupSelectionChangedEventArgs(selectedIndex, selectedSegments));
+}
+
+// ── Share Toolbar Item ─────────────────────────────────────────────────
+
+/// <summary>
+/// The standard macOS share button (📤) that opens the system sharing sheet.
+/// Wraps <c>NSSharingServicePickerToolbarItem</c>.
+/// </summary>
+public class MacOSShareToolbarItem : BindableObject
+{
+	/// <summary>
+	/// Called when the share button is clicked to get the items to share.
+	/// Return strings, URIs, or other shareable objects.
+	/// </summary>
+	public Func<IEnumerable<object>>? ShareItemsProvider { get; set; }
+
+	public static readonly BindableProperty LabelProperty =
+		BindableProperty.Create(nameof(Label), typeof(string), typeof(MacOSShareToolbarItem), "Share");
+	public string Label { get => (string)GetValue(LabelProperty); set => SetValue(LabelProperty, value); }
+
+	public MacOSToolbarItemPlacement Placement { get; set; } = MacOSToolbarItemPlacement.Content;
+
+	/// <summary>Fired when a sharing service is chosen by the user.</summary>
+	public event EventHandler<string>? ServiceChosen;
+	internal void RaiseServiceChosen(string serviceName) => ServiceChosen?.Invoke(this, serviceName);
+}
+
+// ── PopUp Toolbar Item ─────────────────────────────────────────────────
+
+/// <summary>
+/// A dropdown popup selector in the toolbar (like a font size or zoom level picker).
+/// Wraps an <c>NSToolbarItem</c> with an <c>NSPopUpButton</c> as its view.
+/// </summary>
+public class MacOSPopUpToolbarItem : BindableObject
+{
+	/// <summary>The selectable options.</summary>
+	public IList<string> Items { get; } = new List<string>();
+
+	public static readonly BindableProperty SelectedIndexProperty =
+		BindableProperty.Create(nameof(SelectedIndex), typeof(int), typeof(MacOSPopUpToolbarItem), 0);
+	public int SelectedIndex
+	{
+		get => (int)GetValue(SelectedIndexProperty);
+		set => SetValue(SelectedIndexProperty, value);
+	}
+
+	/// <summary>Whether this is a pull-down menu (true) or popup selection (false, default).</summary>
+	public static readonly BindableProperty PullsDownProperty =
+		BindableProperty.Create(nameof(PullsDown), typeof(bool), typeof(MacOSPopUpToolbarItem), false);
+	public bool PullsDown { get => (bool)GetValue(PullsDownProperty); set => SetValue(PullsDownProperty, value); }
+
+	/// <summary>Width of the popup button (default: 120).</summary>
+	public static readonly BindableProperty WidthProperty =
+		BindableProperty.Create(nameof(Width), typeof(double), typeof(MacOSPopUpToolbarItem), 120.0);
+	public double Width { get => (double)GetValue(WidthProperty); set => SetValue(WidthProperty, value); }
+
+	public MacOSToolbarItemPlacement Placement { get; set; } = MacOSToolbarItemPlacement.Content;
+
+	public event EventHandler<int>? SelectionChanged;
+	internal void RaiseSelectionChanged(int index) => SelectionChanged?.Invoke(this, index);
+}
+
 /// <summary>
 /// Attached properties for configuring the macOS toolbar layout at the page level.
 /// </summary>
@@ -262,19 +615,66 @@ public static class MacOSToolbar
 	public static void SetSearchItem(BindableObject obj, MacOSSearchToolbarItem? value)
 		=> obj.SetValue(SearchItemProperty, value);
 
+	/// <summary>Menu toolbar items to add to the toolbar.</summary>
+	public static readonly BindableProperty MenuItemsProperty =
+		BindableProperty.CreateAttached("MenuItems", typeof(IList<MacOSMenuToolbarItem>),
+			typeof(MacOSToolbar), defaultValue: null, propertyChanged: OnToolbarAttachedPropertyChanged);
+
+	public static IList<MacOSMenuToolbarItem>? GetMenuItems(BindableObject obj)
+		=> (IList<MacOSMenuToolbarItem>?)obj.GetValue(MenuItemsProperty);
+	public static void SetMenuItems(BindableObject obj, IList<MacOSMenuToolbarItem>? value)
+		=> obj.SetValue(MenuItemsProperty, value);
+
+	/// <summary>Toolbar item groups (segmented controls) to add.</summary>
+	public static readonly BindableProperty ItemGroupsProperty =
+		BindableProperty.CreateAttached("ItemGroups", typeof(IList<MacOSToolbarItemGroup>),
+			typeof(MacOSToolbar), defaultValue: null, propertyChanged: OnToolbarAttachedPropertyChanged);
+
+	public static IList<MacOSToolbarItemGroup>? GetItemGroups(BindableObject obj)
+		=> (IList<MacOSToolbarItemGroup>?)obj.GetValue(ItemGroupsProperty);
+	public static void SetItemGroups(BindableObject obj, IList<MacOSToolbarItemGroup>? value)
+		=> obj.SetValue(ItemGroupsProperty, value);
+
+	/// <summary>Share toolbar item to add.</summary>
+	public static readonly BindableProperty ShareItemProperty =
+		BindableProperty.CreateAttached("ShareItem", typeof(MacOSShareToolbarItem),
+			typeof(MacOSToolbar), defaultValue: null, propertyChanged: OnToolbarAttachedPropertyChanged);
+
+	public static MacOSShareToolbarItem? GetShareItem(BindableObject obj)
+		=> (MacOSShareToolbarItem?)obj.GetValue(ShareItemProperty);
+	public static void SetShareItem(BindableObject obj, MacOSShareToolbarItem? value)
+		=> obj.SetValue(ShareItemProperty, value);
+
+	/// <summary>PopUp toolbar items (dropdown selectors) to add.</summary>
+	public static readonly BindableProperty PopUpItemsProperty =
+		BindableProperty.CreateAttached("PopUpItems", typeof(IList<MacOSPopUpToolbarItem>),
+			typeof(MacOSToolbar), defaultValue: null, propertyChanged: OnToolbarAttachedPropertyChanged);
+
+	public static IList<MacOSPopUpToolbarItem>? GetPopUpItems(BindableObject obj)
+		=> (IList<MacOSPopUpToolbarItem>?)obj.GetValue(PopUpItemsProperty);
+	public static void SetPopUpItems(BindableObject obj, IList<MacOSPopUpToolbarItem>? value)
+		=> obj.SetValue(PopUpItemsProperty, value);
+
 	/// <summary>
 	/// Forces the ToolbarHandler to refresh by triggering a ToolbarItems
 	/// collection change, since attached property changes on Page aren't
 	/// reliably detected by the handler's PropertyChanged subscription.
 	/// </summary>
+	static readonly ToolbarItem _sentinel = new() { AutomationId = "__MacOSToolbar_Sentinel__" };
+
 	static void OnToolbarAttachedPropertyChanged(BindableObject bindable, object? oldValue, object? newValue)
 	{
 		if (bindable is Page page && page.ToolbarItems != null)
 		{
-			// Add and remove a sentinel item to trigger CollectionChanged
-			var sentinel = new ToolbarItem();
-			page.ToolbarItems.Add(sentinel);
-			page.ToolbarItems.Remove(sentinel);
+			// Add/remove a sentinel item to trigger CollectionChanged → RefreshToolbar.
+			// Remove it asynchronously so only ONE synchronous refresh fires with the
+			// new property value already set. The async removal fires a second refresh
+			// which also succeeds because the attached property is already set.
+			if (!page.ToolbarItems.Contains(_sentinel))
+			{
+				page.ToolbarItems.Add(_sentinel);
+				page.Dispatcher?.Dispatch(() => page.ToolbarItems.Remove(_sentinel));
+			}
 		}
 	}
 }

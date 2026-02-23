@@ -1,6 +1,7 @@
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
 #if MACAPP
+using System.Linq;
 using Microsoft.Maui.Platform.MacOS;
 #endif
 
@@ -82,6 +83,21 @@ public class ToolbarPage : ContentPage
 #if MACAPP
 					SectionHeader("Search Toolbar (macOS)"),
 					CreateSearchButtons(),
+
+					SectionHeader("Menu Toolbar Item (macOS)"),
+					CreateMenuButtons(),
+
+					SectionHeader("Segmented Control / Group (macOS)"),
+					CreateGroupButtons(),
+
+					SectionHeader("Share & PopUp (macOS)"),
+					CreateSharePopUpButtons(),
+
+					SectionHeader("Item Properties (macOS)"),
+					CreateItemPropertyButtons(),
+
+					SectionHeader("System Toolbar Items (macOS)"),
+					CreateSystemItemButtons(),
 #endif
 
 					SectionHeader("Manage Items"),
@@ -527,6 +543,212 @@ public class ToolbarPage : ContentPage
 			Spacing = 8,
 			Children = { desc, addContentSearch, addSidebarSearch, addSearchWithLayout, removeSearch, _searchStatusLabel }
 		};
+	}
+
+	View CreateMenuButtons()
+	{
+		var addMenu = MakeButton("Add Sort/Filter Menu", AppColors.AccentBlue, (s, e) =>
+		{
+			var menu = new MacOSMenuToolbarItem
+			{
+				Text = "Sort",
+				Icon = "arrow.up.arrow.down",
+				ShowsIndicator = true,
+			};
+			menu.Items.Add(new MacOSMenuItem { Text = "Name", Icon = "textformat.abc", IsChecked = true });
+			menu.Items.Add(new MacOSMenuItem { Text = "Date Modified", Icon = "calendar" });
+			menu.Items.Add(new MacOSMenuItem { Text = "Size", Icon = "internaldrive" });
+			menu.Items.Add(new MacOSMenuItem { IsSeparator = true });
+			menu.Items.Add(new MacOSMenuItem { Text = "Ascending", IsChecked = true });
+			menu.Items.Add(new MacOSMenuItem { Text = "Descending" });
+
+			foreach (var item in menu.Items.Where(i => !i.IsSeparator))
+				item.Clicked += (_, _) => SetStatus($"Menu: {item.Text} clicked");
+
+			MacOSToolbar.SetMenuItems(this, new List<MacOSMenuToolbarItem> { menu });
+			SetStatus("Added Sort/Filter menu toolbar item");
+		});
+
+		var addMenuWithSub = MakeButton("Add Menu with Submenu", AppColors.AccentGreen, (s, e) =>
+		{
+			var menu = new MacOSMenuToolbarItem { Text = "Actions", Icon = "ellipsis.circle" };
+			var subMenu = new MacOSMenuItem { Text = "Export As…", Icon = "square.and.arrow.up" };
+			subMenu.SubItems.Add(new MacOSMenuItem { Text = "PDF", Icon = "doc.richtext" });
+			subMenu.SubItems.Add(new MacOSMenuItem { Text = "PNG", Icon = "photo" });
+			subMenu.SubItems.Add(new MacOSMenuItem { Text = "CSV", Icon = "tablecells" });
+			foreach (var sub in subMenu.SubItems)
+				sub.Clicked += (_, _) => SetStatus($"Export as {sub.Text}");
+
+			menu.Items.Add(new MacOSMenuItem { Text = "New Folder", Icon = "folder.badge.plus" });
+			menu.Items.Add(new MacOSMenuItem { Text = "Duplicate", Icon = "plus.square.on.square" });
+			menu.Items.Add(new MacOSMenuItem { IsSeparator = true });
+			menu.Items.Add(subMenu);
+			menu.Items.Add(new MacOSMenuItem { IsSeparator = true });
+			menu.Items.Add(new MacOSMenuItem { Text = "Delete", Icon = "trash" });
+
+			foreach (var item in menu.Items.Where(i => !i.IsSeparator && i.SubItems.Count == 0))
+				item.Clicked += (_, _) => SetStatus($"Action: {item.Text}");
+
+			MacOSToolbar.SetMenuItems(this, new List<MacOSMenuToolbarItem> { menu });
+			SetStatus("Added Actions menu with submenu");
+		});
+
+		var clearMenus = MakeButton("Clear Menus", AppColors.AccentRed, (s, e) =>
+		{
+			MacOSToolbar.SetMenuItems(this, null);
+			SetStatus("Cleared menu toolbar items");
+		});
+
+		return new VerticalStackLayout { Spacing = 8, Children = { addMenu, addMenuWithSub, clearMenus } };
+	}
+
+	View CreateGroupButtons()
+	{
+		var addSelectOne = MakeButton("View Mode (SelectOne)", AppColors.AccentBlue, (s, e) =>
+		{
+			var group = new MacOSToolbarItemGroup
+			{
+				Label = "View",
+				SelectionMode = MacOSToolbarGroupSelectionMode.SelectOne,
+				Representation = MacOSToolbarGroupRepresentation.Collapsed,
+				SelectedIndex = 0,
+			};
+			group.Segments.Add(new MacOSToolbarGroupSegment { Icon = "list.bullet", Label = "List" });
+			group.Segments.Add(new MacOSToolbarGroupSegment { Icon = "square.grid.2x2", Label = "Grid" });
+			group.Segments.Add(new MacOSToolbarGroupSegment { Icon = "rectangle.grid.1x2", Label = "Gallery" });
+			group.SelectionChanged += (_, args) => SetStatus($"View mode: segment {args.SelectedIndex}");
+
+			MacOSToolbar.SetItemGroups(this, new List<MacOSToolbarItemGroup> { group });
+			SetStatus("Added SelectOne group (view mode switcher)");
+		});
+
+		var addMomentary = MakeButton("Text Style (Momentary)", AppColors.AccentGreen, (s, e) =>
+		{
+			var group = new MacOSToolbarItemGroup
+			{
+				Label = "Style",
+				SelectionMode = MacOSToolbarGroupSelectionMode.Momentary,
+				Representation = MacOSToolbarGroupRepresentation.Expanded,
+			};
+			group.Segments.Add(new MacOSToolbarGroupSegment { Icon = "bold", Label = "Bold" });
+			group.Segments.Add(new MacOSToolbarGroupSegment { Icon = "italic", Label = "Italic" });
+			group.Segments.Add(new MacOSToolbarGroupSegment { Icon = "underline", Label = "Underline" });
+			group.SelectionChanged += (_, args) => SetStatus($"Style: segment {args.SelectedIndex} pressed");
+
+			MacOSToolbar.SetItemGroups(this, new List<MacOSToolbarItemGroup> { group });
+			SetStatus("Added Momentary group (text style)");
+		});
+
+		var clearGroups = MakeButton("Clear Groups", AppColors.AccentRed, (s, e) =>
+		{
+			MacOSToolbar.SetItemGroups(this, null);
+			SetStatus("Cleared group toolbar items");
+		});
+
+		return new VerticalStackLayout { Spacing = 8, Children = { addSelectOne, addMomentary, clearGroups } };
+	}
+
+	View CreateSharePopUpButtons()
+	{
+		var addShare = MakeButton("Add Share Button", AppColors.AccentBlue, (s, e) =>
+		{
+			var share = new MacOSShareToolbarItem
+			{
+				Label = "Share",
+			};
+			share.ShareItemsProvider = () => new object[]
+			{
+				"Check out this MAUI macOS app!",
+				new Uri("https://github.com/shinyorg/mauiplatforms"),
+			};
+			MacOSToolbar.SetShareItem(this, share);
+			SetStatus("Added Share toolbar button");
+		});
+
+		var addPopUp = MakeButton("Add Zoom PopUp", AppColors.AccentGreen, (s, e) =>
+		{
+			var popup = new MacOSPopUpToolbarItem { Width = 100 };
+			popup.Items.Add("50%");
+			popup.Items.Add("75%");
+			popup.Items.Add("100%");
+			popup.Items.Add("125%");
+			popup.Items.Add("150%");
+			popup.Items.Add("200%");
+			popup.SelectedIndex = 2; // 100%
+			popup.SelectionChanged += (_, idx) => SetStatus($"Zoom: {popup.Items[idx]}");
+
+			MacOSToolbar.SetPopUpItems(this, new List<MacOSPopUpToolbarItem> { popup });
+			SetStatus("Added Zoom popup selector");
+		});
+
+		var clearSharePopUp = MakeButton("Clear Share & PopUps", AppColors.AccentRed, (s, e) =>
+		{
+			MacOSToolbar.SetShareItem(this, null);
+			MacOSToolbar.SetPopUpItems(this, null);
+			SetStatus("Cleared share and popup items");
+		});
+
+		return new VerticalStackLayout { Spacing = 8, Children = { addShare, addPopUp, clearSharePopUp } };
+	}
+
+	View CreateItemPropertyButtons()
+	{
+		var addBadge = MakeButton("Add Item with Badge", AppColors.AccentBlue, (s, e) =>
+		{
+			_itemCount++;
+			var item = new ToolbarItem { Text = $"Inbox", IconImageSource = "tray" };
+			MacOSToolbarItem.SetBadge(item, "3");
+			MacOSToolbarItem.SetVisibilityPriority(item, MacOSToolbarItemVisibilityPriority.High);
+			item.Clicked += (_, _) => SetStatus("Inbox clicked");
+			ToolbarItems.Add(item);
+			RefreshDisplay();
+			SetStatus("Added item with badge '3' and high priority");
+		});
+
+		var addTinted = MakeButton("Add Tinted Item", AppColors.AccentGreen, (s, e) =>
+		{
+			_itemCount++;
+			var item = new ToolbarItem { Text = "Important", IconImageSource = "exclamationmark.triangle" };
+			MacOSToolbarItem.SetBackgroundTintColor(item, Colors.Orange);
+			MacOSToolbarItem.SetToolTip(item, "This is an important action!");
+			item.Clicked += (_, _) => SetStatus("Important clicked");
+			ToolbarItems.Add(item);
+			RefreshDisplay();
+			SetStatus("Added tinted item with custom tooltip");
+		});
+
+		return new VerticalStackLayout { Spacing = 8, Children = { addBadge, addTinted } };
+	}
+
+	View CreateSystemItemButtons()
+	{
+		var desc = new Label
+		{
+			Text = "Add built-in macOS system toolbar items. These require an explicit layout to position.",
+			FontSize = 12,
+		}.WithSecondaryText();
+
+		var addSystemItems = MakeButton("Add System Items (Layout)", AppColors.AccentPurple, (s, e) =>
+		{
+			MacOSToolbar.SetContentLayout(this, new MacOSToolbarLayoutItem[]
+			{
+				MacOSToolbarLayoutItem.FlexibleSpace,
+				MacOSToolbarLayoutItem.Title,
+				MacOSToolbarLayoutItem.FlexibleSpace,
+				MacOSToolbarLayoutItem.ShowColors,
+				MacOSToolbarLayoutItem.ShowFonts,
+				MacOSToolbarLayoutItem.Print,
+			});
+			SetStatus("Added Colors, Fonts, Print system items via explicit layout");
+		});
+
+		var clearSystem = MakeButton("Clear Layout", AppColors.AccentRed, (s, e) =>
+		{
+			MacOSToolbar.SetContentLayout(this, null);
+			SetStatus("Cleared explicit layout");
+		});
+
+		return new VerticalStackLayout { Spacing = 8, Children = { desc, addSystemItems, clearSystem } };
 	}
 #endif
 
