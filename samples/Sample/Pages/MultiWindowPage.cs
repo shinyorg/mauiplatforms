@@ -26,17 +26,28 @@ class MultiWindowPage : ContentPage
 			Dispatcher.Dispatch(UpdateWindowCount);
 		};
 
-		var openCompactBtn = new Button { Text = "Open Compact Titlebar Window" };
+		var openUnifiedBtn = new Button { Text = "Open Unified Window" };
+		openUnifiedBtn.Clicked += (s, e) =>
+		{
+			var win = new Window(new SecondaryWindowPage { Title = "Unified Window" });
+			MacOSWindow.SetTitlebarStyle(win, MacOSTitlebarStyle.Unified);
+			MacOSWindow.SetTitleVisibility(win, MacOSTitleVisibility.Visible);
+			MacOSWindow.SetTitlebarTransparent(win, false);
+			Application.Current?.OpenWindow(win);
+			Dispatcher.Dispatch(UpdateWindowCount);
+		};
+
+		var openCompactBtn = new Button { Text = "Open Unified Compact Window" };
 		openCompactBtn.Clicked += (s, e) =>
 		{
-			var win = new Window(new SecondaryWindowPage { Title = "Compact Window" });
+			var win = new Window(new SecondaryWindowPage { Title = "Unified Compact Window" });
 			MacOSWindow.SetTitlebarStyle(win, MacOSTitlebarStyle.UnifiedCompact);
 			MacOSWindow.SetTitleVisibility(win, MacOSTitleVisibility.Visible);
 			Application.Current?.OpenWindow(win);
 			Dispatcher.Dispatch(UpdateWindowCount);
 		};
 
-		var openExpandedBtn = new Button { Text = "Open Expanded Titlebar Window" };
+		var openExpandedBtn = new Button { Text = "Open Expanded Window" };
 		openExpandedBtn.Clicked += (s, e) =>
 		{
 			var win = new Window(new SecondaryWindowPage { Title = "Expanded Window" });
@@ -70,6 +81,7 @@ class MultiWindowPage : ContentPage
 				},
 				_windowCountLabel,
 				openBtn,
+				openUnifiedBtn,
 				openCompactBtn,
 				openExpandedBtn,
 				closeBtn,

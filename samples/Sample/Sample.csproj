@@ -38,6 +38,10 @@
         <ProjectReference Include="..\..\src\Platform.Maui.MacOS\Platform.Maui.MacOS.csproj"/>
         <ProjectReference Include="..\..\src\Platform.Maui.Essentials.MacOS\Platform.Maui.Essentials.MacOS.csproj"/>
     </ItemGroup>
+
+    <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'macos'">
+        <DefineConstants>$(DefineConstants);MACAPP</DefineConstants>
+    </PropertyGroup>
             
     <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'tvos'">
         <Compile Include="Platforms\tvOS\**\*.cs" />
