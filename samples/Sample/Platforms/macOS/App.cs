@@ -73,6 +73,7 @@ class MainShell : Shell
 		// Platform
 		var platform = new FlyoutItem { Title = "Platform" };
 		platform.Items.Add(MakeContent("Menu Bar", "menubar", "menubar.rectangle", typeof(MenuBarPage)));
+		platform.Items.Add(MakeContent("Toolbar", "toolbar", "hammer", typeof(ToolbarPage)));
 		platform.Items.Add(MakeContent("Multi-Window", "multiwindow", "macwindow.on.rectangle", typeof(MultiWindowPage)));
 		platform.Items.Add(MakeContent("Theme", "theme", "sun.max", typeof(ThemePage)));
 		platform.Items.Add(MakeContent("WebView", "webview", "globe", typeof(WebViewPage)));
