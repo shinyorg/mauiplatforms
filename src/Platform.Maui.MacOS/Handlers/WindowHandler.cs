@@ -111,6 +111,9 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
             [nameof(IWindow.MinimumHeight)] = MapMinMaxSize,
             [nameof(IWindow.MaximumWidth)] = MapMinMaxSize,
             [nameof(IWindow.MaximumHeight)] = MapMinMaxSize,
+            [MacOSWindow.TitlebarStyleProperty.PropertyName] = MapTitlebarStyle,
+            [MacOSWindow.TitlebarTransparentProperty.PropertyName] = MapTitlebarTransparent,
+            [MacOSWindow.TitleVisibilityProperty.PropertyName] = MapTitleVisibility,
         };
 
     FlippedNSView? _contentContainer;
@@ -173,9 +176,9 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
         }
         _windowCascadeOffset++;
 
-        window.ToolbarStyle = NSWindowToolbarStyle.Unified;
-        window.TitleVisibility = NSWindowTitleVisibility.Hidden;
-        window.TitlebarAppearsTransparent = true;
+        window.ToolbarStyle = (NSWindowToolbarStyle)(int)MacOSWindow.GetTitlebarStyle((BindableObject)VirtualView);
+        window.TitleVisibility = (NSWindowTitleVisibility)(int)MacOSWindow.GetTitleVisibility((BindableObject)VirtualView);
+        window.TitlebarAppearsTransparent = MacOSWindow.GetTitlebarTransparent((BindableObject)VirtualView);
 
         // Use a flipped NSView as ContentView so subviews use top-left origin
         _contentContainer = new FlippedNSView();
@@ -398,6 +401,30 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
             Page page => page,
             _ => null,
         };
+    }
+
+    public static void MapTitlebarStyle(WindowHandler handler, IWindow window)
+    {
+        if (handler.PlatformView == null || window is not BindableObject bo)
+            return;
+
+        handler.PlatformView.ToolbarStyle = (NSWindowToolbarStyle)(int)MacOSWindow.GetTitlebarStyle(bo);
+    }
+
+    public static void MapTitlebarTransparent(WindowHandler handler, IWindow window)
+    {
+        if (handler.PlatformView == null || window is not BindableObject bo)
+            return;
+
+        handler.PlatformView.TitlebarAppearsTransparent = MacOSWindow.GetTitlebarTransparent(bo);
+    }
+
+    public static void MapTitleVisibility(WindowHandler handler, IWindow window)
+    {
+        if (handler.PlatformView == null || window is not BindableObject bo)
+            return;
+
+        handler.PlatformView.TitleVisibility = (NSWindowTitleVisibility)(int)MacOSWindow.GetTitleVisibility(bo);
     }
 
     public static void MapMinMaxSize(WindowHandler handler, IWindow window)
