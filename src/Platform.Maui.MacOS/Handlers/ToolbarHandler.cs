@@ -186,22 +186,36 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
 
         // Partition toolbar items into sidebar and content placement
         var contentItems = new List<ToolbarItem>();
-        var sidebarToolbarItems = new List<ToolbarItem>();
+        var sidebarLeading = new List<ToolbarItem>();
+        var sidebarCenter = new List<ToolbarItem>();
+        var sidebarTrailing = new List<ToolbarItem>();
         if (toolbarItems != null)
         {
             foreach (var item in toolbarItems)
             {
                 if (item.Order == ToolbarItemOrder.Secondary)
                     continue;
-                if (MacOSToolbarItem.GetPlacement(item) == MacOSToolbarItemPlacement.Sidebar)
-                    sidebarToolbarItems.Add(item);
-                else
-                    contentItems.Add(item);
+                var placement = MacOSToolbarItem.GetPlacement(item);
+                switch (placement)
+                {
+                    case MacOSToolbarItemPlacement.SidebarLeading:
+                        sidebarLeading.Add(item);
+                        break;
+                    case MacOSToolbarItemPlacement.SidebarCenter:
+                        sidebarCenter.Add(item);
+                        break;
+                    case MacOSToolbarItemPlacement.SidebarTrailing:
+                        sidebarTrailing.Add(item);
+                        break;
+                    default:
+                        contentItems.Add(item);
+                        break;
+                }
             }
         }
 
         bool hasContentItems = contentItems.Count > 0;
-        bool hasSidebarItems = sidebarToolbarItems.Count > 0;
+        bool hasSidebarItems = sidebarLeading.Count > 0 || sidebarCenter.Count > 0 || sidebarTrailing.Count > 0;
         bool hasToolbarItems = hasContentItems || hasSidebarItems;
 
         // Only show the toolbar if there's meaningful content
@@ -247,9 +261,42 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
         if (hasBackButton)
             _itemIdentifiers.Add(BackButtonId);
 
-        // Sidebar-placed toolbar items
+        // Sidebar-placed toolbar items: [Leading] <flex> [Center] <flex> [Trailing]
         int sidebarIdx = 0;
-        foreach (var item in sidebarToolbarItems)
+
+        foreach (var item in sidebarLeading)
+        {
+            var id = $"{SidebarItemIdPrefix}{sidebarIdx}";
+            _sidebarItems.Add(item);
+            _itemIdentifiers.Add(id);
+            item.PropertyChanged += OnToolbarItemPropertyChanged;
+            sidebarIdx++;
+        }
+
+        // Insert flex space if there are center or trailing items after leading
+        if (sidebarLeading.Count > 0 && (sidebarCenter.Count > 0 || sidebarTrailing.Count > 0))
+            _itemIdentifiers.Add(FlexibleSpaceId);
+        // Also insert flex space if no leading items but we have center items
+        // (to push center away from the left edge toggle/back buttons)
+        else if (sidebarLeading.Count == 0 && sidebarCenter.Count > 0)
+            _itemIdentifiers.Add(FlexibleSpaceId);
+
+        foreach (var item in sidebarCenter)
+        {
+            var id = $"{SidebarItemIdPrefix}{sidebarIdx}";
+            _sidebarItems.Add(item);
+            _itemIdentifiers.Add(id);
+            item.PropertyChanged += OnToolbarItemPropertyChanged;
+            sidebarIdx++;
+        }
+
+        // Insert flex space between center and trailing (or leading and trailing if no center)
+        if (sidebarCenter.Count > 0 && sidebarTrailing.Count > 0)
+            _itemIdentifiers.Add(FlexibleSpaceId);
+        else if (sidebarCenter.Count == 0 && sidebarLeading.Count == 0 && sidebarTrailing.Count > 0)
+            _itemIdentifiers.Add(FlexibleSpaceId);
+
+        foreach (var item in sidebarTrailing)
         {
             var id = $"{SidebarItemIdPrefix}{sidebarIdx}";
             _sidebarItems.Add(item);

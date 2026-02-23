@@ -190,62 +190,66 @@ public class ToolbarPage : ContentPage
 #if MACAPP
 	View CreateSidebarPlacementButtons()
 	{
-		var addSidebar = MakeButton("Add Sidebar Item (plus)", AppColors.AccentGreen, (s, e) =>
+		var addLeading = MakeButton("＋ Leading (left)", AppColors.AccentGreen, (s, e) =>
 		{
 			_itemCount++;
-			var item = new ToolbarItem
-			{
-				Text = $"Sidebar {_itemCount}",
-				IconImageSource = "plus",
-			};
-			item.Clicked += (_, _) => SetStatus($"Clicked: Sidebar {_itemCount}");
-			MacOSToolbarItem.SetPlacement(item, MacOSToolbarItemPlacement.Sidebar);
+			var item = new ToolbarItem { Text = $"Lead {_itemCount}", IconImageSource = "plus" };
+			item.Clicked += (_, _) => SetStatus($"Clicked: Lead {_itemCount}");
+			MacOSToolbarItem.SetPlacement(item, MacOSToolbarItemPlacement.SidebarLeading);
 			ToolbarItems.Add(item);
 			RefreshDisplay();
-			SetStatus($"Added sidebar item: Sidebar {_itemCount} (will appear in sidebar titlebar when using native sidebar)");
+			SetStatus($"Added sidebar leading item");
 		});
 
-		var addSidebarFilter = MakeButton("Add Sidebar Item (line.3.horizontal.decrease)", AppColors.AccentTeal, (s, e) =>
+		var addCenter = MakeButton("◉ Center", AppColors.AccentTeal, (s, e) =>
 		{
 			_itemCount++;
-			var item = new ToolbarItem
-			{
-				Text = $"Filter {_itemCount}",
-				IconImageSource = "line.3.horizontal.decrease",
-			};
-			item.Clicked += (_, _) => SetStatus($"Clicked: Filter {_itemCount}");
-			MacOSToolbarItem.SetPlacement(item, MacOSToolbarItemPlacement.Sidebar);
+			var item = new ToolbarItem { Text = $"Center {_itemCount}", IconImageSource = "text.aligncenter" };
+			item.Clicked += (_, _) => SetStatus($"Clicked: Center {_itemCount}");
+			MacOSToolbarItem.SetPlacement(item, MacOSToolbarItemPlacement.SidebarCenter);
 			ToolbarItems.Add(item);
 			RefreshDisplay();
-			SetStatus($"Added sidebar filter item");
+			SetStatus($"Added sidebar center item");
 		});
 
-		var addMixed = MakeButton("Add Both: Sidebar + Content Items", AppColors.AccentPurple, (s, e) =>
+		var addTrailing = MakeButton("▸ Trailing (right)", AppColors.AccentOrange, (s, e) =>
 		{
 			_itemCount++;
-
-			var sidebarItem = new ToolbarItem
-			{
-				Text = "New",
-				IconImageSource = "plus",
-			};
-			sidebarItem.Clicked += (_, _) => SetStatus("Clicked: New (sidebar)");
-			MacOSToolbarItem.SetPlacement(sidebarItem, MacOSToolbarItemPlacement.Sidebar);
-			ToolbarItems.Add(sidebarItem);
-
-			var contentItem = new ToolbarItem
-			{
-				Text = "Share",
-				IconImageSource = "square.and.arrow.up",
-			};
-			contentItem.Clicked += (_, _) => SetStatus("Clicked: Share (content)");
-			ToolbarItems.Add(contentItem);
-
+			var item = new ToolbarItem { Text = $"Trail {_itemCount}", IconImageSource = "line.3.horizontal.decrease" };
+			item.Clicked += (_, _) => SetStatus($"Clicked: Trail {_itemCount}");
+			MacOSToolbarItem.SetPlacement(item, MacOSToolbarItemPlacement.SidebarTrailing);
+			ToolbarItems.Add(item);
 			RefreshDisplay();
-			SetStatus("Added sidebar 'New' + content 'Share' items");
+			SetStatus($"Added sidebar trailing item");
 		});
 
-		return new VerticalStackLayout { Spacing = 8, Children = { addSidebar, addSidebarFilter, addMixed } };
+		var addAllThree = MakeButton("Add Leading + Center + Trailing", AppColors.AccentPurple, (s, e) =>
+		{
+			_itemCount++;
+			var lead = new ToolbarItem { Text = "New", IconImageSource = "plus" };
+			lead.Clicked += (_, _) => SetStatus("Clicked: New (leading)");
+			MacOSToolbarItem.SetPlacement(lead, MacOSToolbarItemPlacement.SidebarLeading);
+			ToolbarItems.Add(lead);
+
+			var center = new ToolbarItem { Text = "Title", IconImageSource = "text.aligncenter" };
+			center.Clicked += (_, _) => SetStatus("Clicked: Title (center)");
+			MacOSToolbarItem.SetPlacement(center, MacOSToolbarItemPlacement.SidebarCenter);
+			ToolbarItems.Add(center);
+
+			var trail = new ToolbarItem { Text = "Filter", IconImageSource = "line.3.horizontal.decrease" };
+			trail.Clicked += (_, _) => SetStatus("Clicked: Filter (trailing)");
+			MacOSToolbarItem.SetPlacement(trail, MacOSToolbarItemPlacement.SidebarTrailing);
+			ToolbarItems.Add(trail);
+
+			var content = new ToolbarItem { Text = "Share", IconImageSource = "square.and.arrow.up" };
+			content.Clicked += (_, _) => SetStatus("Clicked: Share (content)");
+			ToolbarItems.Add(content);
+
+			RefreshDisplay();
+			SetStatus("Added leading + center + trailing + content items");
+		});
+
+		return new VerticalStackLayout { Spacing = 8, Children = { addLeading, addCenter, addTrailing, addAllThree } };
 	}
 #endif
 
@@ -383,8 +387,13 @@ public class ToolbarPage : ContentPage
 			var item = ToolbarItems[i];
 			var placement = "Content";
 #if MACAPP
-			if (MacOSToolbarItem.GetPlacement(item) == MacOSToolbarItemPlacement.Sidebar)
-				placement = "Sidebar";
+			placement = MacOSToolbarItem.GetPlacement(item) switch
+			{
+				MacOSToolbarItemPlacement.SidebarLeading => "Sidebar/Leading",
+				MacOSToolbarItemPlacement.SidebarCenter => "Sidebar/Center",
+				MacOSToolbarItemPlacement.SidebarTrailing => "Sidebar/Trailing",
+				_ => "Content",
+			};
 #endif
 			var icon = item.IconImageSource is FileImageSource fs ? fs.File : "(none)";
 			var enabled = item.Command == null || item.Command.CanExecute(null);
@@ -543,15 +552,16 @@ class ToolbarTestContentPage : ContentPage
 
 	void AddDefaultItems()
 	{
-		// Sidebar toolbar items
+		// Sidebar leading
 		var newItem = new ToolbarItem { Text = "New", IconImageSource = "plus" };
-		newItem.Clicked += (_, _) => _statusLabel.Text = "Clicked: New (sidebar)";
-		MacOSToolbarItem.SetPlacement(newItem, MacOSToolbarItemPlacement.Sidebar);
+		newItem.Clicked += (_, _) => _statusLabel.Text = "Clicked: New (leading)";
+		MacOSToolbarItem.SetPlacement(newItem, MacOSToolbarItemPlacement.SidebarLeading);
 		ToolbarItems.Add(newItem);
 
+		// Sidebar trailing
 		var filterItem = new ToolbarItem { Text = "Filter", IconImageSource = "line.3.horizontal.decrease" };
-		filterItem.Clicked += (_, _) => _statusLabel.Text = "Clicked: Filter (sidebar)";
-		MacOSToolbarItem.SetPlacement(filterItem, MacOSToolbarItemPlacement.Sidebar);
+		filterItem.Clicked += (_, _) => _statusLabel.Text = "Clicked: Filter (trailing)";
+		MacOSToolbarItem.SetPlacement(filterItem, MacOSToolbarItemPlacement.SidebarTrailing);
 		ToolbarItems.Add(filterItem);
 
 		// Content toolbar items
@@ -594,7 +604,12 @@ class ToolbarTestContentPage : ContentPage
 	void OnRemoveSidebarItems(object? s, EventArgs e)
 	{
 		var toRemove = ToolbarItems
-			.Where(i => MacOSToolbarItem.GetPlacement(i) == MacOSToolbarItemPlacement.Sidebar)
+			.Where(i => {
+				var p = MacOSToolbarItem.GetPlacement(i);
+				return p == MacOSToolbarItemPlacement.SidebarLeading
+					|| p == MacOSToolbarItemPlacement.SidebarCenter
+					|| p == MacOSToolbarItemPlacement.SidebarTrailing;
+			})
 			.ToList();
 		foreach (var item in toRemove)
 			ToolbarItems.Remove(item);
