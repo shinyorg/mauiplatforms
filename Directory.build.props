@@ -16,7 +16,7 @@
         <PackageReleaseNotes>https://github.com/shinyorg/mauiplatforms</PackageReleaseNotes>
         <RepositoryUrl>https://github.com/shinyorg/mauiplatforms</RepositoryUrl>
         <PackageTags>shiny maui platforms essentials tvos macos</PackageTags>
-        <Authors>redth</Authors>
+        <Authors>aritchie;redth</Authors>
 
         <CI Condition="'$(GITHUB_ACTIONS)' == 'true'">true</CI>
         <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
