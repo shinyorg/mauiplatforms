@@ -250,24 +250,33 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
         var sidebarCenter = new List<ToolbarItem>();
         var sidebarTrailing = new List<ToolbarItem>();
 
-        // Collect items referenced by explicit layouts for quick lookup
+        // Collect items referenced by explicit layouts for quick lookup.
+        // This includes regular ToolbarItems AND special items (menu, group, popup, share, search)
+        // so they aren't duplicated when convenience mode also processes them.
         HashSet<ToolbarItem> explicitItems = new();
+        HashSet<object> explicitSpecialItems = new();
+        void CollectExplicitLayoutItems(IList<MacOSToolbarLayoutItem> layout)
+        {
+            foreach (var entry in layout)
+            {
+                if (entry is ToolbarItemLayoutRef itemRef)
+                    explicitItems.Add(itemRef.ToolbarItem);
+                else if (entry is MenuLayoutRef menuRef)
+                    explicitSpecialItems.Add(menuRef.MenuItem);
+                else if (entry is GroupLayoutRef groupRef)
+                    explicitSpecialItems.Add(groupRef.Group);
+                else if (entry is PopUpLayoutRef popUpRef)
+                    explicitSpecialItems.Add(popUpRef.PopUpItem);
+                else if (entry is ShareLayoutRef)
+                    explicitSpecialItems.Add("__share__");
+                else if (entry is SearchLayoutRef)
+                    explicitSpecialItems.Add("__search__");
+            }
+        }
         if (hasExplicitSidebarLayout)
-        {
-            foreach (var entry in explicitSidebarLayout!)
-            {
-                if (entry is ToolbarItemLayoutRef itemRef)
-                    explicitItems.Add(itemRef.ToolbarItem);
-            }
-        }
+            CollectExplicitLayoutItems(explicitSidebarLayout!);
         if (hasExplicitContentLayout)
-        {
-            foreach (var entry in explicitContentLayout!)
-            {
-                if (entry is ToolbarItemLayoutRef itemRef)
-                    explicitItems.Add(itemRef.ToolbarItem);
-            }
-        }
+            CollectExplicitLayoutItems(explicitContentLayout!);
 
         if (toolbarItems != null)
         {
@@ -458,8 +467,10 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
                 sidebarIdx++;
             }
 
-            // Search item in sidebar (convenience mode — only when placed in sidebar)
-            if (_searchItem != null && _searchItem.Placement != MacOSToolbarItemPlacement.Content)
+            // Search item in sidebar (convenience mode — only when placed in sidebar
+            // and not already claimed by an explicit layout)
+            if (_searchItem != null && _searchItem.Placement != MacOSToolbarItemPlacement.Content
+                && !explicitSpecialItems.Contains("__search__"))
                 _itemIdentifiers.Add(SearchId);
         }
 
@@ -555,21 +566,28 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
                 contentIdx++;
             }
 
-            // Search item in content area (convenience mode — only when placed in content)
-            if (_searchItem != null && _searchItem.Placement == MacOSToolbarItemPlacement.Content)
+            // Search item in content area (convenience mode — only when placed in content
+            // and not already claimed by an explicit layout)
+            if (_searchItem != null && _searchItem.Placement == MacOSToolbarItemPlacement.Content
+                && !explicitSpecialItems.Contains("__search__"))
                 _itemIdentifiers.Add(SearchId);
 
-            // Other special items in content area (convenience mode)
+            // Other special items in content area (convenience mode — skip items
+            // already claimed by an explicit layout to avoid duplicates)
             for (int mi = 0; mi < _menuItems.Count; mi++)
-                if (_menuItems[mi].Placement == MacOSToolbarItemPlacement.Content)
+                if (_menuItems[mi].Placement == MacOSToolbarItemPlacement.Content
+                    && !explicitSpecialItems.Contains(_menuItems[mi]))
                     _itemIdentifiers.Add($"{MenuIdPrefix}{mi}");
             for (int gi = 0; gi < _groupItems.Count; gi++)
-                if (_groupItems[gi].Placement == MacOSToolbarItemPlacement.Content)
+                if (_groupItems[gi].Placement == MacOSToolbarItemPlacement.Content
+                    && !explicitSpecialItems.Contains(_groupItems[gi]))
                     _itemIdentifiers.Add($"{GroupIdPrefix}{gi}");
-            if (_shareItem != null && _shareItem.Placement == MacOSToolbarItemPlacement.Content)
+            if (_shareItem != null && _shareItem.Placement == MacOSToolbarItemPlacement.Content
+                && !explicitSpecialItems.Contains("__share__"))
                 _itemIdentifiers.Add(ShareId);
             for (int pi = 0; pi < _popUpItems.Count; pi++)
-                if (_popUpItems[pi].Placement == MacOSToolbarItemPlacement.Content)
+                if (_popUpItems[pi].Placement == MacOSToolbarItemPlacement.Content
+                    && !explicitSpecialItems.Contains(_popUpItems[pi]))
                     _itemIdentifiers.Add($"{PopUpIdPrefix}{pi}");
             for (int vi = 0; vi < _viewItems.Count; vi++)
                 if (_viewItems[vi].Placement == MacOSToolbarItemPlacement.Content)
