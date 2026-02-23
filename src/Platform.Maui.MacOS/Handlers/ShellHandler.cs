@@ -120,10 +120,13 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 			_sidebarView.AddSubview(_sidebarScrollView);
 		}
 
-		// Content area
+		// Content area — observe frame changes to re-layout MAUI content
 		_contentView = new FlippedDocumentView();
 		_contentView.WantsLayer = true;
 		_contentView.Layer!.MasksToBounds = true;
+		_contentView.PostsFrameChangedNotifications = true;
+		NSNotificationCenter.DefaultCenter.AddObserver(
+			NSView.FrameChangedNotification, OnContentFrameChanged, _contentView);
 
 		// Use NSSplitViewController for native inset sidebar appearance
 		_splitViewController = new NSSplitViewController();
@@ -189,6 +192,9 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 			_shell.Navigated -= OnShellNavigated;
 			_shell.PropertyChanged -= OnShellPropertyChanged;
 		}
+		if (_contentView != null)
+			NSNotificationCenter.DefaultCenter.RemoveObserver(
+				_contentView, NSView.FrameChangedNotification, null);
 		_shell = null;
 		base.DisconnectHandler(platformView);
 	}
@@ -250,18 +256,16 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 	{
 		base.PlatformArrange(rect);
 
-		var splitView = _splitViewController?.SplitView;
-		if (splitView == null || _contentView == null)
+		if (_contentView == null)
 			return;
-
-		splitView.Frame = new CGRect(0, 0, rect.Width, rect.Height);
 
 		if (!_useNativeSidebar)
 			LayoutSidebarContent();
 
 		if (_currentPageView != null)
 		{
-			_currentPageView.Frame = _contentView.Bounds;
+			var contentBounds = _contentView.Bounds;
+			_currentPageView.Frame = contentBounds;
 			LayoutCurrentPage(rect);
 		}
 	}
@@ -298,6 +302,20 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 		var contentBounds = _contentView.Bounds;
 		_currentPage.Measure((double)contentBounds.Width, (double)contentBounds.Height);
 		_currentPage.Arrange(new Rect(0, 0, (double)contentBounds.Width, (double)contentBounds.Height));
+	}
+
+	void OnContentFrameChanged(NSNotification notification)
+	{
+		if (_contentView == null || _currentPageView == null || _currentPage == null)
+			return;
+
+		var bounds = _contentView.Bounds;
+		if (bounds.Width <= 0 || bounds.Height <= 0)
+			return;
+
+		_currentPageView.Frame = bounds;
+		_currentPage.Measure((double)bounds.Width, (double)bounds.Height);
+		_currentPage.Arrange(new Rect(0, 0, (double)bounds.Width, (double)bounds.Height));
 	}
 
 	void BuildSidebar()
@@ -585,6 +603,7 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 			{
 				var platformView = ((IView)page).ToMacOSPlatform(MauiContext);
 				platformView.Frame = _contentView.Bounds;
+				platformView.AutoresizingMask = NSViewResizingMask.WidthSizable | NSViewResizingMask.HeightSizable;
 				_contentView.AddSubview(platformView);
 				_currentPageView = platformView;
 

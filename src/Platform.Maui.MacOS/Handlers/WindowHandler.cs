@@ -223,7 +223,13 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
         // inside the sidebar, behind-window vibrancy, inset rounded corners).
         if (page is Shell && pageHandler is ShellHandler shellHandler && shellHandler.SplitViewController != null)
         {
+            // Preserve the window frame — setting contentViewController can resize it
+            var savedFrame = handler.PlatformView.Frame;
+
             handler.PlatformView.ContentViewController = shellHandler.SplitViewController;
+
+            // Restore the original window frame
+            handler.PlatformView.SetFrame(savedFrame, true);
 
             // Sidebar requires Unified toolbar style for proper titlebar integration.
             if (handler.PlatformView.ToolbarStyle == NSWindowToolbarStyle.Automatic)
