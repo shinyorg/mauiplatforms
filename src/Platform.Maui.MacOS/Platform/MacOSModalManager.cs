@@ -14,12 +14,12 @@ namespace Microsoft.Maui.Platform.MacOS.Handlers;
 /// </summary>
 internal class MacOSModalManager
 {
-	readonly FlippedNSView _contentContainer;
+	readonly NSView _contentContainer;
 	readonly List<ModalEntry> _modalStack = new();
 
 	record ModalEntry(Page Page, NSView BackdropView, NSView EffectView, NSView PageView, IMauiContext MauiContext);
 
-	public MacOSModalManager(FlippedNSView contentContainer)
+	public MacOSModalManager(NSView contentContainer)
 	{
 		_contentContainer = contentContainer;
 	}

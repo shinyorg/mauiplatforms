@@ -218,6 +218,34 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
         var pageHandler = page.ToHandler(handler.MauiContext);
         var pageView = pageHandler.ToPlatformView();
 
+        // Shell with NSSplitViewController: set as window's contentViewController
+        // so the system provides proper sidebar titlebar integration (traffic lights
+        // inside the sidebar, behind-window vibrancy, inset rounded corners).
+        if (page is Shell && pageHandler is ShellHandler shellHandler && shellHandler.SplitViewController != null)
+        {
+            handler.PlatformView.ContentViewController = shellHandler.SplitViewController;
+
+            // Sidebar requires Unified toolbar style for proper titlebar integration.
+            if (handler.PlatformView.ToolbarStyle == NSWindowToolbarStyle.Automatic)
+                handler.PlatformView.ToolbarStyle = NSWindowToolbarStyle.Unified;
+
+            // Re-attach the toolbar AFTER setting contentViewController so the system
+            // recalculates titlebar integration with the NSSplitViewController sidebar.
+            var toolbar = handler.PlatformView.Toolbar;
+            handler.PlatformView.Toolbar = null;
+            handler.PlatformView.Toolbar = toolbar;
+
+            // Recreate modal manager with the new content view
+            var contentView = handler.PlatformView.ContentView;
+            if (contentView != null)
+                handler._modalManager = new MacOSModalManager(contentView);
+
+            handler.SubscribeModalEvents(window);
+            handler.ObservePageChanges(page);
+            handler.RefreshToolbar();
+            return;
+        }
+
         if (handler._contentContainer != null)
         {
             foreach (var subview in handler._contentContainer.Subviews)

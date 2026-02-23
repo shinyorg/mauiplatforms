@@ -4,7 +4,7 @@ namespace Microsoft.Maui.Platform.MacOS;
 
 /// <summary>
 /// Controls how the window toolbar/titlebar is rendered.
-/// Maps to NSWindowToolbarStyle.
+/// Values match NSWindowToolbarStyle for direct casting.
 /// </summary>
 public enum MacOSTitlebarStyle
 {
@@ -14,11 +14,14 @@ public enum MacOSTitlebarStyle
 	/// <summary>Full-height toolbar with title below the toolbar.</summary>
 	Expanded = 1,
 
+	/// <summary>Preferences-style toolbar (like System Settings).</summary>
+	Preference = 2,
+
 	/// <summary>Standard unified toolbar with title inline. Default for MAUI windows.</summary>
-	Unified = 2,
+	Unified = 3,
 
 	/// <summary>Compact unified toolbar — shorter/narrower, ideal for tool windows.</summary>
-	UnifiedCompact = 3,
+	UnifiedCompact = 4,
 }
 
 /// <summary>

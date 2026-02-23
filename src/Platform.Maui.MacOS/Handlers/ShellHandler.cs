@@ -33,11 +33,11 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 	public static readonly CommandMapper<Shell, ShellHandler> CommandMapper =
 		new(ViewCommandMapper);
 
-	NSView? _container;
+	NSSplitViewController? _splitViewController;
+	NSSplitViewItem? _sidebarSplitItem;
 	NSView? _sidebarView;
 	NSView? _contentView;
 	NSView? _currentPageView;
-	DividerView? _dividerView;
 	Page? _currentPage;
 	Shell? _shell;
 	nfloat _flyoutWidth = 220;
@@ -50,7 +50,6 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 	bool _useNativeSidebar;
 	NSScrollView? _nativeSidebarScrollView;
 	NSOutlineView? _outlineView;
-	NSVisualEffectView? _sidebarEffectView;
 	SidebarOutlineViewDataSource? _outlineDataSource;
 	SidebarOutlineViewDelegate? _outlineDelegate;
 	// Maps leaf MacOSSidebarItem → (ShellItem, ShellSection, ShellContent)
@@ -61,28 +60,23 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 	{
 	}
 
+	/// <summary>
+	/// Exposes the NSSplitViewController so WindowHandler can set it as the
+	/// window's contentViewController for proper sidebar titlebar integration.
+	/// </summary>
+	internal NSSplitViewController? SplitViewController => _splitViewController;
+
 	protected override NSView CreatePlatformView()
 	{
-		_container = new FlippedDocumentView();
-
-		// Check if native sidebar is requested
 		_useNativeSidebar = VirtualView is Shell shell && MacOSShell.GetUseNativeSidebar(shell);
 
-		// Sidebar
+		// Sidebar — keep transparent so the system-provided sidebar vibrancy
+		// from NSSplitViewItem.CreateSidebar() shows through
 		_sidebarView = new NSView();
-		_sidebarView.WantsLayer = true;
 
 		if (_useNativeSidebar)
 		{
 			// Native NSOutlineView source list sidebar
-			_sidebarEffectView = new NSVisualEffectView
-			{
-				BlendingMode = NSVisualEffectBlendingMode.BehindWindow,
-				Material = NSVisualEffectMaterial.Sidebar,
-				State = NSVisualEffectState.Active,
-			};
-			_sidebarView.AddSubview(_sidebarEffectView);
-
 			_outlineView = new NSOutlineView
 			{
 				SelectionHighlightStyle = NSTableViewSelectionHighlightStyle.SourceList,
@@ -105,29 +99,20 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 				AutohidesScrollers = true,
 				DrawsBackground = false,
 				DocumentView = _outlineView,
-				AutomaticallyAdjustsContentInsets = false,
+				AutoresizingMask = NSViewResizingMask.WidthSizable | NSViewResizingMask.HeightSizable,
 			};
 			_sidebarView.AddSubview(_nativeSidebarScrollView);
 		}
 		else
 		{
-			// Custom sidebar with MAUI-drawn items — use NSVisualEffectView
-			// for proper behind-window blending that extends under the titlebar
-			_sidebarEffectView = new NSVisualEffectView
-			{
-				BlendingMode = NSVisualEffectBlendingMode.BehindWindow,
-				Material = NSVisualEffectMaterial.Sidebar,
-				State = NSVisualEffectState.Active,
-			};
-			_sidebarView.AddSubview(_sidebarEffectView);
-
+			// Custom sidebar with MAUI-drawn items
 			_sidebarScrollView = new NSScrollView
 			{
 				HasVerticalScroller = true,
 				HasHorizontalScroller = false,
 				AutohidesScrollers = true,
 				DrawsBackground = false,
-				AutomaticallyAdjustsContentInsets = false,
+				AutoresizingMask = NSViewResizingMask.WidthSizable | NSViewResizingMask.HeightSizable,
 			};
 
 			_sidebarContent = new FlippedDocumentView();
@@ -140,14 +125,36 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 		_contentView.WantsLayer = true;
 		_contentView.Layer!.MasksToBounds = true;
 
-		// Draggable divider between sidebar and content
-		_dividerView = new DividerView(this);
+		// Use NSSplitViewController for native inset sidebar appearance
+		_splitViewController = new NSSplitViewController();
 
-		_container.AddSubview(_sidebarView);
-		_container.AddSubview(_contentView);
-		_container.AddSubview(_dividerView);
+		var sidebarVC = new NSViewController();
+		sidebarVC.View = _sidebarView;
 
-		return _container;
+		var contentVC = new NSViewController();
+		contentVC.View = _contentView;
+
+		_sidebarSplitItem = NSSplitViewItem.CreateSidebar(sidebarVC);
+		_sidebarSplitItem.MinimumThickness = 150;
+		_sidebarSplitItem.MaximumThickness = 400;
+		_sidebarSplitItem.CanCollapse = false;
+		_sidebarSplitItem.AllowsFullHeightLayout = true;
+		_sidebarSplitItem.TitlebarSeparatorStyle = NSTitlebarSeparatorStyle.None;
+
+		var contentItem = NSSplitViewItem.CreateContentList(contentVC);
+		contentItem.TitlebarSeparatorStyle = NSTitlebarSeparatorStyle.Line;
+
+		_splitViewController.AddSplitViewItem(_sidebarSplitItem);
+		_splitViewController.AddSplitViewItem(contentItem);
+
+		// Apply resize constraint
+		if (VirtualView is Shell s && !MacOSShell.GetIsSidebarResizable(s))
+		{
+			_sidebarSplitItem.MinimumThickness = _flyoutWidth;
+			_sidebarSplitItem.MaximumThickness = _flyoutWidth;
+		}
+
+		return _splitViewController.View;
 	}
 
 	protected override void ConnectHandler(NSView platformView)
@@ -166,6 +173,9 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 			// Shell's internal navigation system (GoToAsync) can resolve them
 			EnsureShellItemHandlers();
 		}
+
+		// Set initial sidebar width
+		_splitViewController?.SplitView?.SetPositionOfDivider(_flyoutWidth, 0);
 
 		BuildSidebar();
 	}
@@ -236,67 +246,24 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 		}
 	}
 
-	nfloat GetTitlebarHeight()
-	{
-		// The traffic light buttons (close/minimize/maximize) need ~28px clearance.
-		// SafeAreaInsets.Top and ContentLayoutRect both return the full unified
-		// toolbar height (52px) which is too much when TitlebarAppearsTransparent
-		// is set and TitleVisibility is hidden.
-		return 28;
-	}
-
 	public override void PlatformArrange(Rect rect)
 	{
 		base.PlatformArrange(rect);
 
-		if (_container == null || _sidebarView == null || _contentView == null)
+		var splitView = _splitViewController?.SplitView;
+		if (splitView == null || _contentView == null)
 			return;
 
-		_container.Frame = new CGRect(0, 0, rect.Width, rect.Height);
+		splitView.Frame = new CGRect(0, 0, rect.Width, rect.Height);
 
-		var sidebarWidth = Math.Min((double)_flyoutWidth, rect.Width * 0.4);
-		_sidebarView.Frame = new CGRect(0, 0, sidebarWidth, rect.Height);
-
-		if (_useNativeSidebar)
-		{
-			if (_sidebarEffectView != null)
-				_sidebarEffectView.Frame = _sidebarView.Bounds;
-			if (_nativeSidebarScrollView != null)
-			{
-				_nativeSidebarScrollView.Frame = _sidebarView.Bounds;
-				var safeTop = GetTitlebarHeight();
-				_nativeSidebarScrollView.ContentInsets = new NSEdgeInsets(safeTop, 0, 0, 0);
-			}
-		}
-		else
-		{
-			if (_sidebarEffectView != null)
-				_sidebarEffectView.Frame = _sidebarView.Bounds;
-			if (_sidebarScrollView != null)
-			{
-				_sidebarScrollView.Frame = _sidebarView.Bounds;
-				var safeTop = GetTitlebarHeight();
-				_sidebarScrollView.ContentInsets = new NSEdgeInsets(safeTop, 0, 0, 0);
-			}
-		}
-
-		// Divider (thin draggable strip)
-		const double dividerWidth = 5;
-		if (_dividerView != null)
-			_dividerView.Frame = new CGRect(sidebarWidth - 2, 0, dividerWidth, rect.Height);
-
-		var contentX = sidebarWidth + 1;
-		var contentWidth = rect.Width - contentX;
-		_contentView.Frame = new CGRect(contentX, 0, contentWidth, rect.Height);
+		if (!_useNativeSidebar)
+			LayoutSidebarContent();
 
 		if (_currentPageView != null)
 		{
 			_currentPageView.Frame = _contentView.Bounds;
 			LayoutCurrentPage(rect);
 		}
-
-		if (!_useNativeSidebar)
-			LayoutSidebarContent();
 	}
 
 	void LayoutSidebarContent()
@@ -688,25 +655,22 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 
 	public static void MapFlyoutBehavior(ShellHandler handler, Shell shell)
 	{
-		if (handler._sidebarView == null)
+		if (handler._sidebarSplitItem == null)
 			return;
 
-		var behavior = shell.FlyoutBehavior;
-		handler._sidebarView.Hidden = behavior == FlyoutBehavior.Disabled;
-		if (behavior == FlyoutBehavior.Locked)
-			handler._sidebarView.Hidden = false;
+		handler._sidebarSplitItem.Collapsed = shell.FlyoutBehavior == FlyoutBehavior.Disabled;
 	}
 
 	public static void MapIsPresented(ShellHandler handler, Shell shell)
 	{
-		if (handler._sidebarView == null)
+		if (handler._sidebarSplitItem == null)
 			return;
 
 		// When FlyoutBehavior is Locked, sidebar is always visible
 		if (shell.FlyoutBehavior == FlyoutBehavior.Locked)
 			return;
 
-		handler._sidebarView.Hidden = !shell.FlyoutIsPresented;
+		handler._sidebarSplitItem.Collapsed = !shell.FlyoutIsPresented;
 	}
 
 	public static void MapFlyoutWidth(ShellHandler handler, Shell shell)
@@ -714,11 +678,7 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 		if (shell.FlyoutWidth > 0)
 		{
 			handler._flyoutWidth = (nfloat)shell.FlyoutWidth;
-			if (handler._sidebarView != null && handler.PlatformView.Frame.Width > 0)
-			{
-				var rect = handler.PlatformView.Frame;
-				handler.PlatformArrange(new Rect(0, 0, rect.Width, rect.Height));
-			}
+			handler._splitViewController?.SplitView?.SetPositionOfDivider(handler._flyoutWidth, 0);
 		}
 	}
 
@@ -839,78 +799,4 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 		}
 	}
 
-	/// <summary>
-	/// A draggable divider between the sidebar and content area.
-	/// Shows a resize cursor on hover and resizes the sidebar on drag.
-	/// </summary>
-	class DividerView : NSView
-	{
-		readonly ShellHandler _handler;
-		nfloat _dragStartX;
-		nfloat _dragStartWidth;
-		bool _isDragging;
-		NSTrackingArea? _trackingArea;
-
-		static readonly nfloat MinWidth = 150;
-		static readonly nfloat MaxWidth = 400;
-
-		public DividerView(ShellHandler handler)
-		{
-			_handler = handler;
-		}
-
-		bool IsResizable => _handler._shell is Shell shell && MacOSShell.GetIsSidebarResizable(shell);
-
-		public override void ResetCursorRects()
-		{
-			base.ResetCursorRects();
-			if (IsResizable)
-				AddCursorRect(Bounds, NSCursor.ResizeLeftRightCursor);
-		}
-
-		public override void MouseDown(NSEvent theEvent)
-		{
-			if (!IsResizable) { base.MouseDown(theEvent); return; }
-
-			_isDragging = true;
-			var loc = theEvent.LocationInWindow;
-			_dragStartX = loc.X;
-			_dragStartWidth = _handler._flyoutWidth;
-		}
-
-		public override void MouseDragged(NSEvent theEvent)
-		{
-			if (!_isDragging || !IsResizable) return;
-
-			var loc = theEvent.LocationInWindow;
-			var delta = loc.X - _dragStartX;
-			var newWidth = (nfloat)Math.Clamp((double)(_dragStartWidth + delta), (double)MinWidth, (double)MaxWidth);
-
-			_handler._flyoutWidth = newWidth;
-
-			var containerFrame = _handler._container?.Frame ?? CGRect.Empty;
-			if (containerFrame.Width > 0 && containerFrame.Height > 0)
-			{
-				_handler.PlatformArrange(new Rect(0, 0, containerFrame.Width, containerFrame.Height));
-			}
-		}
-
-		public override void MouseUp(NSEvent theEvent)
-		{
-			_isDragging = false;
-		}
-
-		public override void UpdateTrackingAreas()
-		{
-			base.UpdateTrackingAreas();
-			if (_trackingArea != null)
-				RemoveTrackingArea(_trackingArea);
-
-			_trackingArea = new NSTrackingArea(
-				Bounds,
-				NSTrackingAreaOptions.MouseEnteredAndExited | NSTrackingAreaOptions.ActiveInKeyWindow | NSTrackingAreaOptions.CursorUpdate,
-				this, null);
-			AddTrackingArea(_trackingArea);
-		}
-	}
 }

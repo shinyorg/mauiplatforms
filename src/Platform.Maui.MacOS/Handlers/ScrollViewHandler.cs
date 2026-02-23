@@ -18,6 +18,12 @@ internal class FlippedDocumentView : NSView
     }
 
     public override bool IsFlipped => true;
+
+    public override void ViewDidChangeEffectiveAppearance()
+    {
+        base.ViewDidChangeEffectiveAppearance();
+        FlippedNSView.SyncUserAppTheme(EffectiveAppearance);
+    }
 }
 
 public partial class ScrollViewHandler : MacOSViewHandler<IScrollView, NSScrollView>

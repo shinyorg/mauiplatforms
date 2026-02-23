@@ -163,11 +163,42 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
         _items.Clear();
         _itemIdentifiers.Clear();
 
+        bool hasBackButton = ShouldShowBackButton();
+        bool hasFlyoutToggle = _flyoutPage != null;
+        bool hasToolbarItems = toolbarItems != null && toolbarItems.Any(i => i.Order != ToolbarItemOrder.Secondary);
+
+        // Only show the toolbar if there's meaningful content
+        bool needsToolbar = hasBackButton || hasFlyoutToggle || hasToolbarItems;
+
+        if (!needsToolbar)
+        {
+            // When a Shell sidebar is active, the toolbar must remain attached
+            // (even if empty) for AllowsFullHeightLayout to extend the sidebar
+            // under the titlebar.  Only detach when there is no sidebar.
+            if (_shell == null)
+            {
+                if (_window?.Toolbar != null)
+                    _window.Toolbar = null;
+                return;
+            }
+
+            // Keep toolbar attached but clear its items
+            if (_window != null && _window.Toolbar == null && _toolbar != null)
+                _window.Toolbar = _toolbar;
+
+            if (_toolbar != null)
+            {
+                while (_toolbar.Items.Length > 0)
+                    _toolbar.RemoveItem(0);
+            }
+            return;
+        }
+
         // Left side: sidebar toggle, then back button
-        if (_flyoutPage != null)
+        if (hasFlyoutToggle)
             _itemIdentifiers.Add(SidebarToggleId);
 
-        if (ShouldShowBackButton())
+        if (hasBackButton)
             _itemIdentifiers.Add(BackButtonId);
 
         // Flexible space between left nav items and centered title
@@ -194,6 +225,10 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
                 index++;
             }
         }
+
+        // Attach toolbar if not already attached
+        if (_window != null && _window.Toolbar == null && _toolbar != null)
+            _window.Toolbar = _toolbar;
 
         // Force NSToolbar to reload by removing and re-inserting items
         if (_toolbar != null)
