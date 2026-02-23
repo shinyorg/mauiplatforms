@@ -599,19 +599,80 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
         if (_window != null && _window.Toolbar == null && _toolbar != null)
             _window.Toolbar = _toolbar;
 
-        // Force NSToolbar to reload by removing and re-inserting items
+        // Diff-based update: only modify the native toolbar when the identifier
+        // list actually changed, and suppress animation to avoid flash/flicker.
         if (_toolbar != null)
         {
-            while (_toolbar.Items.Length > 0)
-                _toolbar.RemoveItem(0);
+            var currentIds = _toolbar.Items.Select(i => i.Identifier).ToList();
+            var desiredIds = _itemIdentifiers;
 
-            for (int i = 0; i < _itemIdentifiers.Count; i++)
-                _toolbar.InsertItem(_itemIdentifiers[i], i);
+            if (!currentIds.SequenceEqual(desiredIds))
+            {
+                NSAnimationContext.BeginGrouping();
+                NSAnimationContext.CurrentContext.Duration = 0;
+
+                // Remove items that are no longer present (iterate backwards)
+                for (int i = currentIds.Count - 1; i >= 0; i--)
+                {
+                    if (i >= desiredIds.Count || currentIds[i] != desiredIds[i])
+                        _toolbar.RemoveItem(i);
+                    else
+                        currentIds[i] = null!; // mark as matched
+                }
+
+                // Re-read after removals, then insert missing items
+                var afterRemoval = _toolbar.Items.Select(i => i.Identifier).ToList();
+                for (int i = 0; i < desiredIds.Count; i++)
+                {
+                    if (i >= afterRemoval.Count || afterRemoval[i] != desiredIds[i])
+                    {
+                        _toolbar.InsertItem(desiredIds[i], i);
+                        afterRemoval.Insert(i, desiredIds[i]);
+                    }
+                }
+
+                NSAnimationContext.EndGrouping();
+            }
+
+            // Sync IsHidden on existing native items so that
+            // MacOSToolbarItem.IsVisible changes take effect without
+            // removing/re-inserting items.
+            SyncItemVisibility();
         }
         }
         finally
         {
             _isRefreshing = false;
+        }
+    }
+
+    /// <summary>
+    /// Updates <c>NSToolbarItem.IsHidden</c> on all native content and sidebar
+    /// toolbar items to match <see cref="MacOSToolbarItem.IsVisibleProperty"/>.
+    /// </summary>
+    void SyncItemVisibility()
+    {
+        if (_toolbar == null) return;
+
+        foreach (var nsItem in _toolbar.Items)
+        {
+            ToolbarItem? mauiItem = null;
+
+            if (nsItem.Identifier.StartsWith(ItemIdPrefix))
+            {
+                if (int.TryParse(nsItem.Identifier.AsSpan(ItemIdPrefix.Length), out int idx)
+                    && idx >= 0 && idx < _items.Count)
+                    mauiItem = _items[idx];
+            }
+            else if (nsItem.Identifier.StartsWith(SidebarItemIdPrefix))
+            {
+                if (int.TryParse(nsItem.Identifier.AsSpan(SidebarItemIdPrefix.Length), out int idx)
+                    && idx >= 0 && idx < _sidebarItems.Count)
+                    mauiItem = _sidebarItems[idx];
+            }
+
+            if (mauiItem != null)
+                nsItem.Hidden = !MacOSToolbarItem.GetIsVisible(mauiItem);
         }
     }
 
@@ -809,6 +870,10 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
         var visPriority = MacOSToolbarItem.GetVisibilityPriority(mauiItem);
         if (visPriority != MacOSToolbarItemVisibilityPriority.Standard)
             nsItem.VisibilityPriority = (nint)(long)visPriority;
+
+        // Item visibility (maps to NSToolbarItem.IsHidden, macOS 15+)
+        if (!MacOSToolbarItem.GetIsVisible(mauiItem))
+            nsItem.Hidden = true;
 
         // Background tint color
         var tintColor = MacOSToolbarItem.GetBackgroundTintColor(mauiItem);

@@ -103,6 +103,25 @@ public static class MacOSToolbarItem
 
 	public static void SetVisibilityPriority(BindableObject obj, MacOSToolbarItemVisibilityPriority value)
 		=> obj.SetValue(VisibilityPriorityProperty, value);
+
+	/// <summary>
+	/// Controls whether this toolbar item is visible. When <c>false</c>, the native
+	/// <c>NSToolbarItem.IsHidden</c> property is set to hide the item without removing
+	/// it from the toolbar — avoiding the flash/flicker caused by a full toolbar rebuild.
+	/// Defaults to <c>true</c>.
+	/// </summary>
+	public static readonly BindableProperty IsVisibleProperty =
+		BindableProperty.CreateAttached("IsVisible", typeof(bool), typeof(MacOSToolbarItem), true,
+			propertyChanged: OnIsVisibleChanged);
+
+	public static bool GetIsVisible(BindableObject obj) => (bool)obj.GetValue(IsVisibleProperty);
+	public static void SetIsVisible(BindableObject obj, bool value) => obj.SetValue(IsVisibleProperty, value);
+
+	static void OnIsVisibleChanged(BindableObject bindable, object? oldValue, object? newValue)
+	{
+		if (bindable is ToolbarItem ti && ti.Parent is Page page)
+			MacOSToolbar.RequestRefresh(page);
+	}
 }
 
 /// <summary>Identifies a built-in system toolbar item provided by AppKit.</summary>
@@ -739,4 +758,12 @@ public static class MacOSToolbar
 			}
 		}
 	}
+
+	/// <summary>
+	/// Triggers a toolbar refresh for the given page. Used by
+	/// <see cref="MacOSToolbarItem.IsVisibleProperty"/> when a ToolbarItem's
+	/// visibility changes at runtime.
+	/// </summary>
+	internal static void RequestRefresh(Page page)
+		=> OnToolbarAttachedPropertyChanged(page, null, null);
 }
