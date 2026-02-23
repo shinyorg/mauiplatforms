@@ -356,6 +356,7 @@ public partial class NativeSidebarFlyoutPageHandler : MacOSViewHandler<IFlyoutVi
 			_sidebarSplitItem.TitlebarSeparatorStyle = NSTitlebarSeparatorStyle.None;
 
 			var contentItem = NSSplitViewItem.CreateContentList(contentVC);
+			contentItem.AllowsFullHeightLayout = true;
 			contentItem.TitlebarSeparatorStyle = NSTitlebarSeparatorStyle.Line;
 
 			_splitViewController.AddSplitViewItem(_sidebarSplitItem);
