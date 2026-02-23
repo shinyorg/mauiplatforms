@@ -179,7 +179,8 @@ public class ToolbarPage : ContentPage
 				RefreshDisplay();
 				SetStatus($"Added icon item: {captured}");
 			});
-			btn.FontSize = 12;
+			btn.FontSize = 11;
+			btn.HorizontalOptions = LayoutOptions.Fill;
 			grid.Add(btn, i % 3, i / 3);
 		}
 
@@ -415,6 +416,11 @@ public class ToolbarPage : ContentPage
 			Text = text,
 			BackgroundColor = bg,
 			TextColor = Colors.White,
+			HeightRequest = 40,
+			CornerRadius = 8,
+			FontSize = 13,
+			HorizontalOptions = LayoutOptions.Start,
+			Padding = new Thickness(20, 0),
 		};
 		btn.Clicked += handler;
 		return btn;
@@ -627,6 +633,11 @@ class ToolbarTestContentPage : ContentPage
 			Text = text,
 			BackgroundColor = bg,
 			TextColor = Colors.White,
+			HeightRequest = 40,
+			CornerRadius = 8,
+			FontSize = 13,
+			HorizontalOptions = LayoutOptions.Start,
+			Padding = new Thickness(20, 0),
 		};
 		btn.Clicked += handler;
 		return btn;
