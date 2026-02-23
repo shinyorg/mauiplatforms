@@ -30,26 +30,26 @@ public class BlazorPage : ContentPage
 		{
 			Label = "Separator",
 			SelectionMode = MacOSToolbarGroupSelectionMode.SelectOne,
+			Representation = MacOSToolbarGroupRepresentation.Expanded,
 			SelectedIndex = 0,
 			Segments =
 			{
-				new MacOSToolbarGroupSegment { Text = "Auto", Icon = "line.3.horizontal" },
-				new MacOSToolbarGroupSegment { Text = "None", Icon = "circle.slash" },
-				new MacOSToolbarGroupSegment { Text = "Line", Icon = "minus" },
+				new MacOSToolbarGroupSegment { Text = "Auto" },
+				new MacOSToolbarGroupSegment { Text = "None" },
+				new MacOSToolbarGroupSegment { Text = "Line" },
 			}
 		};
 		separatorGroup.SelectionChanged += (s, e) =>
 		{
 			var window = Application.Current?.Windows?.FirstOrDefault();
-			if (window == null) return;
+			if (window?.Handler?.PlatformView is not AppKit.NSWindow nsWindow) return;
 
-			var style = e.SelectedIndex switch
+			nsWindow.TitlebarSeparatorStyle = e.SelectedIndex switch
 			{
-				1 => MacOSTitlebarSeparatorStyle.None,
-				2 => MacOSTitlebarSeparatorStyle.Line,
-				_ => MacOSTitlebarSeparatorStyle.Automatic,
+				1 => AppKit.NSTitlebarSeparatorStyle.None,
+				2 => AppKit.NSTitlebarSeparatorStyle.Line,
+				_ => AppKit.NSTitlebarSeparatorStyle.Automatic,
 			};
-			MacOSWindow.SetTitlebarSeparatorStyle(window, style);
 		};
 
 		MacOSToolbar.SetItemGroups(this, new List<MacOSToolbarItemGroup> { separatorGroup });
