@@ -16,6 +16,7 @@ public class BlazorPage : ContentPage
 		{
 			HostPage = "wwwroot/index.html",
 			// ContentInsets are auto-calculated from toolbar height
+			HideScrollPocketOverlay = true,
 		};
 		blazorWebView.RootComponents.Add(new BlazorRootComponent
 		{
@@ -41,14 +42,16 @@ public class BlazorPage : ContentPage
 			if (Window is BindableObject w)
 				MacOSWindow.SetTitlebarSeparatorStyle(w, MacOSTitlebarSeparatorStyle.Automatic);
 		}));
-	}
-
-	protected override void OnAppearing()
-	{
-		base.OnAppearing();
-		// Set initial separator style to None for seamless titlebar
-		if (Window is BindableObject w)
-			MacOSWindow.SetTitlebarSeparatorStyle(w, MacOSTitlebarSeparatorStyle.None);
+		ToolbarItems.Add(new ToolbarItem("TB: Opaque", null, () =>
+		{
+			if (Window is BindableObject w)
+				MacOSWindow.SetTitlebarTransparent(w, false);
+		}));
+		ToolbarItems.Add(new ToolbarItem("TB: Clear", null, () =>
+		{
+			if (Window is BindableObject w)
+				MacOSWindow.SetTitlebarTransparent(w, true);
+		}));
 	}
 }
 #endif

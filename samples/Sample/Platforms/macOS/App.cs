@@ -10,6 +10,9 @@ class MacOSApp : Application
 	protected override Window CreateWindow(IActivationState? activationState)
 	{
 		var window = new Window(new MainShell());
+		// Set titlebar properties at build time for testing
+		MacOSWindow.SetTitlebarTransparent(window, false);
+		MacOSWindow.SetTitlebarSeparatorStyle(window, MacOSTitlebarSeparatorStyle.None);
 		window.Created += (s, e) => Console.WriteLine("[Lifecycle] Window Created");
 		window.Activated += (s, e) => Console.WriteLine("[Lifecycle] Window Activated");
 		window.Deactivated += (s, e) => Console.WriteLine("[Lifecycle] Window Deactivated");

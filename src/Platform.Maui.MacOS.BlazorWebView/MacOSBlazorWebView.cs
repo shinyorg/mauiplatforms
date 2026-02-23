@@ -26,6 +26,17 @@ public class MacOSBlazorWebView : View
     public static readonly BindableProperty ContentInsetsProperty =
         BindableProperty.Create(nameof(ContentInsets), typeof(Thickness), typeof(MacOSBlazorWebView), default(Thickness));
 
+    /// <summary>
+    /// When true, hides the WKWebView's internal scroll pocket overlay views
+    /// (NSScrollPocket, BackdropView) that create a harsh white bar at the top
+    /// of the content area when the view extends behind the toolbar.
+    /// Enable this when using FullSizeContentView with a toolbar and
+    /// TitlebarAppearsTransparent=false to get a clean toolbar appearance.
+    /// Default is false (standard WKWebView behavior).
+    /// </summary>
+    public static readonly BindableProperty HideScrollPocketOverlayProperty =
+        BindableProperty.Create(nameof(HideScrollPocketOverlay), typeof(bool), typeof(MacOSBlazorWebView), false);
+
     public string? HostPage
     {
         get => (string?)GetValue(HostPageProperty);
@@ -48,6 +59,16 @@ public class MacOSBlazorWebView : View
     {
         get => (Thickness)GetValue(ContentInsetsProperty);
         set => SetValue(ContentInsetsProperty, value);
+    }
+
+    /// <summary>
+    /// Gets or sets whether to hide the WKWebView's internal scroll pocket overlay
+    /// that creates a harsh white bar when content extends behind the toolbar.
+    /// </summary>
+    public bool HideScrollPocketOverlay
+    {
+        get => (bool)GetValue(HideScrollPocketOverlayProperty);
+        set => SetValue(HideScrollPocketOverlayProperty, value);
     }
 
     public List<BlazorRootComponent> RootComponents { get; } = new();

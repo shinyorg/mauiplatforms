@@ -128,7 +128,7 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 		// Content area — observe frame changes to re-layout MAUI content
 		_contentView = new FlippedDocumentView();
 		_contentView.WantsLayer = true;
-		_contentView.Layer!.MasksToBounds = true;
+		_contentView.Layer!.MasksToBounds = false;
 		_contentView.PostsFrameChangedNotifications = true;
 		NSNotificationCenter.DefaultCenter.AddObserver(
 			NSView.FrameChangedNotification, OnContentFrameChanged, _contentView);
@@ -157,6 +157,7 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 		widthConstraint.Active = true;
 
 		var contentItem = NSSplitViewItem.CreateContentList(contentVC);
+		contentItem.AllowsFullHeightLayout = true;
 		contentItem.TitlebarSeparatorStyle = NSTitlebarSeparatorStyle.Line;
 
 		_splitViewController.AddSplitViewItem(_sidebarSplitItem);

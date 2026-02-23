@@ -19,6 +19,7 @@ public partial class BlazorWebViewHandler : MacOSViewHandler<MacOSBlazorWebView,
         new PropertyMapper<MacOSBlazorWebView, BlazorWebViewHandler>(ViewMapper)
         {
             [nameof(MacOSBlazorWebView.ContentInsets)] = MapContentInsets,
+            [nameof(MacOSBlazorWebView.HideScrollPocketOverlay)] = MapHideScrollPocketOverlay,
         };
 
     internal static string AppOrigin { get; } = "app://0.0.0.1/";
@@ -85,7 +86,10 @@ public partial class BlazorWebViewHandler : MacOSViewHandler<MacOSBlazorWebView,
 
         // Apply initial content insets
         if (VirtualView is MacOSBlazorWebView macView)
+        {
             MapContentInsets(this, macView);
+            MapHideScrollPocketOverlay(this, macView);
+        }
 
         // Install titlebar drag overlay so the window is draggable
         // even when WKWebView covers the titlebar area (FullSizeContentView)
@@ -249,6 +253,40 @@ public partial class BlazorWebViewHandler : MacOSViewHandler<MacOSBlazorWebView,
 
     [System.Runtime.InteropServices.DllImport(ObjCRuntime.Constants.ObjectiveCLibrary, EntryPoint = "objc_msgSend")]
     static extern void _objc_msgSend_NSEdgeInsets(IntPtr receiver, IntPtr selector, NSEdgeInsets arg1);
+
+    public static void MapHideScrollPocketOverlay(BlazorWebViewHandler handler, MacOSBlazorWebView view)
+    {
+        if (handler.PlatformView == null)
+            return;
+
+        var wkWebView = handler.PlatformView;
+        var hide = view.HideScrollPocketOverlay;
+
+        // The scroll pocket views may not exist yet if the WKWebView hasn't been laid out.
+        // Defer until the next layout pass to ensure the subview hierarchy is populated.
+        CoreFoundation.DispatchQueue.MainQueue.DispatchAsync(() =>
+            ApplyScrollPocketVisibility(wkWebView, hide));
+    }
+
+    static void ApplyScrollPocketVisibility(WKWebView wkWebView, bool hide)
+    {
+        static void SetVisibility(NSView view, bool hidden)
+        {
+            var name = view.Class.Name;
+            // NSScrollPocket is the container for the scroll pocket overlay views.
+            // BackdropView in WKFlippedView also contributes to the overlay.
+            if (name.Contains("ScrollPocket") || name.Contains("BackdropView"))
+            {
+                view.Hidden = hidden;
+                return;
+            }
+            foreach (var sub in view.Subviews)
+                SetVisibility(sub, hidden);
+        }
+
+        foreach (var child in wkWebView.Subviews)
+            SetVisibility(child, hide);
+    }
 
     sealed class WebViewScriptMessageHandler : NSObject, IWKScriptMessageHandler
     {
