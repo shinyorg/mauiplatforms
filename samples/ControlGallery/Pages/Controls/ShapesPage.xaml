@@ -48,37 +48,18 @@
         <ScrollView>
             <StackLayout Margin="15">
                 <Label Text="Shapes" Style="{StaticResource Headline}"/>
-                <FlexLayout Wrap="Wrap" AlignContent="SpaceEvenly" JustifyContent="SpaceEvenly">
+                <FlexLayout x:Name="shapesLayout" Wrap="Wrap" AlignContent="SpaceEvenly" JustifyContent="SpaceEvenly">
                     <Ellipse WidthRequest="50" HeightRequest="50"
                         Fill="{StaticResource PrimaryBrush}"/>
                     <Rectangle WidthRequest="50" HeightRequest="50"
                             Fill="{StaticResource PrimaryBrush}"/>
                     
-                    <Microsoft.Maui.Controls.Shapes.Polygon Fill="{StaticResource PrimaryBrush}"
-                            Points="0 36 0 13.5 13.5 0 36 0 50 13.5 50 36 36 50 13.5 50"/>
-                    
-                    <Microsoft.Maui.Controls.Shapes.Polygon Fill="{StaticResource PrimaryBrush}"
-                            Points="0 14 12 0 38 0 50 14 25 50"/>
-                    
-                    <Microsoft.Maui.Controls.Shapes.Polygon Fill="{StaticResource PrimaryBrush}"
-                        Margin="0,10"
-                            Points="24 0 47.7764129 17.2745751 38.6946313 45.2254249 9.30536869 45.2254249 0.223587093 17.2745751"/>
+                    <!-- Polygons added programmatically in code-behind due to XAML parsing issue with fully-qualified Polygon type -->
                     
                     <Grid Margin="0,10">
-                        <Microsoft.Maui.Controls.Shapes.Polygon Fill="#512BD4" 
-                                Points="0 0 0 50 25 25"/>
-                        <Microsoft.Maui.Controls.Shapes.Polygon Fill="#DFD8F7" 
-                                Points="0 0 50 0 25 25"/>
-                        <Microsoft.Maui.Controls.Shapes.Polygon Fill="#2B0B98" 
-                                Points="50 0 50 50 25 25"/>
-                        <Microsoft.Maui.Controls.Shapes.Polygon Fill="#E5E5E1" 
-                                Points="0 50 25 25 50 50"/>
+                        <!-- Grid polygon children added programmatically -->
                     </Grid>
                     
-                    <Microsoft.Maui.Controls.Shapes.Polygon Fill="{StaticResource PrimaryBrush}"
-                        Margin="0,10"
-                            Points="8 25 25 0 42 25 25 50"/>
-
                     <Path 
     Fill="{StaticResource PrimaryBrush}"
     Data="M50,0 L50,50 L25,50 C11.1928813,50 0,38.8071187 0,25 C0,11.3309524 10.9701429,0.224119049 24.5865793,0.00334928573 L25,0 L50,0 Z" />
