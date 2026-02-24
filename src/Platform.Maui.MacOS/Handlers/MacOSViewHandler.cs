@@ -446,19 +446,22 @@ public abstract class MacOSViewHandler<TVirtualView, TPlatformView> : ViewHandle
         CGSize sizeThatFits;
 
         // MacOSContainerView has a custom SizeThatFits method
+        // Use infinity (not nfloat.MaxValue) for unconstrained dimensions so
+        // MAUI layout engines (especially FlexLayout) treat them as truly
+        // unconstrained rather than as a huge finite space.
         if (platformView is MacOSContainerView containerView)
         {
             sizeThatFits = containerView.SizeThatFits(
                 new CGSize(
-                    widthConstrained ? widthConstraint : nfloat.MaxValue,
-                    heightConstrained ? heightConstraint : nfloat.MaxValue));
+                    widthConstrained ? widthConstraint : (nfloat)double.PositiveInfinity,
+                    heightConstrained ? heightConstraint : (nfloat)double.PositiveInfinity));
         }
         else if (platformView is BorderNSView borderView)
         {
             sizeThatFits = borderView.SizeThatFits(
                 new CGSize(
-                    widthConstrained ? widthConstraint : nfloat.MaxValue,
-                    heightConstrained ? heightConstraint : nfloat.MaxValue));
+                    widthConstrained ? widthConstraint : (nfloat)double.PositiveInfinity,
+                    heightConstrained ? heightConstraint : (nfloat)double.PositiveInfinity));
         }
         else
         {

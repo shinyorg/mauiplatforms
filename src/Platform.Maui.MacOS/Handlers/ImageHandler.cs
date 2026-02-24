@@ -82,27 +82,7 @@ public partial class ImageHandler : MacOSViewHandler<IImage, NSImageView>
             var fileName = fileImageSource.File;
             if (!string.IsNullOrEmpty(fileName))
             {
-                NSImage? nsImage = null;
-
-                // Try bundle resource first (most common for MAUI apps)
-                var bundlePath = NSBundle.MainBundle.PathForResource(
-                    System.IO.Path.GetFileNameWithoutExtension(fileName),
-                    System.IO.Path.GetExtension(fileName)?.TrimStart('.'));
-
-                if (bundlePath != null)
-                {
-                    try { nsImage = new NSImage(bundlePath); } catch { }
-                }
-
-                // Fall back to direct file path
-                if (nsImage == null && System.IO.File.Exists(fileName))
-                {
-                    try { nsImage = new NSImage(fileName); } catch { }
-                }
-
-                // Last resort: try NSImage.ImageNamed (searches asset catalogs)
-                nsImage ??= NSImage.ImageNamed(fileName);
-
+                var nsImage = FindBundleImage(fileName);
                 PlatformView.Image = nsImage;
             }
 
@@ -134,6 +114,54 @@ public partial class ImageHandler : MacOSViewHandler<IImage, NSImageView>
             PlatformView.Image = null;
             imageSourcePart.UpdateIsLoading(false);
         }
+    }
+
+    /// <summary>
+    /// Searches for an image in the app bundle, trying the exact name/extension first,
+    /// then alternate extensions (.svg, .pdf) and subdirectories (Images/).
+    /// MAUI MauiImage resources may be SVGs that aren't converted to PNGs on macOS.
+    /// </summary>
+    static NSImage? FindBundleImage(string fileName)
+    {
+        var name = System.IO.Path.GetFileNameWithoutExtension(fileName);
+        var ext = System.IO.Path.GetExtension(fileName)?.TrimStart('.');
+
+        // Extensions to try: requested extension first, then common MAUI image formats
+        var extensions = new List<string>();
+        if (!string.IsNullOrEmpty(ext))
+            extensions.Add(ext);
+        foreach (var alt in new[] { "png", "svg", "pdf", "jpg", "jpeg" })
+        {
+            if (!extensions.Contains(alt, StringComparer.OrdinalIgnoreCase))
+                extensions.Add(alt);
+        }
+
+        // Subdirectories to try: root first, then Images/ (where MAUI puts resources)
+        string?[] subdirs = [null, "Images"];
+
+        foreach (var subdir in subdirs)
+        {
+            foreach (var tryExt in extensions)
+            {
+                var path = subdir == null
+                    ? NSBundle.MainBundle.PathForResource(name, tryExt)
+                    : NSBundle.MainBundle.PathForResource(name, tryExt, subdir);
+
+                if (path != null)
+                {
+                    try { return new NSImage(path); } catch { }
+                }
+            }
+        }
+
+        // Try direct file path
+        if (System.IO.File.Exists(fileName))
+        {
+            try { return new NSImage(fileName); } catch { }
+        }
+
+        // Last resort: NSImage.ImageNamed (searches asset catalogs)
+        return NSImage.ImageNamed(fileName);
     }
 
     async void LoadFromUri(Uri uri, IImageSourcePart imageSourcePart)
