@@ -283,7 +283,14 @@ internal static class FontExtensions
         NSFont? nsFont = null;
 
         if (!string.IsNullOrEmpty(font.Family))
-            nsFont = NSFont.FromFontName(font.Family, size);
+        {
+            // Try the font manager (resolves registered font aliases like "FluentUI")
+            var fontManager = IPlatformApplication.Current?.Services?.GetService(typeof(IFontManager)) as MacOSFontManager;
+            if (fontManager != null)
+                nsFont = fontManager.GetFont(font);
+            else
+                nsFont = NSFont.FromFontName(font.Family, size);
+        }
 
         nsFont ??= NSFont.SystemFontOfSize(size);
 

@@ -27,7 +27,26 @@ public class EditorNSView : NSScrollView
         DocumentView = TextView;
     }
 
-    public override CGSize IntrinsicContentSize => new CGSize(200, 100);
+    public override CGSize IntrinsicContentSize
+    {
+        get
+        {
+            // Compute height from actual text content, matching UITextView behavior.
+            // Empty editors get a single-line default (~36px with system font).
+            var tv = TextView;
+            if (tv.LayoutManager != null && tv.TextContainer != null)
+            {
+                tv.LayoutManager.EnsureLayoutForTextContainer(tv.TextContainer);
+                var usedRect = tv.LayoutManager.GetUsedRect(tv.TextContainer);
+                var textHeight = usedRect.Height;
+                // Add vertical inset/padding
+                var inset = tv.TextContainerInset;
+                var height = Math.Max(textHeight + inset.Height * 2, 36);
+                return new CGSize(NSView.NoIntrinsicMetric, height);
+            }
+            return new CGSize(NSView.NoIntrinsicMetric, 36);
+        }
+    }
 }
 
 public class EditorHandler : MacOSViewHandler<IEditor, EditorNSView>

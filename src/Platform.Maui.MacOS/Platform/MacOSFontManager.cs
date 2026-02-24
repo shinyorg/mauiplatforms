@@ -1,19 +1,16 @@
 using AppKit;
 using Foundation;
-using Microsoft.Maui.Animations;
 
 namespace Microsoft.Maui.Platform.MacOS;
 
 /// <summary>
 /// macOS implementation of IFontManager. Maps MAUI Font abstractions to NSFont.
-/// The netstandard IFontManager only requires DefaultFontSize, but we also expose
-/// GetFont() for use by handlers throughout the backend.
 /// </summary>
 public class MacOSFontManager : IFontManager
 {
     readonly IFontRegistrar _fontRegistrar;
 
-    public MacOSFontManager(IFontRegistrar fontRegistrar)
+    public MacOSFontManager(IFontRegistrar fontRegistrar, IServiceProvider? serviceProvider = null)
     {
         _fontRegistrar = fontRegistrar;
     }
@@ -32,11 +29,11 @@ public class MacOSFontManager : IFontManager
 
         if (!string.IsNullOrEmpty(font.Family))
         {
-            // Try registered/embedded fonts first
+            // Try registered/embedded fonts (resolves aliases like "FluentUI")
             if (_fontRegistrar.GetFont(font.Family) is string registeredFont)
                 nsFont = NSFont.FromFontName(registeredFont, size);
 
-            // Fall back to system font lookup
+            // Fall back to direct system font lookup
             nsFont ??= NSFont.FromFontName(font.Family, size);
         }
 

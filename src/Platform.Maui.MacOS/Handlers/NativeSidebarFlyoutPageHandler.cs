@@ -272,7 +272,7 @@ public partial class NativeSidebarFlyoutPageHandler : MacOSViewHandler<IFlyoutVi
 	SidebarOutlineViewDataSource? _dataSource;
 	SidebarOutlineViewDelegate? _delegate;
 
-	double _flyoutWidth = 220;
+	double _flyoutWidth = 250;
 
 	/// <summary>
 	/// True when the handler is updating the selection programmatically.
@@ -284,7 +284,7 @@ public partial class NativeSidebarFlyoutPageHandler : MacOSViewHandler<IFlyoutVi
 	/// Exposes the NSSplitViewController so WindowHandler can set it as the
 	/// window's contentViewController for proper sidebar titlebar integration.
 	/// </summary>
-	internal NSSplitViewController? SplitViewController => _splitViewController;
+	public NSSplitViewController? SplitViewController => _splitViewController;
 
 	FlyoutPage? FlyoutPage => VirtualView as FlyoutPage;
 
@@ -349,8 +349,8 @@ public partial class NativeSidebarFlyoutPageHandler : MacOSViewHandler<IFlyoutVi
 			var contentVC = new NSViewController { View = _detailContainer };
 
 			_sidebarSplitItem = NSSplitViewItem.CreateSidebar(sidebarVC);
-			_sidebarSplitItem.MinimumThickness = (nfloat)_flyoutWidth;
-			_sidebarSplitItem.MaximumThickness = (nfloat)_flyoutWidth;
+			_sidebarSplitItem.MinimumThickness = 150;
+			_sidebarSplitItem.MaximumThickness = 400;
 			_sidebarSplitItem.CanCollapse = false;
 			_sidebarSplitItem.AllowsFullHeightLayout = true;
 			_sidebarSplitItem.TitlebarSeparatorStyle = NSTitlebarSeparatorStyle.None;
@@ -392,6 +392,16 @@ public partial class NativeSidebarFlyoutPageHandler : MacOSViewHandler<IFlyoutVi
 	{
 		base.ConnectHandler(platformView);
 		LoadSidebarItems();
+
+		// Defer initial sidebar width to next run loop so the view is in a window
+		if (_splitViewController != null)
+		{
+			var width = _flyoutWidth;
+			CoreFoundation.DispatchQueue.MainQueue.DispatchAsync(() =>
+			{
+				_splitViewController?.SplitView?.SetPositionOfDivider((nfloat)width, 0);
+			});
+		}
 	}
 
 	protected override void DisconnectHandler(NSSplitView platformView)
@@ -687,9 +697,10 @@ public partial class NativeSidebarFlyoutPageHandler : MacOSViewHandler<IFlyoutVi
 
 	public static void MapFlyoutWidth(NativeSidebarFlyoutPageHandler handler, IFlyoutView view)
 	{
-		var width = view.FlyoutWidth > 0 ? view.FlyoutWidth : 220;
+		var width = view.FlyoutWidth > 0 ? view.FlyoutWidth : 250;
 		handler._flyoutWidth = width;
 		if (handler._sidebarWidthConstraint != null)
 			handler._sidebarWidthConstraint.Constant = (nfloat)width;
+		handler._splitViewController?.SplitView?.SetPositionOfDivider((nfloat)width, 0);
 	}
 }

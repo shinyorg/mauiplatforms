@@ -96,9 +96,13 @@ public static partial class AppHostBuilderExtensions
         builder.Services.Replace(ServiceDescriptor.Singleton<IEmbeddedFontLoader>(svc =>
             new MacOSEmbeddedFontLoader(svc)));
 
+        // Register macOS font registrar that finds fonts in the bundle's Fonts/ directory
+        builder.Services.Replace(ServiceDescriptor.Singleton<IFontRegistrar>(svc =>
+            new MacOSFontRegistrar(svc.GetRequiredService<IEmbeddedFontLoader>())));
+
         // Register macOS font manager for proper font resolution
         builder.Services.Replace(ServiceDescriptor.Singleton<IFontManager>(svc =>
-            new MacOSFontManager(svc.GetRequiredService<IFontRegistrar>())));
+            new MacOSFontManager(svc.GetRequiredService<IFontRegistrar>(), svc)));
 
         AlertManagerSubscription.Register(builder.Services);
 
