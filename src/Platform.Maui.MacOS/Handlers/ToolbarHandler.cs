@@ -649,11 +649,35 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
             // MacOSToolbarItem.IsVisible changes take effect without
             // removing/re-inserting items.
             SyncItemVisibility();
+
+            // Always update the title label text — the identifier list may
+            // not change when navigating between pages with the same toolbar
+            // structure, but the title text does.
+            UpdateTitleLabel();
         }
         }
         finally
         {
             _isRefreshing = false;
+        }
+    }
+
+    /// <summary>
+    /// Updates the title label text on the existing toolbar title item
+    /// without recreating the entire toolbar.
+    /// </summary>
+    void UpdateTitleLabel()
+    {
+        if (_toolbar == null) return;
+        var title = _currentPage?.Title ?? string.Empty;
+        foreach (var item in _toolbar.Items)
+        {
+            if (item.Identifier == TitleId && item.View is NSTextField label)
+            {
+                label.StringValue = title;
+                label.SizeToFit();
+                break;
+            }
         }
     }
 

@@ -452,13 +452,25 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
     {
         return view switch
         {
-            Shell shell => shell.CurrentPage,
+            Shell shell => GetShellVisiblePage(shell),
             FlyoutPage flyout => FindCurrentPage((IView?)flyout.Detail),
             TabbedPage tabbed => FindCurrentPage((IView?)tabbed.CurrentPage),
             NavigationPage nav => FindCurrentPage((IView?)nav.CurrentPage),
             Page page => page,
             _ => null,
         };
+    }
+
+    static Page? GetShellVisiblePage(Shell shell)
+    {
+        // Check for pushed pages on the ShellSection navigation stack
+        if (shell.CurrentItem?.CurrentItem is ShellSection section)
+        {
+            var navStack = section.Navigation?.NavigationStack;
+            if (navStack != null && navStack.Count > 1)
+                return navStack[^1];
+        }
+        return shell.CurrentPage;
     }
 
     public static void MapTitlebarStyle(WindowHandler handler, IWindow window)
