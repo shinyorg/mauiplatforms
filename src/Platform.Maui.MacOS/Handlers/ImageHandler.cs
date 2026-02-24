@@ -82,17 +82,26 @@ public partial class ImageHandler : MacOSViewHandler<IImage, NSImageView>
             var fileName = fileImageSource.File;
             if (!string.IsNullOrEmpty(fileName))
             {
-                // Try loading from app bundle, then from file path
-                var nsImage = new NSImage(fileName);
-                if (nsImage.Size.Width == 0 && nsImage.Size.Height == 0)
+                NSImage? nsImage = null;
+
+                // Try bundle resource first (most common for MAUI apps)
+                var bundlePath = NSBundle.MainBundle.PathForResource(
+                    System.IO.Path.GetFileNameWithoutExtension(fileName),
+                    System.IO.Path.GetExtension(fileName)?.TrimStart('.'));
+
+                if (bundlePath != null)
                 {
-                    // Try bundle resource
-                    var bundlePath = NSBundle.MainBundle.PathForResource(
-                        System.IO.Path.GetFileNameWithoutExtension(fileName),
-                        System.IO.Path.GetExtension(fileName)?.TrimStart('.'));
-                    if (bundlePath != null)
-                        nsImage = new NSImage(bundlePath);
+                    try { nsImage = new NSImage(bundlePath); } catch { }
                 }
+
+                // Fall back to direct file path
+                if (nsImage == null && System.IO.File.Exists(fileName))
+                {
+                    try { nsImage = new NSImage(fileName); } catch { }
+                }
+
+                // Last resort: try NSImage.ImageNamed (searches asset catalogs)
+                nsImage ??= NSImage.ImageNamed(fileName);
 
                 PlatformView.Image = nsImage;
             }

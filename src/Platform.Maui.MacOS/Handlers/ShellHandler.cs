@@ -628,10 +628,9 @@ public partial class ShellHandler : ViewHandler<Shell, NSView>
 					page.Arrange(new Rect(0, 0, (double)bounds.Width, (double)bounds.Height));
 				}
 			}
-			catch (Exception)
+			catch (Exception ex)
 			{
-				// Page creation may fail if handler setup throws;
-				// don't let it crash the app via unhandled dispatch exception
+				Console.Error.WriteLine($"[ShellHandler.ShowCurrentPage] Failed to create page view: {ex.Message}");
 			}
 		}
 

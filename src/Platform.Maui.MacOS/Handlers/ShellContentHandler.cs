@@ -27,12 +27,18 @@ public partial class ShellContentHandler : ElementHandler<ShellContent, NSView>
 	{
 		base.ConnectHandler(platformElement);
 
-		// Ensure the content page is created so Shell.CurrentPage is non-null.
-		// Shell's HandleNavigated waits for CurrentPage != null before firing
-		// the Navigated event, so this must happen during handler connection.
+		// Only eagerly create content for the currently active ShellContent.
+		// Creating all pages upfront triggers PlatformBehavior.OnLoaded on pages
+		// that aren't visible yet (can crash) and wastes resources.
+		// Non-current content pages are created lazily by ShowCurrentPage().
 		if (VirtualView is IShellContentController controller)
 		{
-			controller.GetOrCreateContent();
+			var shell = VirtualView?.Parent?.Parent?.Parent as Shell;
+			var isCurrentContent = shell?.CurrentItem?.CurrentItem?.CurrentItem == VirtualView;
+			if (isCurrentContent)
+			{
+				controller.GetOrCreateContent();
+			}
 		}
 	}
 }
