@@ -67,6 +67,7 @@ internal class MacOSModalManager
 			State = NSVisualEffectState.Active,
 			BlendingMode = NSVisualEffectBlendingMode.BehindWindow,
 			WantsLayer = true,
+			AutoresizingMask = NSViewResizingMask.WidthSizable | NSViewResizingMask.HeightSizable,
 		};
 		effectView.Layer!.CornerRadius = 10;
 		effectView.Layer.MasksToBounds = true;
