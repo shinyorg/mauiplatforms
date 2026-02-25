@@ -376,10 +376,6 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
 
         // === Build toolbar item list ===
 
-        // Sidebar area items (before tracking separator)
-        if (hasBackButton)
-            _itemIdentifiers.Add(BackButtonId);
-
         // Sidebar-placed toolbar items
         int sidebarIdx = 0;
 
@@ -488,6 +484,10 @@ public class MacOSToolbarManager : NSObject, INSToolbarDelegate
         // Tracking separator — divides sidebar area from content area
         if (_splitView != null)
             _itemIdentifiers.Add(TrackingSeparatorId);
+
+        // Back button — placed at the start of the content area (right of sidebar)
+        if (hasBackButton)
+            _itemIdentifiers.Add(BackButtonId);
 
         // Content area items (after tracking separator)
         if (hasExplicitContentLayout)
