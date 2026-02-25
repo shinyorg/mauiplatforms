@@ -23,6 +23,7 @@ public partial class LabelHandler : MacOSViewHandler<ILabel, MauiNSTextField>
             [nameof(Label.FormattedText)] = MapFormattedText,
             [nameof(Label.LineHeight)] = MapLineHeight,
             [nameof(Label.TextType)] = MapTextType,
+            [nameof(Label.TextTransform)] = MapTextTransform,
         };
 
     public LabelHandler() : base(Mapper)
@@ -105,6 +106,17 @@ public partial class LabelHandler : MacOSViewHandler<ILabel, MauiNSTextField>
 
         var pv = handler.PlatformView;
         var text = label.Text ?? string.Empty;
+
+        // Apply TextTransform
+        if (label is Label mauiLbl)
+        {
+            text = mauiLbl.TextTransform switch
+            {
+                TextTransform.Uppercase => text.ToUpperInvariant(),
+                TextTransform.Lowercase => text.ToLowerInvariant(),
+                _ => text,
+            };
+        }
 
         // HTML text type — parse HTML into attributed string
         if (label is Label ml2 && ml2.TextType == TextType.Html)
@@ -225,6 +237,7 @@ public partial class LabelHandler : MacOSViewHandler<ILabel, MauiNSTextField>
     public static void MapCharacterSpacing(LabelHandler handler, ILabel label) => UpdateAttributedText(handler, label);
     public static void MapTextDecorations(LabelHandler handler, ILabel label) => UpdateAttributedText(handler, label);
     public static void MapLineHeight(LabelHandler handler, ILabel label) => UpdateAttributedText(handler, label);
+    public static void MapTextTransform(LabelHandler handler, ILabel label) => UpdateAttributedText(handler, label);
 
     public static void MapHorizontalTextAlignment(LabelHandler handler, ILabel label)
     {

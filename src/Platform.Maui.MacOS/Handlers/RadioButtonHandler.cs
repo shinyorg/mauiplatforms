@@ -74,7 +74,20 @@ public partial class RadioButtonHandler : MacOSViewHandler<IRadioButton, NSButto
 
 	public static void MapContent(RadioButtonHandler handler, IRadioButton view)
 	{
-		handler.PlatformView.Title = ExtractContentText(view) ?? string.Empty;
+		var text = ExtractContentText(view) ?? string.Empty;
+
+		// Apply TextTransform if available
+		if (view is Microsoft.Maui.Controls.RadioButton rb)
+		{
+			text = rb.TextTransform switch
+			{
+				TextTransform.Uppercase => text.ToUpperInvariant(),
+				TextTransform.Lowercase => text.ToLowerInvariant(),
+				_ => text,
+			};
+		}
+
+		handler.PlatformView.Title = text;
 	}
 
 	static string? ExtractContentText(IRadioButton view)
@@ -86,13 +99,41 @@ public partial class RadioButtonHandler : MacOSViewHandler<IRadioButton, NSButto
 		if (content is string s)
 			return s;
 
-		// For View content, try to extract meaningful text instead of showing type name
-		if (content is IText textView)
+		// For View content, try to extract meaningful text
+		if (content is IText textView && !string.IsNullOrEmpty(textView.Text))
 			return textView.Text;
 
-		if (content is ILabel label)
+		if (content is ILabel label && !string.IsNullOrEmpty(label.Text))
 			return label.Text;
 
+		// Recursively search child views for text content
+		if (content is IView viewContent)
+		{
+			var extracted = ExtractTextFromViewTree(viewContent);
+			if (!string.IsNullOrEmpty(extracted))
+				return extracted;
+		}
+
 		return content.ToString();
+	}
+
+	static string? ExtractTextFromViewTree(IView view)
+	{
+		if (view is IText tv && !string.IsNullOrEmpty(tv.Text))
+			return tv.Text;
+		if (view is ILabel lbl && !string.IsNullOrEmpty(lbl.Text))
+			return lbl.Text;
+
+		if (view is Microsoft.Maui.ILayout layout)
+		{
+			foreach (var child in layout)
+			{
+				var text = ExtractTextFromViewTree(child);
+				if (!string.IsNullOrEmpty(text))
+					return text;
+			}
+		}
+
+		return null;
 	}
 }
