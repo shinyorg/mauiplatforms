@@ -43,6 +43,58 @@ class ScreenshotImplementation : IScreenshot
 		return Task.FromResult(result);
 	}
 
+	/// <summary>
+	/// Captures a screenshot of a specific NSView.
+	/// Uses CacheDisplay to render the view hierarchy into a bitmap.
+	/// </summary>
+	public Task<IScreenshotResult?> CaptureAsync(NSView view)
+	{
+		ArgumentNullException.ThrowIfNull(view);
+
+		var bounds = view.Bounds;
+		if (bounds.Width <= 0 || bounds.Height <= 0)
+			return Task.FromResult<IScreenshotResult?>(null);
+
+		var scale = view.Window?.BackingScaleFactor ?? 2.0;
+		var pixelWidth = (int)(bounds.Width * scale);
+		var pixelHeight = (int)(bounds.Height * scale);
+
+		var rep = new NSBitmapImageRep(
+			IntPtr.Zero,
+			pixelWidth,
+			pixelHeight,
+			8,       // bits per sample
+			4,       // samples per pixel (RGBA)
+			true,    // has alpha
+			false,   // is planar
+			NSColorSpace.DeviceRGB,
+			0,       // bytes per row (auto)
+			0);      // bits per pixel (auto)
+
+		if (rep == null)
+			return Task.FromResult<IScreenshotResult?>(null);
+
+		rep.Size = new CGSize(bounds.Width, bounds.Height);
+
+		NSGraphicsContext.GlobalSaveGraphicsState();
+		try
+		{
+			var context = NSGraphicsContext.FromBitmap(rep);
+			if (context == null)
+				return Task.FromResult<IScreenshotResult?>(null);
+
+			NSGraphicsContext.CurrentContext = context;
+			view.CacheDisplay(bounds, rep);
+		}
+		finally
+		{
+			NSGraphicsContext.GlobalRestoreGraphicsState();
+		}
+
+		var result = new MacOSScreenshotResult(rep, pixelWidth, pixelHeight);
+		return Task.FromResult<IScreenshotResult?>(result);
+	}
+
 	[System.Runtime.InteropServices.DllImport("/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics")]
 	static extern IntPtr CGWindowListCreateImage(CGRect screenBounds, CGWindowListOption listOption, uint windowId, CGWindowImageOption imageOption);
 }
