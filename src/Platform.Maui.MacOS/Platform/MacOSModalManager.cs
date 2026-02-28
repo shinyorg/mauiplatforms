@@ -8,26 +8,187 @@ namespace Microsoft.Maui.Platform.MacOS.Handlers;
 
 /// <summary>
 /// Manages modal page presentation on macOS.
-/// Modal pages are shown as overlay views on top of the window content,
-/// with a semi-transparent backdrop. This matches MAUI's cross-platform
-/// modal behavior while feeling native on macOS.
+/// By default, modals are presented as native AppKit sheets via NSWindow.BeginSheet.
+/// Pages can opt into the overlay presentation style via MacOSPage.ModalPresentationStyleProperty.
 /// </summary>
 internal class MacOSModalManager
 {
 	readonly NSView _contentContainer;
 	readonly List<ModalEntry> _modalStack = new();
+	NSWindow? _parentWindow;
 
-	record ModalEntry(Page Page, NSView BackdropView, NSView EffectView, NSView PageView, IMauiContext MauiContext);
+	record ModalEntry(
+		Page Page,
+		NSView PageView,
+		IMauiContext MauiContext,
+		MacOSModalPresentationStyle Style,
+		// Sheet mode
+		NSWindow? SheetWindow = null,
+		// Overlay mode
+		NSView? BackdropView = null,
+		NSView? EffectView = null);
 
-	public MacOSModalManager(NSView contentContainer)
+	public MacOSModalManager(NSView contentContainer, NSWindow parentWindow)
 	{
 		_contentContainer = contentContainer;
+		_parentWindow = parentWindow;
 	}
 
 	public int ModalCount => _modalStack.Count;
 	public bool HasModals => _modalStack.Count > 0;
 
+	public void UpdateParentWindow(NSWindow parentWindow)
+	{
+		_parentWindow = parentWindow;
+	}
+
 	public void PushModal(Page page, IMauiContext mauiContext, bool animated)
+	{
+		var style = MacOSPage.GetModalPresentationStyle(page);
+
+		if (style == MacOSModalPresentationStyle.Sheet)
+			PushSheet(page, mauiContext, animated);
+		else
+			PushOverlay(page, mauiContext, animated);
+	}
+
+	public Page? PopModal(bool animated)
+	{
+		if (_modalStack.Count == 0)
+			return null;
+
+		var entry = _modalStack[^1];
+		_modalStack.RemoveAt(_modalStack.Count - 1);
+
+		if (entry.Style == MacOSModalPresentationStyle.Sheet)
+			RemoveSheet(entry);
+		else
+			RemoveOverlay(entry);
+
+		return entry.Page;
+	}
+
+	public void LayoutAllModals()
+	{
+		foreach (var entry in _modalStack)
+		{
+			if (entry.Style == MacOSModalPresentationStyle.Overlay)
+				LayoutOverlay(entry);
+			// Sheet layout is managed by AppKit
+		}
+	}
+
+	#region Sheet Presentation
+
+	void PushSheet(Page page, IMauiContext mauiContext, bool animated)
+	{
+		var platformView = ((IView)page).ToMacOSPlatform(mauiContext);
+
+		if (platformView is MacOSContainerView container)
+		{
+			container.IgnorePlatformSafeArea = true;
+			container.ExternalFrameManagement = true;
+		}
+
+		var sheetSize = ComputeSheetSize(page);
+
+		var sheetFrame = new CGRect(0, 0, sheetSize.Width, sheetSize.Height);
+
+		var sheetWindow = new NSWindow(
+			sheetFrame,
+			NSWindowStyle.Titled | NSWindowStyle.Closable | NSWindowStyle.Resizable,
+			NSBackingStore.Buffered,
+			deferCreation: false);
+		sheetWindow.ReleasedWhenClosed = false;
+
+		// Apply min size constraints to the sheet window
+		var minWidth = MacOSPage.GetModalSheetMinWidth(page);
+		var minHeight = MacOSPage.GetModalSheetMinHeight(page);
+		if (minWidth > 0 || minHeight > 0)
+		{
+			sheetWindow.ContentMinSize = new CGSize(
+				minWidth > 0 ? minWidth : 0,
+				minHeight > 0 ? minHeight : 0);
+		}
+
+		platformView.Frame = new CGRect(0, 0, sheetFrame.Width, sheetFrame.Height);
+		platformView.AutoresizingMask = NSViewResizingMask.WidthSizable | NSViewResizingMask.HeightSizable;
+		sheetWindow.ContentView = platformView;
+
+		var entry = new ModalEntry(page, platformView, mauiContext, MacOSModalPresentationStyle.Sheet, SheetWindow: sheetWindow);
+		_modalStack.Add(entry);
+
+		_parentWindow?.BeginSheet(sheetWindow, (returnCode) => { });
+	}
+
+	CGSize ComputeSheetSize(Page page)
+	{
+		var parentFrame = _parentWindow?.ContentView?.Frame ?? _contentContainer.Bounds;
+		var requestedWidth = MacOSPage.GetModalSheetWidth(page);
+		var requestedHeight = MacOSPage.GetModalSheetHeight(page);
+		var sizesToContent = MacOSPage.GetModalSheetSizesToContent(page);
+
+		double width = parentFrame.Width;
+		double height = parentFrame.Height;
+
+		if (requestedWidth > 0)
+			width = requestedWidth;
+
+		if (requestedHeight > 0)
+			height = requestedHeight;
+
+		// When sizing to content, measure the page's Content (not the Page itself,
+		// since Page always fills available space). Use unconstrained dimensions
+		// so the content reports its natural/desired size.
+		if (sizesToContent && (requestedWidth <= 0 || requestedHeight <= 0))
+		{
+			var contentView = (page as ContentPage)?.Content as IView;
+			if (contentView != null)
+			{
+				var measured = contentView.Measure(
+					double.PositiveInfinity,
+					double.PositiveInfinity);
+
+				// Account for the page's own padding
+				var padding = page.Padding;
+				var contentWidth = measured.Width + padding.Left + padding.Right;
+				var contentHeight = measured.Height + padding.Top + padding.Bottom;
+
+				if (requestedWidth <= 0)
+					width = contentWidth;
+				if (requestedHeight <= 0)
+					height = contentHeight;
+			}
+		}
+
+		// Apply min size constraints
+		var minWidth = MacOSPage.GetModalSheetMinWidth(page);
+		var minHeight = MacOSPage.GetModalSheetMinHeight(page);
+		if (minWidth > 0 && width < minWidth) width = minWidth;
+		if (minHeight > 0 && height < minHeight) height = minHeight;
+
+		// Don't exceed parent window size
+		if (width > parentFrame.Width) width = parentFrame.Width;
+		if (height > parentFrame.Height) height = parentFrame.Height;
+
+		return new CGSize(width, height);
+	}
+
+	void RemoveSheet(ModalEntry entry)
+	{
+		if (entry.SheetWindow != null)
+		{
+			_parentWindow?.EndSheet(entry.SheetWindow);
+			entry.SheetWindow.OrderOut(null);
+		}
+		entry.Page.Handler?.DisconnectHandler();
+	}
+
+	#endregion
+
+	#region Overlay Presentation
+
+	void PushOverlay(Page page, IMauiContext mauiContext, bool animated)
 	{
 		// Create a semi-transparent backdrop
 		var backdrop = new NSView(_contentContainer.Bounds)
@@ -38,19 +199,15 @@ internal class MacOSModalManager
 		backdrop.Layer!.BackgroundColor = new CGColor(0, 0, 0, 0.4f);
 		_contentContainer.AddSubview(backdrop);
 
-		// Create the modal page view
 		var platformView = ((IView)page).ToMacOSPlatform(mauiContext);
 
-		// Modal pages are already positioned within safe bounds — skip safe area insets
-		// Also prevent MAUI's PlatformArrange from overriding our frame
 		if (platformView is MacOSContainerView container)
 		{
 			container.IgnorePlatformSafeArea = true;
 			container.ExternalFrameManagement = true;
 		}
 
-		// Inset from visible area to create a "sheet" appearance
-		var inset = GetModalInset();
+		var inset = GetOverlayInset();
 		var safeRect = _contentContainer.SafeAreaRect;
 
 		var pageFrame = new CGRect(
@@ -78,42 +235,23 @@ internal class MacOSModalManager
 
 		_contentContainer.AddSubview(effectView);
 
-		var entry = new ModalEntry(page, backdrop, effectView, platformView, mauiContext);
+		var entry = new ModalEntry(page, platformView, mauiContext, MacOSModalPresentationStyle.Overlay, BackdropView: backdrop, EffectView: effectView);
 		_modalStack.Add(entry);
 
-		// Measure and arrange the page
-		LayoutModal(entry);
+		LayoutOverlay(entry);
 	}
 
-	public Page? PopModal(bool animated)
-	{
-		if (_modalStack.Count == 0)
-			return null;
-
-		var entry = _modalStack[_modalStack.Count - 1];
-		_modalStack.RemoveAt(_modalStack.Count - 1);
-		RemoveModalViews(entry);
-
-		return entry.Page;
-	}
-
-	void RemoveModalViews(ModalEntry entry)
+	void RemoveOverlay(ModalEntry entry)
 	{
 		entry.PageView.RemoveFromSuperview();
-		entry.EffectView.RemoveFromSuperview();
-		entry.BackdropView.RemoveFromSuperview();
+		entry.EffectView?.RemoveFromSuperview();
+		entry.BackdropView?.RemoveFromSuperview();
 		entry.Page.Handler?.DisconnectHandler();
 	}
 
-	public void LayoutAllModals()
+	void LayoutOverlay(ModalEntry entry)
 	{
-		foreach (var entry in _modalStack)
-			LayoutModal(entry);
-	}
-
-	void LayoutModal(ModalEntry entry)
-	{
-		var inset = GetModalInset();
+		var inset = GetOverlayInset();
 		var bounds = _contentContainer.Bounds;
 		var safeRect = _contentContainer.SafeAreaRect;
 
@@ -123,8 +261,10 @@ internal class MacOSModalManager
 			safeRect.Width - inset * 2,
 			safeRect.Height - inset * 2);
 
-		entry.BackdropView.Frame = bounds;
-		entry.EffectView.Frame = pageFrame;
+		if (entry.BackdropView != null)
+			entry.BackdropView.Frame = bounds;
+		if (entry.EffectView != null)
+			entry.EffectView.Frame = pageFrame;
 		entry.PageView.Frame = new CGRect(0, 0, pageFrame.Width, pageFrame.Height);
 
 		// Trigger layout on the container — don't call page.Arrange directly
@@ -132,5 +272,7 @@ internal class MacOSModalManager
 		entry.PageView.NeedsLayout = true;
 	}
 
-	static nfloat GetModalInset() => 20;
+	static nfloat GetOverlayInset() => 20;
+
+	#endregion
 }

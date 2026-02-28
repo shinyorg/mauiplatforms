@@ -200,7 +200,7 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
         _toolbarManager.AttachToWindow(window);
 
         // Create the modal manager
-        _modalManager = new MacOSModalManager(_contentContainer);
+        _modalManager = new MacOSModalManager(_contentContainer, window);
 
         // Set the window delegate to handle close events
         _windowDelegate = new MacOSWindowDelegate(this);
@@ -268,7 +268,7 @@ public partial class WindowHandler : ElementHandler<IWindow, NSWindow>
             // Recreate modal manager with the new content view
             var contentView = handler.PlatformView.ContentView;
             if (contentView != null)
-                handler._modalManager = new MacOSModalManager(contentView);
+                handler._modalManager = new MacOSModalManager(contentView, handler.PlatformView);
 
             handler.SubscribeModalEvents(window);
             handler.ObservePageChanges(page);

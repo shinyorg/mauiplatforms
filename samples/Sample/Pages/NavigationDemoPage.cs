@@ -1,5 +1,6 @@
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
+using Microsoft.Maui.Platform.MacOS;
 
 namespace Sample.Pages;
 
@@ -59,35 +60,57 @@ public class NavigationDemoPage : ContentPage
 
 		var pushModalButton = new Button
 		{
-			Text = "Push Modal Page",
+			Text = "Sheet Modal (Default)",
 			Padding = new Thickness(16, 8),
 			HorizontalOptions = LayoutOptions.Start,
 		};
 		pushModalButton.Clicked += async (s, e) =>
 		{
-			var modalPage = new ContentPage
-			{
-				Title = "Modal Page",
-				Content = new VerticalStackLayout
-				{
-					Spacing = 16,
-					Padding = new Thickness(32),
-					VerticalOptions = LayoutOptions.Center,
-					HorizontalOptions = LayoutOptions.Center,
-					Children =
-					{
-						new Label { Text = "🪟 Modal Page", FontSize = 28, FontAttributes = FontAttributes.Bold, HorizontalTextAlignment = TextAlignment.Center },
-						new Label { Text = "This page was presented modally.\nIt overlays the main content.", FontSize = 14, TextColor = Colors.Gray, HorizontalTextAlignment = TextAlignment.Center },
-						new Button
-						{
-							Text = "Dismiss Modal",
-							Padding = new Thickness(16, 8),
-							Command = new Command(async () => await Navigation.PopModalAsync()),
-						}
-					}
-				}
-			};
-			await Navigation.PushModalAsync(modalPage);
+			await Navigation.PushModalAsync(CreateModalPage("Default Sheet", "Full-size native AppKit sheet.\nSlides down from the titlebar."));
+		};
+
+		var pushModalSmallButton = new Button
+		{
+			Text = "Sheet Modal (400×300)",
+			Padding = new Thickness(16, 8),
+			HorizontalOptions = LayoutOptions.Start,
+		};
+		pushModalSmallButton.Clicked += async (s, e) =>
+		{
+			var page = CreateModalPage("Small Sheet", "Custom sized sheet (400×300).\nResizable with min constraints.");
+			MacOSPage.SetModalSheetWidth(page, 400);
+			MacOSPage.SetModalSheetHeight(page, 300);
+			MacOSPage.SetModalSheetMinWidth(page, 300);
+			MacOSPage.SetModalSheetMinHeight(page, 200);
+			await Navigation.PushModalAsync(page);
+		};
+
+		var pushModalContentButton = new Button
+		{
+			Text = "Sheet Modal (Sizes to Content)",
+			Padding = new Thickness(16, 8),
+			HorizontalOptions = LayoutOptions.Start,
+		};
+		pushModalContentButton.Clicked += async (s, e) =>
+		{
+			var page = CreateModalPage("Content-Sized Sheet", "This sheet measured its content\nand sized itself to fit.");
+			MacOSPage.SetModalSheetSizesToContent(page, true);
+			MacOSPage.SetModalSheetMinWidth(page, 250);
+			MacOSPage.SetModalSheetMinHeight(page, 150);
+			await Navigation.PushModalAsync(page);
+		};
+
+		var pushModalOverlayButton = new Button
+		{
+			Text = "Overlay Modal (Old Style)",
+			Padding = new Thickness(16, 8),
+			HorizontalOptions = LayoutOptions.Start,
+		};
+		pushModalOverlayButton.Clicked += async (s, e) =>
+		{
+			var page = CreateModalPage("Overlay Modal", "Overlay presentation style.\nBackdrop + rounded effect view.");
+			MacOSPage.SetModalPresentationStyle(page, MacOSModalPresentationStyle.Overlay);
+			await Navigation.PushModalAsync(page);
 		};
 
 		var pushNoNavBarButton = new Button
@@ -142,13 +165,20 @@ public class NavigationDemoPage : ContentPage
 				pushButton,
 				popButton,
 				pushNoNavBarButton,
+
+				new Border { HeightRequest = 1, BackgroundColor = Colors.Gray, Opacity = 0.3, StrokeThickness = 0 },
+
+				new Label { Text = "Modal Presentations", FontSize = 16, FontAttributes = FontAttributes.Bold, TextColor = Colors.CornflowerBlue },
 				pushModalButton,
+				pushModalSmallButton,
+				pushModalContentButton,
+				pushModalOverlayButton,
 
 				new Border { HeightRequest = 1, BackgroundColor = Colors.Gray, Opacity = 0.3, StrokeThickness = 0 },
 
 				new Label
 				{
-					Text = "• Push/Pop tests the navigation bar with back button\n• \"No NavBar\" hides the navigation bar on the pushed page\n• \"Push Modal\" shows a modal overlay page\n• Toolbar items appear in the macOS toolbar",
+					Text = "• Push/Pop tests the navigation bar with back button\n• \"No NavBar\" hides the navigation bar on the pushed page\n• Sheet modals use native NSWindow.BeginSheet\n• Overlay modal uses the old backdrop + effect view style",
 					FontSize = 12,
 					TextColor = Colors.Gray,
 				},
@@ -164,5 +194,28 @@ public class NavigationDemoPage : ContentPage
 		4 => Colors.MediumPurple,
 		5 => Colors.Crimson,
 		_ => Colors.Teal,
+	};
+
+	ContentPage CreateModalPage(string title, string description) => new ContentPage
+	{
+		Title = title,
+		Content = new VerticalStackLayout
+		{
+			Spacing = 16,
+			Padding = new Thickness(32),
+			VerticalOptions = LayoutOptions.Center,
+			HorizontalOptions = LayoutOptions.Center,
+			Children =
+			{
+				new Label { Text = $"🪟 {title}", FontSize = 28, FontAttributes = FontAttributes.Bold, HorizontalTextAlignment = TextAlignment.Center },
+				new Label { Text = description, FontSize = 14, TextColor = Colors.Gray, HorizontalTextAlignment = TextAlignment.Center },
+				new Button
+				{
+					Text = "Dismiss Modal",
+					Padding = new Thickness(16, 8),
+					Command = new Command(async () => await Navigation.PopModalAsync()),
+				}
+			}
+		}
 	};
 }
