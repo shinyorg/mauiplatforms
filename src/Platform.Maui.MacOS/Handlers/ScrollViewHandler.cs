@@ -46,6 +46,7 @@ public partial class ScrollViewHandler : MacOSViewHandler<IScrollView, NSScrollV
 
     FlippedDocumentView? _documentView;
     NSObject? _boundsChangedObserver;
+    bool _arranging;
 
     public ScrollViewHandler() : base(Mapper, ScrollCommandMapper)
     {
@@ -61,7 +62,7 @@ public partial class ScrollViewHandler : MacOSViewHandler<IScrollView, NSScrollV
             DrawsBackground = false,
         };
 
-        _documentView = new FlippedDocumentView();
+        _documentView = new FlippedDocumentView { AutoresizesSubviews = false };
         scrollView.DocumentView = _documentView;
 
         return scrollView;
@@ -123,31 +124,45 @@ public partial class ScrollViewHandler : MacOSViewHandler<IScrollView, NSScrollV
     {
         base.PlatformArrange(rect);
 
-        if (VirtualView?.PresentedContent is IView content && content.Handler != null && _documentView != null)
+        if (_arranging)
+            return;
+
+        _arranging = true;
+        try
         {
-            var orientation = VirtualView.Orientation;
+            if (VirtualView?.PresentedContent is IView content && content.Handler != null && _documentView != null)
+            {
+                var orientation = VirtualView.Orientation;
 
-            // Measure the content with appropriate constraints based on scroll orientation
-            double measureWidth = orientation == ScrollOrientation.Horizontal || orientation == ScrollOrientation.Both
-                ? double.PositiveInfinity
-                : rect.Width;
+                // Measure the content with appropriate constraints based on scroll orientation
+                double measureWidth = orientation == ScrollOrientation.Horizontal || orientation == ScrollOrientation.Both
+                    ? double.PositiveInfinity
+                    : rect.Width;
 
-            double measureHeight = orientation == ScrollOrientation.Vertical || orientation == ScrollOrientation.Both
-                ? double.PositiveInfinity
-                : rect.Height;
+                double measureHeight = orientation == ScrollOrientation.Vertical || orientation == ScrollOrientation.Both
+                    ? double.PositiveInfinity
+                    : rect.Height;
 
-            var contentSize = content.Measure(measureWidth, measureHeight);
+                var contentSize = content.Measure(measureWidth, measureHeight);
 
-            var arrangeWidth = orientation == ScrollOrientation.Vertical
-                ? rect.Width
-                : Math.Max(rect.Width, contentSize.Width);
+                var arrangeWidth = orientation == ScrollOrientation.Vertical
+                    ? rect.Width
+                    : Math.Max(rect.Width, contentSize.Width);
 
-            var arrangeHeight = orientation == ScrollOrientation.Horizontal
-                ? rect.Height
-                : Math.Max(rect.Height, contentSize.Height);
+                var arrangeHeight = orientation == ScrollOrientation.Horizontal
+                    ? rect.Height
+                    : Math.Max(rect.Height, contentSize.Height);
 
-            content.Arrange(new Rect(0, 0, arrangeWidth, arrangeHeight));
-            _documentView.Frame = new CGRect(0, 0, arrangeWidth, arrangeHeight);
+                // Set document view frame first so AppKit knows the scrollable area,
+                // then arrange content. AutoresizesSubviews=false prevents the
+                // document view from overwriting MAUI-managed child frames.
+                _documentView.Frame = new CGRect(0, 0, arrangeWidth, arrangeHeight);
+                content.Arrange(new Rect(0, 0, arrangeWidth, arrangeHeight));
+            }
+        }
+        finally
+        {
+            _arranging = false;
         }
     }
 

@@ -27,23 +27,10 @@ public class EditorNSView : NSScrollView
         DocumentView = TextView;
     }
 
-    public override CGSize IntrinsicContentSize
-    {
-        get
-        {
-            var tv = TextView;
-            if (tv.LayoutManager != null && tv.TextContainer != null)
-            {
-                tv.LayoutManager.EnsureLayoutForTextContainer(tv.TextContainer);
-                var usedRect = tv.LayoutManager.GetUsedRect(tv.TextContainer);
-                var textHeight = usedRect.Height;
-                var inset = tv.TextContainerInset;
-                var height = Math.Max(textHeight + inset.Height * 2, 36);
-                return new CGSize(NSView.NoIntrinsicMetric, height);
-            }
-            return new CGSize(NSView.NoIntrinsicMetric, 36);
-        }
-    }
+    // Don't override IntrinsicContentSize — querying the layout manager
+    // (GetUsedRect / EnsureLayoutForTextContainer) during an AppKit layout
+    // pass re-invalidates the view, causing an infinite recursion.
+    // MAUI controls sizing via HeightRequest and the layout system instead.
 }
 
 public class PlaceholderNSTextView : NSTextView
