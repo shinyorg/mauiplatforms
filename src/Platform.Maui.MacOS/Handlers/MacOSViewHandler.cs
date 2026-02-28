@@ -133,7 +133,20 @@ public abstract class MacOSViewHandler<TVirtualView, TPlatformView> : ViewHandle
     public static new void MapVisibility(IViewHandler handler, IView view)
     {
         if (handler.PlatformView is NSView platformView)
+        {
+            var wasHidden = platformView.Hidden;
             platformView.Hidden = view.Visibility != Visibility.Visible;
+
+            // When a view transitions from hidden to visible, AppKit may not
+            // trigger layout automatically — invalidate so it gets measured.
+            if (wasHidden && !platformView.Hidden)
+            {
+                platformView.InvalidateIntrinsicContentSize();
+                platformView.NeedsLayout = true;
+                platformView.Superview?.NeedsLayout = true;
+                view.InvalidateMeasure();
+            }
+        }
     }
 
     public static new void MapIsEnabled(IViewHandler handler, IView view)
