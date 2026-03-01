@@ -143,8 +143,27 @@ public abstract class MacOSViewHandler<TVirtualView, TPlatformView> : ViewHandle
             {
                 platformView.InvalidateIntrinsicContentSize();
                 platformView.NeedsLayout = true;
-                platformView.Superview?.NeedsLayout = true;
+
+                // Walk up the native view tree to ensure all ancestors re-layout
+                var ancestor = platformView.Superview;
+                while (ancestor != null)
+                {
+                    ancestor.NeedsLayout = true;
+                    ancestor = ancestor.Superview;
+                }
+
+                // Invalidate MAUI measure on the view and all ancestors so the
+                // layout engine re-measures the entire chain (e.g. Grid → StackLayout → Button)
                 view.InvalidateMeasure();
+                if (view is IElement element)
+                {
+                    var parent = element.Parent;
+                    while (parent is IView parentView)
+                    {
+                        parentView.InvalidateMeasure();
+                        parent = (parent as IElement)?.Parent;
+                    }
+                }
             }
         }
     }
