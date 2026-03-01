@@ -169,6 +169,7 @@ public partial class LabelHandler : MacOSViewHandler<ILabel, MauiNSTextField>
         attrs[NSStringAttributeKey.ParagraphStyle] = paraStyle;
 
         pv.AttributedStringValue = new NSAttributedString(text, attrs);
+        pv.InvalidateIntrinsicContentSize();
     }
 
     static void UpdateHtmlText(LabelHandler handler, ILabel label, string html)
@@ -228,6 +229,7 @@ public partial class LabelHandler : MacOSViewHandler<ILabel, MauiNSTextField>
             // Fallback to plain text if HTML parsing fails
             pv.StringValue = html;
         }
+        pv.InvalidateIntrinsicContentSize();
     }
 
     public static void MapText(LabelHandler handler, ILabel label) => UpdateAttributedText(handler, label);
@@ -264,12 +266,14 @@ public partial class LabelHandler : MacOSViewHandler<ILabel, MauiNSTextField>
             LineBreakMode.MiddleTruncation => NSLineBreakMode.TruncatingMiddle,
             _ => NSLineBreakMode.ByWordWrapping,
         };
+        handler.PlatformView.InvalidateIntrinsicContentSize();
     }
 
     public static void MapMaxLines(LabelHandler handler, ILabel label)
     {
         if (label is Label mauiLabel)
             handler.PlatformView.MaximumNumberOfLines = mauiLabel.MaxLines;
+        handler.PlatformView.InvalidateIntrinsicContentSize();
     }
 
     public static void MapPadding(LabelHandler handler, ILabel label)
@@ -278,6 +282,7 @@ public partial class LabelHandler : MacOSViewHandler<ILabel, MauiNSTextField>
         handler.PlatformView.TextInsets = new AppKit.NSEdgeInsets(
             (nfloat)padding.Top, (nfloat)padding.Left,
             (nfloat)padding.Bottom, (nfloat)padding.Right);
+        handler.PlatformView.InvalidateIntrinsicContentSize();
     }
 
     public static void MapFormattedText(LabelHandler handler, ILabel label)
@@ -336,8 +341,8 @@ public partial class LabelHandler : MacOSViewHandler<ILabel, MauiNSTextField>
         }
 
         handler.PlatformView.AttributedStringValue = attributed;
+        handler.PlatformView.InvalidateIntrinsicContentSize();
     }
-
     static NSFont SpanToNSFont(Span span)
     {
         var size = span.FontSize > 0 ? (nfloat)span.FontSize : (nfloat)13.0;

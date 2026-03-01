@@ -103,7 +103,10 @@ public partial class EntryHandler : MacOSViewHandler<IEntry, NSTextField>
     public static void MapFont(EntryHandler handler, IEntry entry)
     {
         if (entry is ITextStyle textStyle)
+        {
             handler.PlatformView.Font = textStyle.Font.ToNSFont();
+            handler.PlatformView.InvalidateIntrinsicContentSize();
+        }
     }
 
     public static void MapPlaceholder(EntryHandler handler, IEntry entry)

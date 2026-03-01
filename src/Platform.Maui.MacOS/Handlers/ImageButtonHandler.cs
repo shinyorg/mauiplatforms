@@ -63,6 +63,7 @@ public partial class ImageButtonHandler : MacOSViewHandler<IImageButton, NSButto
         {
             handler.PlatformView.Image = FontImageSourceHelper.CreateImage(fontSource, handler.MauiContext);
         }
+        handler.PlatformView.InvalidateIntrinsicContentSize();
     }
 
     static async Task LoadImageFromUri(ImageButtonHandler handler, Uri uri)
@@ -73,6 +74,7 @@ public partial class ImageButtonHandler : MacOSViewHandler<IImageButton, NSButto
             var data = await client.GetByteArrayAsync(uri);
             var nsImage = new NSImage(Foundation.NSData.FromArray(data));
             handler.PlatformView.Image = nsImage;
+            handler.PlatformView.InvalidateIntrinsicContentSize();
         }
         catch
         {

@@ -88,6 +88,7 @@ public partial class RadioButtonHandler : MacOSViewHandler<IRadioButton, NSButto
 		}
 
 		handler.PlatformView.Title = text;
+		handler.PlatformView.InvalidateIntrinsicContentSize();
 	}
 
 	static string? ExtractContentText(IRadioButton view)

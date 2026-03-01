@@ -141,6 +141,7 @@ public class EditorHandler : MacOSViewHandler<IEditor, EditorNSView>
     public static void MapFont(EditorHandler handler, IEditor editor)
     {
         handler.PlatformView.TextView.Font = editor.Font.ToNSFont();
+        handler.PlatformView.InvalidateIntrinsicContentSize();
     }
 
     public static void MapPlaceholder(EditorHandler handler, IEditor editor)
