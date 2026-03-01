@@ -29,6 +29,7 @@ public static partial class AppHostBuilderExtensions
         handlersCollection.AddHandler<ContentPage, ContentPageHandler>();
         handlersCollection.AddHandler<Layout, LayoutHandler>();
         handlersCollection.AddHandler<ContentView, ContentViewHandler>();
+        handlersCollection.AddHandler<ContentPresenter, ContentViewHandler>();
         handlersCollection.AddHandler<Label, LabelHandler>();
         handlersCollection.AddHandler<Button, ButtonHandler>();
         handlersCollection.AddHandler<Entry, EntryHandler>();
