@@ -9,6 +9,10 @@ class MauiNSButton : NSButton
 {
     static readonly Thickness DefaultNonBorderedPadding = new Thickness(8, 4, 8, 4);
     Thickness _padding;
+    internal Graphics.LinearGradientPaint? _linearGradient;
+    internal Graphics.RadialGradientPaint? _radialGradient;
+    internal int _cornerRadius = -1;
+    bool _isPressed;
 
     public Thickness MauiPadding
     {
@@ -25,7 +29,7 @@ class MauiNSButton : NSButton
     {
         get
         {
-            if (_padding != default)
+            if (_padding != default && !double.IsNaN(_padding.Left))
                 return _padding;
             // When Bordered=false (custom background), native bezel padding is lost;
             // apply a default so content (especially images) doesn't sit flush at edges
@@ -41,14 +45,29 @@ class MauiNSButton : NSButton
         {
             // Compute content size without calling base.IntrinsicContentSize,
             // which can trigger recursive auto-layout in AppKit → NaN → exception.
-            var size = AttributedTitle?.Size ?? CGSize.Empty;
+            CGSize size;
+            if (AttributedTitle?.Length > 0)
+            {
+                size = AttributedTitle.Size;
+            }
+            else if (!string.IsNullOrEmpty(Title))
+            {
+                var font = Font ?? NSFont.SystemFontOfSize(NSFont.SystemFontSize);
+                var attrs = new NSStringAttributes { Font = font };
+                size = new NSAttributedString(Title, attrs).Size;
+            }
+            else
+            {
+                size = CGSize.Empty;
+            }
+
             if (Image != null)
             {
                 var imgSize = Image.Size;
                 size.Width += imgSize.Width;
                 if (imgSize.Height > size.Height)
                     size.Height = imgSize.Height;
-                if (AttributedTitle?.Length > 0)
+                if (AttributedTitle?.Length > 0 || !string.IsNullOrEmpty(Title))
                     size.Width += 4; // spacing between image and title
             }
 
@@ -59,7 +78,6 @@ class MauiNSButton : NSButton
             var pad = EffectivePadding;
             if (Bordered)
             {
-                // Bordered buttons have native bezel chrome — add standard bezel padding
                 size.Width += 20;
                 size.Height += 8;
             }
@@ -69,16 +87,89 @@ class MauiNSButton : NSButton
                 size.Height += (nfloat)(pad.Top + pad.Bottom);
             }
 
-            // Ensure minimum touch target
             if (size.Height < 21)
                 size.Height = 21;
+
+            if (nfloat.IsNaN(size.Width) || nfloat.IsNaN(size.Height))
+                return new CGSize(NSView.NoIntrinsicMetric, NSView.NoIntrinsicMetric);
 
             return size;
         }
     }
 
+    public override void MouseDown(NSEvent theEvent)
+    {
+        if (_linearGradient != null || _radialGradient != null)
+        {
+            _isPressed = true;
+            NeedsDisplay = true;
+        }
+        base.MouseDown(theEvent); // blocks until mouse up
+        if (_linearGradient != null || _radialGradient != null)
+        {
+            _isPressed = false;
+            NeedsDisplay = true;
+        }
+    }
+
     public override void DrawRect(CGRect dirtyRect)
     {
+        // Draw gradient background if set
+        if (_linearGradient != null || _radialGradient != null)
+        {
+            var context = NSGraphicsContext.CurrentContext?.CGContext;
+            if (context != null)
+            {
+                var stops = _linearGradient?.GradientStops ?? _radialGradient?.GradientStops;
+                if (stops != null && stops.Length > 0)
+                {
+                    context.SaveState();
+
+                    // Clip to rounded rect for button shape
+                    var cornerRadius = _cornerRadius >= 0 ? (nfloat)_cornerRadius : (nfloat)6;
+                    var path = NSBezierPath.FromRoundedRect(Bounds, cornerRadius, cornerRadius);
+                    path.AddClip();
+
+                    var colors = new CGColor[stops.Length];
+                    var locations = new nfloat[stops.Length];
+                    for (int i = 0; i < stops.Length; i++)
+                    {
+                        colors[i] = stops[i].Color.ToPlatformColor().CGColor;
+                        locations[i] = stops[i].Offset;
+                    }
+                    using var colorSpace = CGColorSpace.CreateSrgb();
+                    using var gradient = new CGGradient(colorSpace, colors, locations);
+
+                    if (_linearGradient != null)
+                    {
+                        var start = new CGPoint(Bounds.Width * _linearGradient.StartPoint.X,
+                                                Bounds.Height * _linearGradient.StartPoint.Y);
+                        var end = new CGPoint(Bounds.Width * _linearGradient.EndPoint.X,
+                                              Bounds.Height * _linearGradient.EndPoint.Y);
+                        context.DrawLinearGradient(gradient, start, end,
+                            CGGradientDrawingOptions.DrawsBeforeStartLocation | CGGradientDrawingOptions.DrawsAfterEndLocation);
+                    }
+                    else if (_radialGradient != null)
+                    {
+                        var center = new CGPoint(Bounds.Width * _radialGradient.Center.X,
+                                                 Bounds.Height * _radialGradient.Center.Y);
+                        var radius = (nfloat)Math.Max(Bounds.Width, Bounds.Height) * (nfloat)_radialGradient.Radius;
+                        context.DrawRadialGradient(gradient, center, (nfloat)0, center, radius,
+                            CGGradientDrawingOptions.DrawsBeforeStartLocation | CGGradientDrawingOptions.DrawsAfterEndLocation);
+                    }
+
+                    // Darken when pressed
+                    if (_isPressed)
+                    {
+                        context.SetFillColor(new CGColor(0, 0, 0, 0.25f));
+                        context.FillRect(Bounds);
+                    }
+
+                    context.RestoreState();
+                }
+            }
+        }
+
         var pad = EffectivePadding;
         if (pad != default && !Bordered)
         {
@@ -113,6 +204,7 @@ public partial class ButtonHandler : MacOSViewHandler<IButton, NSButton>
             [nameof(IButtonStroke.StrokeThickness)] = MapStrokeThickness,
             [nameof(IPadding.Padding)] = MapPadding,
             [nameof(IImage.Source)] = MapImageSource,
+            ["ContentLayout"] = MapContentLayout,
         };
 
     public ButtonHandler() : base(Mapper)
@@ -197,26 +289,59 @@ public partial class ButtonHandler : MacOSViewHandler<IButton, NSButton>
     public static void MapBackground(ButtonHandler handler, IButton button)
     {
         var wasBordered = handler.PlatformView.Bordered;
+        var btn = handler.PlatformView as MauiNSButton;
 
-        // Extract color from background paint or BackgroundColor
-        Graphics.Color? bgColor = null;
-        if (button.Background is Graphics.SolidPaint solidPaint)
-            bgColor = solidPaint.Color;
-
-        // Fallback: check BackgroundColor directly (handles SolidColorBrush / ImmutableBrush)
-        if (bgColor == null && button is Microsoft.Maui.Controls.Button mauiButton && mauiButton.BackgroundColor != null)
-            bgColor = mauiButton.BackgroundColor;
-
-        if (bgColor != null)
+        // Clear previous gradient
+        if (btn != null)
         {
-            handler.PlatformView.WantsLayer = true;
+            btn._linearGradient = null;
+            btn._radialGradient = null;
+        }
+
+        if (button.Background is Graphics.LinearGradientPaint linear)
+        {
             handler.PlatformView.Bordered = false;
-            handler.PlatformView.Layer!.BackgroundColor = bgColor.ToPlatformColor().CGColor;
+            if (btn != null)
+            {
+                btn._linearGradient = linear;
+                btn._radialGradient = null;
+                btn.WantsLayer = false;
+            }
+            handler.PlatformView.NeedsDisplay = true;
+        }
+        else if (button.Background is Graphics.RadialGradientPaint radial)
+        {
+            handler.PlatformView.Bordered = false;
+            if (btn != null)
+            {
+                btn._linearGradient = null;
+                btn._radialGradient = radial;
+                btn.WantsLayer = false;
+            }
+            handler.PlatformView.NeedsDisplay = true;
         }
         else
         {
-            handler.PlatformView.Bordered = true;
-            handler.PlatformView.BezelStyle = NSBezelStyle.Rounded;
+            // Extract color from background paint or BackgroundColor
+            Graphics.Color? bgColor = null;
+            if (button.Background is Graphics.SolidPaint solidPaint)
+                bgColor = solidPaint.Color;
+
+            // Fallback: check BackgroundColor directly (handles SolidColorBrush / ImmutableBrush)
+            if (bgColor == null && button is Microsoft.Maui.Controls.Button mauiButton && mauiButton.BackgroundColor != null)
+                bgColor = mauiButton.BackgroundColor;
+
+            if (bgColor != null)
+            {
+                handler.PlatformView.WantsLayer = true;
+                handler.PlatformView.Bordered = false;
+                handler.PlatformView.Layer!.BackgroundColor = bgColor.ToPlatformColor().CGColor;
+            }
+            else
+            {
+                handler.PlatformView.Bordered = true;
+                handler.PlatformView.BezelStyle = NSBezelStyle.Rounded;
+            }
         }
 
         // Bordered state affects default padding — invalidate both native and MAUI layout
@@ -232,8 +357,11 @@ public partial class ButtonHandler : MacOSViewHandler<IButton, NSButton>
     {
         if (button is IButtonStroke stroke && stroke.CornerRadius >= 0)
         {
+            if (handler.PlatformView is MauiNSButton btn)
+                btn._cornerRadius = stroke.CornerRadius;
             handler.PlatformView.WantsLayer = true;
             handler.PlatformView.Layer!.CornerRadius = (nfloat)stroke.CornerRadius;
+            handler.PlatformView.NeedsDisplay = true;
         }
     }
 
@@ -271,23 +399,52 @@ public partial class ButtonHandler : MacOSViewHandler<IButton, NSButton>
         if (imageButton.Source is IFileImageSource fileSource)
         {
             handler.PlatformView.Image = new AppKit.NSImage(fileSource.File);
-            handler.PlatformView.ImagePosition = NSCellImagePosition.ImageLeft;
         }
         else if (imageButton.Source is IFontImageSource fontSource)
         {
             handler.PlatformView.Image = FontImageSourceHelper.CreateImage(fontSource, handler.MauiContext);
-            handler.PlatformView.ImagePosition = NSCellImagePosition.ImageLeft;
         }
         else if (imageButton.Source is IUriImageSource uriSource)
         {
             _ = LoadButtonImageFromUri(handler, uriSource.Uri);
+            return; // async — position set in callback
         }
         else
         {
             handler.PlatformView.Image = null;
         }
 
+        ApplyImagePosition(handler, button);
         handler.PlatformView.InvalidateIntrinsicContentSize();
+    }
+
+    public static void MapContentLayout(ButtonHandler handler, IButton button)
+    {
+        ApplyImagePosition(handler, button);
+        handler.PlatformView.InvalidateIntrinsicContentSize();
+    }
+
+    static void ApplyImagePosition(ButtonHandler handler, IButton button)
+    {
+        if (handler.PlatformView.Image == null)
+        {
+            handler.PlatformView.ImagePosition = NSCellImagePosition.NoImage;
+            return;
+        }
+
+        var position = NSCellImagePosition.ImageLeft;
+        if (button is Microsoft.Maui.Controls.Button mauiButton)
+        {
+            position = mauiButton.ContentLayout.Position switch
+            {
+                Microsoft.Maui.Controls.Button.ButtonContentLayout.ImagePosition.Left => NSCellImagePosition.ImageLeft,
+                Microsoft.Maui.Controls.Button.ButtonContentLayout.ImagePosition.Right => NSCellImagePosition.ImageRight,
+                Microsoft.Maui.Controls.Button.ButtonContentLayout.ImagePosition.Top => NSCellImagePosition.ImageAbove,
+                Microsoft.Maui.Controls.Button.ButtonContentLayout.ImagePosition.Bottom => NSCellImagePosition.ImageBelow,
+                _ => NSCellImagePosition.ImageLeft,
+            };
+        }
+        handler.PlatformView.ImagePosition = position;
     }
 
     static async Task LoadButtonImageFromUri(ButtonHandler handler, Uri uri)
@@ -298,7 +455,8 @@ public partial class ButtonHandler : MacOSViewHandler<IButton, NSButton>
             var data = await client.GetByteArrayAsync(uri);
             var nsImage = new AppKit.NSImage(Foundation.NSData.FromArray(data));
             handler.PlatformView.Image = nsImage;
-            handler.PlatformView.ImagePosition = NSCellImagePosition.ImageLeft;
+            ApplyImagePosition(handler, handler.VirtualView);
+            handler.PlatformView.InvalidateIntrinsicContentSize();
         }
         catch { }
     }
