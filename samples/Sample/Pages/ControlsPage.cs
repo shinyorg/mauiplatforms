@@ -59,6 +59,21 @@ public class ControlsPage : ContentPage
 				{
 					SectionHeader("Button & ProgressBar"),
 					button,
+					new Button
+					{
+						Text = "Gradient Button",
+						TextColor = Colors.White,
+						Background = new LinearGradientBrush
+						{
+							StartPoint = new Point(0, 0),
+							EndPoint = new Point(1, 1),
+							GradientStops =
+							{
+								new GradientStop(Colors.Purple, 0.0f),
+								new GradientStop(Colors.DodgerBlue, 1.0f),
+							}
+						},
+					},
 					clickLabel,
 					new Label { Text = "Progress (click 20x to fill):", FontSize = 12, TextColor = Colors.Gray },
 					progressBar,
