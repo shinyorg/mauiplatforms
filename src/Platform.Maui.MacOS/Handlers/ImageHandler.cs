@@ -71,6 +71,7 @@ public partial class ImageHandler : MacOSViewHandler<IImage, NSImageView>
         if (source == null)
         {
             PlatformView.Image = null;
+            PlatformView.InvalidateIntrinsicContentSize();
             imageSourcePart.UpdateIsLoading(false);
             return;
         }
@@ -86,6 +87,7 @@ public partial class ImageHandler : MacOSViewHandler<IImage, NSImageView>
                 PlatformView.Image = nsImage;
             }
 
+            PlatformView.InvalidateIntrinsicContentSize();
             imageSourcePart.UpdateIsLoading(false);
         }
         else if (source is IUriImageSource uriImageSource)
@@ -98,6 +100,7 @@ public partial class ImageHandler : MacOSViewHandler<IImage, NSImageView>
             else
             {
                 PlatformView.Image = null;
+                PlatformView.InvalidateIntrinsicContentSize();
                 imageSourcePart.UpdateIsLoading(false);
             }
         }
@@ -112,6 +115,7 @@ public partial class ImageHandler : MacOSViewHandler<IImage, NSImageView>
         else
         {
             PlatformView.Image = null;
+            PlatformView.InvalidateIntrinsicContentSize();
             imageSourcePart.UpdateIsLoading(false);
         }
     }
@@ -190,7 +194,10 @@ public partial class ImageHandler : MacOSViewHandler<IImage, NSImageView>
             var nsImage = new NSImage(nsData);
 
             if (PlatformView != null)
+            {
                 PlatformView.Image = nsImage;
+                PlatformView.InvalidateIntrinsicContentSize();
+            }
         }
         catch (Exception ex)
         {
@@ -215,7 +222,10 @@ public partial class ImageHandler : MacOSViewHandler<IImage, NSImageView>
                 var nsImage = new NSImage(nsData);
 
                 if (PlatformView != null)
+                {
                     PlatformView.Image = nsImage;
+                    PlatformView.InvalidateIntrinsicContentSize();
+                }
 
                 stream.Dispose();
             }
@@ -234,6 +244,7 @@ public partial class ImageHandler : MacOSViewHandler<IImage, NSImageView>
     {
         var image = FontImageSourceHelper.CreateImage(fontImageSource, MauiContext);
         PlatformView.Image = image;
+        PlatformView.InvalidateIntrinsicContentSize();
         imageSourcePart.UpdateIsLoading(false);
     }
 }

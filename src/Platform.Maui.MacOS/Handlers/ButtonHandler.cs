@@ -149,7 +149,10 @@ public partial class ButtonHandler : MacOSViewHandler<IButton, NSButton>
     public static void MapText(ButtonHandler handler, IButton button)
     {
         if (button is IText textButton)
+        {
             handler.PlatformView.Title = textButton.Text ?? string.Empty;
+            handler.PlatformView.InvalidateIntrinsicContentSize();
+        }
     }
 
     public static void MapTextColor(ButtonHandler handler, IButton button)
@@ -161,7 +164,10 @@ public partial class ButtonHandler : MacOSViewHandler<IButton, NSButton>
     public static void MapFont(ButtonHandler handler, IButton button)
     {
         if (button is ITextStyle textStyle)
+        {
             handler.PlatformView.Font = textStyle.Font.ToNSFont();
+            handler.PlatformView.InvalidateIntrinsicContentSize();
+        }
     }
 
     public static void MapCharacterSpacing(ButtonHandler handler, IButton button)
@@ -184,6 +190,7 @@ public partial class ButtonHandler : MacOSViewHandler<IButton, NSButton>
                     handler.PlatformView.Font, range);
             }
             handler.PlatformView.AttributedTitle = attributedTitle;
+            handler.PlatformView.InvalidateIntrinsicContentSize();
         }
     }
 
@@ -279,6 +286,8 @@ public partial class ButtonHandler : MacOSViewHandler<IButton, NSButton>
         {
             handler.PlatformView.Image = null;
         }
+
+        handler.PlatformView.InvalidateIntrinsicContentSize();
     }
 
     static async Task LoadButtonImageFromUri(ButtonHandler handler, Uri uri)
