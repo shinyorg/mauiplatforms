@@ -51,7 +51,11 @@ public partial class PickerHandler : MacOSViewHandler<IPicker, NSPopUpButton>
         var selectedIndex = (int)PlatformView.IndexOfSelectedItem;
         // Account for the placeholder item at index 0
         if (VirtualView.Title != null)
+        {
+            if (selectedIndex == 0)
+                return; // Placeholder — not a real selection
             selectedIndex -= 1;
+        }
 
         if (selectedIndex >= 0 && selectedIndex < VirtualView.Items.Count)
             VirtualView.SelectedIndex = selectedIndex;
@@ -71,9 +75,21 @@ public partial class PickerHandler : MacOSViewHandler<IPicker, NSPopUpButton>
         }
         menu.RemoveAllItems();
 
-        // Add placeholder title if present
+        // Add placeholder as a disabled, greyed-out item — visible but not selectable
         if (VirtualView.Title != null)
-            menu.AddItem(new NSMenuItem(VirtualView.Title));
+        {
+            var placeholder = new NSMenuItem(VirtualView.Title);
+            placeholder.Enabled = false;
+
+            // Style with secondary label color so it looks like a placeholder
+            var attrs = new Foundation.NSDictionary(
+                NSStringAttributeKey.ForegroundColor,
+                NSColor.SecondaryLabel);
+            placeholder.AttributedTitle = new Foundation.NSAttributedString(VirtualView.Title, attrs);
+
+            menu.AddItem(placeholder);
+            menu.AddItem(NSMenuItem.SeparatorItem);
+        }
 
         if (VirtualView.Items != null)
         {
@@ -89,12 +105,13 @@ public partial class PickerHandler : MacOSViewHandler<IPicker, NSPopUpButton>
         if (VirtualView == null)
             return;
 
-        var offset = VirtualView.Title != null ? 1 : 0;
+        // Offset accounts for placeholder item + separator
+        var offset = VirtualView.Title != null ? 2 : 0;
 
         if (VirtualView.SelectedIndex >= 0 && VirtualView.SelectedIndex < VirtualView.Items.Count)
             PlatformView.SelectItem(VirtualView.SelectedIndex + offset);
-        else if (offset > 0)
-            PlatformView.SelectItem(0); // Select placeholder
+        else if (VirtualView.Title != null)
+            PlatformView.SelectItem(0); // Show placeholder text
     }
 
     public static void MapTitle(PickerHandler handler, IPicker picker)
@@ -104,17 +121,17 @@ public partial class PickerHandler : MacOSViewHandler<IPicker, NSPopUpButton>
 
     public static void MapTitleColor(PickerHandler handler, IPicker picker)
     {
-        if (picker.TitleColor == null || picker.Title == null)
+        if (picker.Title == null)
             return;
 
         // Apply TitleColor to the placeholder item (index 0) via attributed title
+        var color = picker.TitleColor?.ToPlatformColor() ?? NSColor.SecondaryLabel;
         var menu = handler.PlatformView.Menu;
         if (menu != null && menu.Count > 0)
         {
             var item = menu.ItemAt(0);
             var attrs = new Foundation.NSDictionary(
-                AppKit.NSStringAttributeKey.ForegroundColor,
-                picker.TitleColor.ToPlatformColor());
+                AppKit.NSStringAttributeKey.ForegroundColor, color);
             item.AttributedTitle = new Foundation.NSAttributedString(picker.Title, attrs);
         }
     }
