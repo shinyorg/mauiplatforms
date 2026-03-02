@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using ControlGallery.Common.Messages;
 using ControlGallery.Pages;
 using ControlGallery.Pages.Controls.CarouselView;
+using ControlGallery.Pages.Features;
 using ControlGallery.Pages.Features.Animation;
 using ControlGallery.Pages.Layouts;
 using ControlGallery.Pages.Layouts.AbsoluteLayouts;
@@ -226,6 +227,7 @@ public partial class AppShell : Shell
         Routing.RegisterRoute(nameof(REIPage), typeof(REIPage));
 
         Routing.RegisterRoute(nameof(HybridWebViewPage), typeof(HybridWebViewPage));
+        Routing.RegisterRoute(nameof(ModalStackingPage), typeof(ModalStackingPage));
 
         Routing.RegisterRoute(nameof(AchievementsPage), typeof(AchievementsPage));
         Routing.RegisterRoute(nameof(AlignmentPage), typeof(AlignmentPage));

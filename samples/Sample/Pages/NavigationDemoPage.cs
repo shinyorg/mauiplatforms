@@ -113,6 +113,30 @@ public class NavigationDemoPage : ContentPage
 			await Navigation.PushModalAsync(page);
 		};
 
+		var pushModalWindowButton = new Button
+		{
+			Text = "Window Modal",
+			Padding = new Thickness(16, 8),
+			HorizontalOptions = LayoutOptions.Start,
+		};
+		pushModalWindowButton.Clicked += async (s, e) =>
+		{
+			var page = CreateStackableModalPage(1, MacOSModalPresentationStyle.Window);
+			await Navigation.PushModalAsync(page);
+		};
+
+		var pushStackedSheetButton = new Button
+		{
+			Text = "Stacked Sheets (Nested)",
+			Padding = new Thickness(16, 8),
+			HorizontalOptions = LayoutOptions.Start,
+		};
+		pushStackedSheetButton.Clicked += async (s, e) =>
+		{
+			var page = CreateStackableModalPage(1, MacOSModalPresentationStyle.Sheet);
+			await Navigation.PushModalAsync(page);
+		};
+
 		var pushNoNavBarButton = new Button
 		{
 			Text = "Push Page (No NavBar)",
@@ -173,12 +197,14 @@ public class NavigationDemoPage : ContentPage
 				pushModalSmallButton,
 				pushModalContentButton,
 				pushModalOverlayButton,
+				pushModalWindowButton,
+				pushStackedSheetButton,
 
 				new Border { HeightRequest = 1, BackgroundColor = Colors.Gray, Opacity = 0.3, StrokeThickness = 0 },
 
 				new Label
 				{
-					Text = "• Push/Pop tests the navigation bar with back button\n• \"No NavBar\" hides the navigation bar on the pushed page\n• Sheet modals use native NSWindow.BeginSheet\n• Overlay modal uses the old backdrop + effect view style",
+					Text = "• Push/Pop tests the navigation bar with back button\n• \"No NavBar\" hides the navigation bar on the pushed page\n• Sheet modals use native NSWindow.BeginSheet\n• Overlay modal uses the old backdrop + effect view style\n• Window modal uses a child NSWindow that blocks the parent\n• Stacked sheets nest sheet-on-sheet with push buttons inside each modal",
 					FontSize = 12,
 					TextColor = Colors.Gray,
 				},
@@ -218,4 +244,79 @@ public class NavigationDemoPage : ContentPage
 			}
 		}
 	};
+
+	ContentPage CreateStackableModalPage(int depth, MacOSModalPresentationStyle style)
+	{
+		var page = new ContentPage { Title = $"Modal #{depth} ({style})" };
+
+		MacOSPage.SetModalPresentationStyle(page, style);
+		MacOSPage.SetModalSheetWidth(page, Math.Max(300, 500 - (depth - 1) * 40));
+		MacOSPage.SetModalSheetHeight(page, Math.Max(250, 400 - (depth - 1) * 30));
+		MacOSPage.SetModalSheetMinWidth(page, 250);
+		MacOSPage.SetModalSheetMinHeight(page, 200);
+
+		var pushSheetBtn = new Button
+		{
+			Text = $"Push Sheet #{depth + 1}",
+			Padding = new Thickness(16, 8),
+		};
+		pushSheetBtn.Clicked += async (s, e) =>
+		{
+			var next = CreateStackableModalPage(depth + 1, MacOSModalPresentationStyle.Sheet);
+			await page.Navigation.PushModalAsync(next);
+		};
+
+		var pushWindowBtn = new Button
+		{
+			Text = $"Push Window #{depth + 1}",
+			Padding = new Thickness(16, 8),
+		};
+		pushWindowBtn.Clicked += async (s, e) =>
+		{
+			var next = CreateStackableModalPage(depth + 1, MacOSModalPresentationStyle.Window);
+			await page.Navigation.PushModalAsync(next);
+		};
+
+		var dismissBtn = new Button
+		{
+			Text = "Dismiss",
+			Padding = new Thickness(16, 8),
+			BackgroundColor = Colors.OrangeRed,
+			TextColor = Colors.White,
+		};
+		dismissBtn.Clicked += async (s, e) =>
+		{
+			await page.Navigation.PopModalAsync();
+		};
+
+		page.Content = new VerticalStackLayout
+		{
+			Spacing = 12,
+			Padding = new Thickness(24),
+			VerticalOptions = LayoutOptions.Center,
+			HorizontalOptions = LayoutOptions.Center,
+			Children =
+			{
+				new Label
+				{
+					Text = $"Modal #{depth}",
+					FontSize = 24,
+					FontAttributes = FontAttributes.Bold,
+					HorizontalTextAlignment = TextAlignment.Center,
+				},
+				new Label
+				{
+					Text = $"Style: {style}",
+					FontSize = 14,
+					TextColor = Colors.Gray,
+					HorizontalTextAlignment = TextAlignment.Center,
+				},
+				pushSheetBtn,
+				pushWindowBtn,
+				dismissBtn,
+			}
+		};
+
+		return page;
+	}
 }

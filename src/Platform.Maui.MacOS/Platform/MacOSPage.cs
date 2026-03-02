@@ -18,6 +18,13 @@ public enum MacOSModalPresentationStyle
 	/// backdrop and rounded corners. This is a custom MAUI presentation style.
 	/// </summary>
 	Overlay = 1,
+
+	/// <summary>
+	/// Present as a separate floating NSWindow that is modal relative to its parent.
+	/// The parent window is dimmed and blocked from interaction until the modal is dismissed.
+	/// Supports stacking — each modal window becomes the host for the next.
+	/// </summary>
+	Window = 2,
 }
 
 /// <summary>
