@@ -22,11 +22,15 @@ internal class MacOSModalManager
 		NSView PageView,
 		IMauiContext MauiContext,
 		MacOSModalPresentationStyle Style,
-		// Sheet mode
-		NSWindow? SheetWindow = null,
+		// Sheet and Window modes: the NSWindow hosting the modal content
+		NSWindow? ModalWindow = null,
+		// Sheet and Window modes: the window that presented this modal
+		NSWindow? PresentingWindow = null,
 		// Overlay mode
 		NSView? BackdropView = null,
-		NSView? EffectView = null);
+		NSView? EffectView = null,
+		// Window mode: dims and blocks interaction on the presenting window
+		NSView? HostBlockerView = null);
 
 	public MacOSModalManager(NSView contentContainer, NSWindow parentWindow)
 	{
@@ -42,14 +46,37 @@ internal class MacOSModalManager
 		_parentWindow = parentWindow;
 	}
 
+	/// <summary>
+	/// Returns the topmost modal NSWindow (sheet or window-modal) if one exists,
+	/// otherwise the parent window. This enables nesting: each new modal is
+	/// presented from the topmost existing modal rather than always from the parent.
+	/// </summary>
+	NSWindow? GetTopmostModalHost()
+	{
+		for (int i = _modalStack.Count - 1; i >= 0; i--)
+		{
+			if (_modalStack[i].ModalWindow is { } win)
+				return win;
+		}
+		return _parentWindow;
+	}
+
 	public void PushModal(Page page, IMauiContext mauiContext, bool animated)
 	{
 		var style = MacOSPage.GetModalPresentationStyle(page);
 
-		if (style == MacOSModalPresentationStyle.Sheet)
-			PushSheet(page, mauiContext, animated);
-		else
-			PushOverlay(page, mauiContext, animated);
+		switch (style)
+		{
+			case MacOSModalPresentationStyle.Sheet:
+				PushSheet(page, mauiContext, animated);
+				break;
+			case MacOSModalPresentationStyle.Window:
+				PushModalWindow(page, mauiContext, animated);
+				break;
+			default:
+				PushOverlay(page, mauiContext, animated);
+				break;
+		}
 	}
 
 	public Page? PopModal(bool animated)
@@ -60,10 +87,18 @@ internal class MacOSModalManager
 		var entry = _modalStack[^1];
 		_modalStack.RemoveAt(_modalStack.Count - 1);
 
-		if (entry.Style == MacOSModalPresentationStyle.Sheet)
-			RemoveSheet(entry);
-		else
-			RemoveOverlay(entry);
+		switch (entry.Style)
+		{
+			case MacOSModalPresentationStyle.Sheet:
+				RemoveSheet(entry);
+				break;
+			case MacOSModalPresentationStyle.Window:
+				RemoveModalWindow(entry);
+				break;
+			default:
+				RemoveOverlay(entry);
+				break;
+		}
 
 		return entry.Page;
 	}
@@ -115,10 +150,12 @@ internal class MacOSModalManager
 		platformView.AutoresizingMask = NSViewResizingMask.WidthSizable | NSViewResizingMask.HeightSizable;
 		sheetWindow.ContentView = platformView;
 
-		var entry = new ModalEntry(page, platformView, mauiContext, MacOSModalPresentationStyle.Sheet, SheetWindow: sheetWindow);
+		var presentingWindow = GetTopmostModalHost();
+
+		var entry = new ModalEntry(page, platformView, mauiContext, MacOSModalPresentationStyle.Sheet, ModalWindow: sheetWindow, PresentingWindow: presentingWindow);
 		_modalStack.Add(entry);
 
-		_parentWindow?.BeginSheet(sheetWindow, (returnCode) => { });
+		presentingWindow?.BeginSheet(sheetWindow, (returnCode) => { });
 	}
 
 	CGSize ComputeSheetSize(Page page)
@@ -176,12 +213,101 @@ internal class MacOSModalManager
 
 	void RemoveSheet(ModalEntry entry)
 	{
-		if (entry.SheetWindow != null)
+		if (entry.ModalWindow != null)
 		{
-			_parentWindow?.EndSheet(entry.SheetWindow);
-			entry.SheetWindow.OrderOut(null);
+			var host = entry.PresentingWindow ?? _parentWindow;
+			host?.EndSheet(entry.ModalWindow);
+			entry.ModalWindow.OrderOut(null);
 		}
 		entry.Page.Handler?.DisconnectHandler();
+	}
+
+	#endregion
+
+	#region Window Modal Presentation
+
+	void PushModalWindow(Page page, IMauiContext mauiContext, bool animated)
+	{
+		var platformView = ((IView)page).ToMacOSPlatform(mauiContext);
+
+		if (platformView is MacOSContainerView container)
+		{
+			container.IgnorePlatformSafeArea = true;
+			container.ExternalFrameManagement = true;
+		}
+
+		var hostWindow = GetTopmostModalHost();
+
+		// Add a dimming overlay to the host window to block interaction
+		NSView? blockerView = null;
+		if (hostWindow?.ContentView is { } hostContent)
+		{
+			blockerView = new NSView(hostContent.Bounds)
+			{
+				WantsLayer = true,
+				AutoresizingMask = NSViewResizingMask.WidthSizable | NSViewResizingMask.HeightSizable,
+			};
+			blockerView.Layer!.BackgroundColor = new CGColor(0, 0, 0, 0.25f);
+			hostContent.AddSubview(blockerView);
+		}
+
+		var modalSize = ComputeSheetSize(page);
+		var modalFrame = ComputeCenteredFrame(hostWindow, modalSize);
+
+		var modalWindow = new NSWindow(
+			modalFrame,
+			NSWindowStyle.Titled | NSWindowStyle.Resizable,
+			NSBackingStore.Buffered,
+			deferCreation: false);
+		modalWindow.ReleasedWhenClosed = false;
+
+		var minWidth = MacOSPage.GetModalSheetMinWidth(page);
+		var minHeight = MacOSPage.GetModalSheetMinHeight(page);
+		if (minWidth > 0 || minHeight > 0)
+		{
+			modalWindow.ContentMinSize = new CGSize(
+				minWidth > 0 ? minWidth : 0,
+				minHeight > 0 ? minHeight : 0);
+		}
+
+		platformView.Frame = new CGRect(0, 0, modalSize.Width, modalSize.Height);
+		platformView.AutoresizingMask = NSViewResizingMask.WidthSizable | NSViewResizingMask.HeightSizable;
+		modalWindow.ContentView = platformView;
+
+		hostWindow?.AddChildWindow(modalWindow, NSWindowOrderingMode.Above);
+		modalWindow.MakeKeyAndOrderFront(null);
+
+		var entry = new ModalEntry(page, platformView, mauiContext, MacOSModalPresentationStyle.Window,
+			ModalWindow: modalWindow, PresentingWindow: hostWindow, HostBlockerView: blockerView);
+		_modalStack.Add(entry);
+	}
+
+	void RemoveModalWindow(ModalEntry entry)
+	{
+		// Remove the blocker overlay from the host window
+		entry.HostBlockerView?.RemoveFromSuperview();
+
+		if (entry.ModalWindow != null)
+		{
+			entry.PresentingWindow?.RemoveChildWindow(entry.ModalWindow);
+			entry.ModalWindow.OrderOut(null);
+		}
+
+		// Re-activate the host window
+		entry.PresentingWindow?.MakeKeyAndOrderFront(null);
+
+		entry.Page.Handler?.DisconnectHandler();
+	}
+
+	static CGRect ComputeCenteredFrame(NSWindow? host, CGSize size)
+	{
+		if (host == null)
+			return new CGRect(100, 100, size.Width, size.Height);
+
+		var hostFrame = host.Frame;
+		var x = hostFrame.X + (hostFrame.Width - size.Width) / 2;
+		var y = hostFrame.Y + (hostFrame.Height - size.Height) / 2;
+		return new CGRect(x, y, size.Width, size.Height);
 	}
 
 	#endregion

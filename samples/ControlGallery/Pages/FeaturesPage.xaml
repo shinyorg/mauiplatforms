@@ -38,6 +38,8 @@
                                    Destination="{x:Type TriggersPage}"/>
                             <NavItem Title="HybridWebView"
                                    Destination="{x:Type HybridWebViewPage}"/>
+                            <NavItem Title="Modal Stacking"
+                                   Destination="{x:Type ModalStackingPage}"/>
 
                             
 
