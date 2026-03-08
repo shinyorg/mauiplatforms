@@ -138,6 +138,9 @@ public class LayoutsPage : ContentPage
 						Content = new Label { Text = "Pill-style rounded", FontSize = 14, TextColor = Colors.White, HorizontalTextAlignment = TextAlignment.Center }
 					},
 
+					SectionHeader("Toggle Row Height"),
+					CreateToggleRowDemo(),
+
 					SectionHeader("Deeply Nested"),
 					new Border
 					{
@@ -176,6 +179,46 @@ public class LayoutsPage : ContentPage
 				}
 			}
 		};
+	}
+
+	static View CreateToggleRowDemo()
+	{
+		var collapsibleRow = new RowDefinition(new GridLength(0));
+
+		var grid = new Grid
+		{
+			HeightRequest = 200,
+			RowDefinitions = { new RowDefinition(GridLength.Star), collapsibleRow },
+			ColumnDefinitions = { new ColumnDefinition(GridLength.Star) },
+		};
+
+		var topBlock = ColorBlock("Always Visible (Row 0)", Colors.SteelBlue);
+		Grid.SetRow(topBlock, 0);
+		grid.Children.Add(topBlock);
+
+		var bottomBlock = ColorBlock("Toggled Row (Row 1)", Colors.Tomato);
+		Grid.SetRow(bottomBlock, 1);
+		grid.Children.Add(bottomBlock);
+
+		var toggle = new Button { Text = "Show Row 1" };
+		toggle.Clicked += (_, _) =>
+		{
+			var hidden = collapsibleRow.Height.Value is 0;
+			collapsibleRow.Height = hidden ? GridLength.Star : new GridLength(0);
+			toggle.Text = hidden ? "Hide Row 1" : "Show Row 1";
+		};
+
+		var wrapper = new VerticalStackLayout { Spacing = 8 };
+		wrapper.Children.Add(toggle);
+		wrapper.Children.Add(new Border
+		{
+			Stroke = Colors.SlateGray,
+			StrokeThickness = 1,
+			StrokeShape = new RoundRectangle { CornerRadius = 8 },
+			Padding = new Thickness(4),
+			Content = grid,
+		});
+		return wrapper;
 	}
 
 	static Label SectionHeader(string text) => new()
