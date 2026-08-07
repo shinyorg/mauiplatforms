@@ -33,7 +33,7 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
       with:
           fetch-depth: 0
 
@@ -41,7 +41,7 @@ jobs:
       run: sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
 
     - name: Setup .NET 10.0
-      uses: actions/setup-dotnet@v4
+      uses: actions/setup-dotnet@v6
       with:
           dotnet-version: '10.0.x'
 
@@ -62,13 +62,13 @@ jobs:
 
     - name: Post NuGet Artifacts
       if: github.event_name == 'push'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: nuget-artifacts
         path: '**/*.nupkg'
 
     - name: Post Sample App
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: SampleMac
         path: 'samples/SampleMac/bin/Release/net10.0-macos/**/*.app'
