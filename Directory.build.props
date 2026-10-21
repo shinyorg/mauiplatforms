@@ -10,6 +10,7 @@
         <TvOSPackageVersion>0.1.0-alpha-0001</TvOSPackageVersion>
         <Description>MAUI Platforms</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <Copyright>Copyright (c) $([System.DateTime]::Now.Year) Allan Ritchie</Copyright>
         <PackageIcon>icon.png</PackageIcon>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <PackageProjectUrl>https://github.com/shinyorg/mauiplatforms</PackageProjectUrl>
