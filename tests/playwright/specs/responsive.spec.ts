@@ -31,7 +31,8 @@ test.describe('narrow screens', () => {
     await app.open();
     await app.navigate('TabbedPage');
     const tab = app.tab('📊 Stats');
-    const box = await tab.boundingBox();
-    expect(box!.y).toBeGreaterThan(page.viewportSize()!.height / 2);
+    // The tab strip is drawn at the top until the TabbedPage's first arrange moves it down.
+    await expect.poll(async () => (await tab.boundingBox())?.y ?? 0)
+      .toBeGreaterThan(page.viewportSize()!.height / 2);
   });
 });
