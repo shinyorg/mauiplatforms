@@ -95,6 +95,19 @@ class ModalDemoPage : ContentPage
 			_statusLabel.Text = "Inline modal was dismissed.";
 		};
 
+		// --- Transparent (popup over the current page) ---
+		var transparentModalBtn = new Button
+		{
+			Text = "Transparent Modal (Popup)",
+			AutomationId = "btnTransparentModal",
+			Margin = new Thickness(0, 4),
+		};
+		transparentModalBtn.Clicked += async (s, e) =>
+		{
+			await Navigation.PushModalAsync(CreatePopupPage());
+			_statusLabel.Text = "Transparent modal was dismissed.";
+		};
+
 		// --- Stacked ---
 		var stackedModalBtn = new Button
 		{
@@ -159,6 +172,7 @@ class ModalDemoPage : ContentPage
 
 					new Label { Text = "Other Styles", FontSize = 16, FontAttributes = FontAttributes.Bold, TextColor = Colors.CornflowerBlue },
 					inlineModalBtn,
+					transparentModalBtn,
 					stackedModalBtn,
 
 					new Border { HeightRequest = 1, BackgroundColor = Colors.Gray, Opacity = 0.3, StrokeThickness = 0 },
@@ -168,13 +182,71 @@ class ModalDemoPage : ContentPage
 						Text = "• Dialog styles use WebPage.SetModalPresentationStyle(page, Dialog)\n"
 							+ "• Custom size sets explicit dialog dimensions\n"
 							+ "• Content-sized measures the MAUI content\n"
-							+ "• Full-window is the default PushModalAsync presentation",
+							+ "• Full-window is the default PushModalAsync presentation\n"
+							+ "• A full-window page with a transparent background shows the page below it",
 						FontSize = 12,
 						TextColor = Colors.Gray,
 					},
 				}
 			}
 		};
+	}
+
+	/// <summary>
+	/// A full-window modal with a transparent background: a dimmed scrim and a card over the
+	/// page that pushed it, the usual way MAUI apps build popups.
+	/// </summary>
+	private static ContentPage CreatePopupPage()
+	{
+		var dismissBtn = new Button
+		{
+			Text = "Dismiss",
+			AutomationId = "btnDismissModal",
+			BackgroundColor = Colors.Tomato,
+			TextColor = Colors.White,
+		};
+
+		var card = new Border
+		{
+			Padding = new Thickness(24),
+			StrokeThickness = 0,
+			StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = 14 },
+			HorizontalOptions = LayoutOptions.Center,
+			VerticalOptions = LayoutOptions.Center,
+			WidthRequest = 300,
+			Content = new VerticalStackLayout
+			{
+				Spacing = 12,
+				Children =
+				{
+					new Label { Text = "Popup", FontSize = 20, FontAttributes = FontAttributes.Bold, HorizontalOptions = LayoutOptions.Center },
+					new Label
+					{
+						Text = "This page's background is transparent,\nso the page below shows through.",
+						HorizontalTextAlignment = TextAlignment.Center,
+					},
+					dismissBtn,
+				}
+			}
+		};
+		Theme.Bind(card, VisualElement.BackgroundColorProperty, Theme.Paper);
+
+		var page = new ContentPage
+		{
+			Title = "Popup",
+			BackgroundColor = Colors.Transparent,
+			Content = new Grid
+			{
+				Children =
+				{
+					new BoxView { Color = Colors.Black, Opacity = 0.4 },
+					card,
+				}
+			}
+		};
+
+		dismissBtn.Clicked += async (s, e) => await page.Navigation.PopModalAsync();
+		return page;
 	}
 
 	private static ContentPage CreateModalContent(string title, string description)

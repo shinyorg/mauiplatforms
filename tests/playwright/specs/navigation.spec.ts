@@ -73,6 +73,24 @@ test.describe('modal pages', () => {
     await expect(app.label(/was dismissed/)).toBeVisible();
   });
 
+  test('transparent full-window modal shows the page below it', async ({ app, page }) => {
+    await app.button('Transparent Modal (Popup)').click();
+    const layer = page.locator('.maui-modal-layer');
+    await expect(layer).toBeVisible();
+    // Neither the layer nor the page (BackgroundColor = Transparent) paints over what's below.
+    await expect.poll(() => layer.evaluate(l => [l, l.firstElementChild!].map(e => getComputedStyle(e).backgroundColor)))
+      .toEqual(['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0)']);
+    // A page that doesn't set a background is still opaque.
+    const defaultBackground = await layer.evaluate(l => {
+      const page = l.firstElementChild as HTMLElement;
+      page.style.backgroundColor = '';
+      return getComputedStyle(page).backgroundColor;
+    });
+    expect(defaultBackground).not.toBe('rgba(0, 0, 0, 0)');
+    await app.button('Dismiss').click();
+    await expect(app.label('Transparent modal was dismissed.')).toBeVisible();
+  });
+
   test('dialog modal dismisses from the backdrop', async ({ app, page }) => {
     await app.button('Dialog Modal (Default)').click();
     await expect(page.locator('.maui-modal-dialog')).toBeVisible();

@@ -285,7 +285,9 @@ html, body {
 @keyframes maui-fade-in { from { opacity: 0; } }
 @keyframes maui-dialog-in { from { transform: translateY(12px) scale(0.98); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .maui-modal-backdrop, .maui-modal-dialog, .maui-modal-layer { animation: none; } }
-.maui-modal-layer { position: absolute; inset: 0; background: var(--maui-bg); z-index: 10; animation: maui-modal-in 200ms ease-out; }
+/* The layer itself is see-through so a modal page with a transparent Background shows the page
+   below it (popup-style pages). Pages without a Background still get the opaque default. */
+.maui-modal-layer { position: absolute; inset: 0; --maui-page-bg: var(--maui-bg); z-index: 10; animation: maui-modal-in 200ms ease-out; }
 @keyframes maui-modal-in { from { transform: translateY(32px); opacity: 0; } }
 
 /* Collections */
