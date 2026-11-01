@@ -26,12 +26,18 @@ export class App {
   /** Opens a gallery page from the flyout menu, opening the menu first on narrow screens. */
   async navigate(menuTitle: string) {
     const item = this.page.locator('.maui-flyout-pane').getByText(menuTitle, { exact: true });
-    // On narrow screens the flyout may still be sliding open or shut; decide once it has settled.
-    await this.settled('.maui-flyout-pane');
-    if (!(await item.isVisible()))
-      await this.page.getByRole('button', { name: 'Open navigation' }).click();
-    await this.settled('.maui-flyout-pane');
-    await item.click();
+    const menu = this.page.getByRole('button', { name: 'Open navigation' });
+    // On narrow screens the flyout may still be sliding shut, or only just switching from docked to
+    // popover. A closing pane stays visible until its transition ends, so the item can look
+    // clickable and then disappear. Retry until the click lands, opening the menu whenever the
+    // item is hidden.
+    await expect(async () => {
+      await this.settled('.maui-flyout-pane');
+      if (!(await item.isVisible()))
+        await menu.click({ timeout: 2_000 });
+      await this.settled('.maui-flyout-pane');
+      await item.click({ timeout: 2_000 });
+    }).toPass({ timeout: 30_000 });
   }
 
   /** Waits until the matching elements have no running CSS transitions or animations. */
