@@ -81,28 +81,60 @@ public class WebElement
 
 	/// <summary>Subscribes to a DOM event; dispose to unsubscribe.</summary>
 	public IDisposable On(string type, Action callback, bool preventDefault = false)
-		=> new Subscription(Dom.Listen(Js, type, callback, preventDefault));
+		=> new Subscription(Dom.Listen(Js, type, Guard(type, callback), preventDefault));
 
 	/// <summary>Subscribes to a DOM event without letting it bubble to ancestor views.</summary>
 	public IDisposable OnStopped(string type, Action callback)
-		=> new Subscription(Dom.ListenStopped(Js, type, callback));
+		=> new Subscription(Dom.ListenStopped(Js, type, Guard(type, callback)));
 
 	/// <summary>Subscribes to an input event, receiving the element's value (or checked state).</summary>
 	public IDisposable OnValue(string type, Action<string> callback)
-		=> new Subscription(Dom.ListenValue(Js, type, callback));
+		=> new Subscription(Dom.ListenValue(Js, type, Guard(type, callback)));
 
 	public IDisposable OnKey(string type, Action<string> callback)
-		=> new Subscription(Dom.ListenKey(Js, type, callback));
+		=> new Subscription(Dom.ListenKey(Js, type, Guard(type, callback)));
 
 	/// <summary>Pointer events report element-relative coordinates and packed flags (see <see cref="PointerFlags"/>).</summary>
 	public IDisposable OnPointer(string type, Action<double, double, int> callback, bool capture = false)
-		=> new Subscription(Dom.ListenPointer(Js, type, callback, capture));
+		=> new Subscription(Dom.ListenPointer(Js, type, Guard(type, callback), capture));
 
 	public IDisposable OnScroll(Action<double, double> callback)
-		=> new Subscription(Dom.ListenScroll(Js, callback));
+		=> new Subscription(Dom.ListenScroll(Js, Guard("scroll", callback)));
+
+	/// <summary>Reports whether the element is in the viewport whenever that changes.</summary>
+	public IDisposable OnVisibility(Action<bool> callback)
+		=> new Subscription(Dom.ObserveVisibility(Js, Guard("visibility", callback)), observer: true);
 
 	public IDisposable OnResize(Action<double, double> callback)
-		=> new Subscription(Dom.ObserveResize(Js, callback), observer: true);
+		=> new Subscription(Dom.ObserveResize(Js, Guard("resize", callback)), observer: true);
+
+	// An exception thrown back into a DOM event loses its .NET stack and surfaces as a bare script
+	// error, so event callbacks log the full exception here instead.
+	static Action Guard(string type, Action callback) => () =>
+	{
+		try { callback(); }
+		catch (Exception ex) { Report(type, ex); }
+	};
+
+	static Action<T> Guard<T>(string type, Action<T> callback) => a =>
+	{
+		try { callback(a); }
+		catch (Exception ex) { Report(type, ex); }
+	};
+
+	static Action<T1, T2> Guard<T1, T2>(string type, Action<T1, T2> callback) => (a, b) =>
+	{
+		try { callback(a, b); }
+		catch (Exception ex) { Report(type, ex); }
+	};
+
+	static Action<T1, T2, T3> Guard<T1, T2, T3>(string type, Action<T1, T2, T3> callback) => (a, b, c) =>
+	{
+		try { callback(a, b, c); }
+		catch (Exception ex) { Report(type, ex); }
+	};
+
+	static void Report(string type, Exception ex) => Console.Error.WriteLine($"[maui-web] '{type}' event handler failed: {ex}");
 
 	sealed class Subscription(int id, bool observer = false) : IDisposable
 	{

@@ -131,7 +131,7 @@ public class IndicatorViewHandler : WebElementHandler<IIndicatorView, WebElement
 			handler._dotSubscriptions.Add(dot.On("click", () => view.Position = index));
 			handler.PlatformView.Append(dot);
 		}
-		handler.VirtualView?.InvalidateMeasure();
+		handler.CurrentView?.InvalidateMeasure();
 	}
 }
 

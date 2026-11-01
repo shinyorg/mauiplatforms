@@ -163,6 +163,78 @@ prompts (iOS) must start from a user gesture. FileSystem directories live in mem
 on reload. FilePicker types need a `WebDevicePlatform.Web` entry (`WebFilePickerFileTypes`
 provides the common ones).
 
+## XAML and existing MAUI apps
+
+XAML needs nothing web-specific. The `Microsoft.Maui.Controls` package's build assets collect
+`*.xaml` as `MauiXaml`, compile it, and add MAUI's implicit usings to any project with
+`ImplicitUsings` enabled, `UseMaui` or not. This is the same arrangement the
+[maui-labs](https://github.com/dotnet/maui-labs) GTK4 backend documents. Verified with both compiled
+inflators, in Debug and in trimmed Release publishes: `SourceGen` (the MAUI 10 template default,
+recommended) and `XamlC`. The `Runtime` inflator hasn't been tested.
+
+Verified on the stock `dotnet new maui` template (`App.xaml` with merged `Colors.xaml` and
+`Styles.xaml`, `AppShell.xaml`, `MainPage.xaml`). Also verified with a page that uses compiled
+`x:DataType` bindings with `StringFormat` and converters, commands and `ObservableCollection`,
+`CollectionView` templates and selection, `AppThemeBinding`, `OnPlatform` and `OnIdiom`, property
+triggers and `DataTrigger`, `VisualStateManager` with `StateTrigger`, a XAML `ContentView` with
+bindable properties, and pages and resource dictionaries from a referenced class library.
+
+### Adding a web head to an existing app
+
+Keep the app project as it is and add a web project beside it that links the shared XAML and C#.
+The platform folders and the app's `MauiProgram.cs` stay behind. Shiny's `Sample.Linux` and the
+maui-labs Linux heads follow the same pattern.
+
+```xml
+<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>MyApp</RootNamespace>
+    <MauiXamlInflator>SourceGen</MauiXamlInflator>
+    <!-- Resources come from the app project, below. -->
+    <EnableDefaultMauiResourceItems>false</EnableDefaultMauiResourceItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\MyApp\**\*.cs" Exclude="..\MyApp\Platforms\**;..\MyApp\MauiProgram.cs;..\MyApp\obj\**;..\MyApp\bin\**" Link="%(RecursiveDir)%(Filename)%(Extension)" />
+    <MauiXaml Include="..\MyApp\**\*.xaml" Exclude="..\MyApp\Platforms\**;..\MyApp\obj\**;..\MyApp\bin\**" Link="%(RecursiveDir)%(Filename)%(Extension)" />
+    <MauiImage Include="..\MyApp\Resources\Images\*" />
+    <MauiFont Include="..\MyApp\Resources\Fonts\*" />
+    <MauiAsset Include="..\MyApp\Resources\Raw\**" LogicalName="%(RecursiveDir)%(Filename)%(Extension)" />
+    <MauiIcon Include="..\MyApp\Resources\AppIcon\appicon.svg" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Platform.Maui.Web" Version="*-*" />
+    <PackageReference Include="Platform.Maui.Web.Essentials" Version="*-*" />
+  </ItemGroup>
+</Project>
+```
+
+Then add the web project's own `wwwroot/index.html`, `wwwroot/main.js`, `Program.cs` and
+`MauiProgram.cs` (steps 2–5 of the [setup](../../readme.md#setting-up-a-web-app)), with
+`UseMauiAppWeb<App>()` and the same `ConfigureFonts` as the app. If the app code uses
+`#if ANDROID`/`#if IOS` blocks, the web head builds with neither defined; `WEB` and `BROWSER` are
+defined instead.
+
+**Alternative: a shared UI library.** Move pages, views, view models and resource dictionaries
+into a class library with `UseMaui` that also targets plain `net10.0`, for example
+`<TargetFrameworks>net10.0;net10.0-android;net10.0-ios</TargetFrameworks>`. Both the app and the
+web head reference it; the web head consumes the `net10.0` build. Reference XAML types from
+another assembly with `xmlns:ui="clr-namespace:MyApp.UI;assembly=MyApp.UI"`. Use `$(MauiVersion)`
+for its `Microsoft.Maui.Controls` reference, so the app doesn't see a package downgrade.
+
+**Things to know:**
+- `OnPlatform` matches `Web`. The markup-extension form only has fixed platform properties, so use
+  the element form: `<OnPlatform x:TypeArguments="x:String"><On Platform="Web" Value="…" /></OnPlatform>`.
+- `OnIdiom` follows `DeviceInfo.Idiom`: `Desktop` with a fine pointer (mouse), otherwise `Phone` or
+  `Tablet` by the screen's short side (600 px).
+- Trimming: prefer compiled bindings (`x:DataType`). MAUI warns that the `{OnIdiom}` markup
+  extension isn't trim-safe (use `OnIdiom<T>`), and turns `[QueryProperty]` off in trimmed builds
+  (use `IQueryAttributable`). Both are MAUI rules that apply on every platform.
+
 ## Known limitations
 
 - **CollectionView is not virtualized** — every item is realized. Page large sources with
@@ -171,7 +243,11 @@ provides the common ones).
   context menus aren't rendered.
 - **Not yet:** pull-to-refresh and swipe-item gestures, PinchGestureRecognizer, drag & drop,
   MenuBar/ContextFlyout, CarouselView `Loop`, BlazorWebView, `Application.OpenWindow`, browser
-  history integration for navigation, `GraphicsView` images.
+  history integration for navigation.
+- **GraphicsView images** draw (the browser decodes them), but MAUI's `net10.0` `PlatformImage`
+  can't decode, so its `Width`/`Height` are wrong; code that sizes drawing from them misplaces it.
+- **`Loaded` fires before the first layout pass** (sizes are still -1). That's MAUI Controls' own
+  behaviour on platform-agnostic targets (GTK4 matches); use `SizeChanged` for size-dependent work.
 - **WebView** script evaluation and history only work for same-origin content.
 - **Threads:** the backend targets the default single-threaded WebAssembly runtime.
 

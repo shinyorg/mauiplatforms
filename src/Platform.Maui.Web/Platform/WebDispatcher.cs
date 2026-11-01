@@ -24,14 +24,14 @@ public class WebDispatcher : IDispatcher
 	public bool Dispatch(Action action)
 	{
 		ArgumentNullException.ThrowIfNull(action);
-		Dom.Enqueue(action);
+		Dom.Enqueue(WebTasks.Logged("Dispatched action", action));
 		return true;
 	}
 
 	public bool DispatchDelayed(TimeSpan delay, Action action)
 	{
 		ArgumentNullException.ThrowIfNull(action);
-		Dom.StartTimeout(action, Math.Max(0, delay.TotalMilliseconds));
+		Dom.StartTimeout(WebTasks.Logged("Delayed action", action), Math.Max(0, delay.TotalMilliseconds));
 		return true;
 	}
 }
@@ -57,7 +57,8 @@ public class WebDispatcherTimer : IDispatcherTimer
 		IsRunning = true;
 		_repeating = IsRepeating;
 		var ms = Math.Max(0, Interval.TotalMilliseconds);
-		_id = _repeating ? Dom.StartInterval(OnTick, ms) : Dom.StartTimeout(OnTick, ms);
+		var tick = WebTasks.Logged("Dispatcher timer tick", OnTick);
+		_id = _repeating ? Dom.StartInterval(tick, ms) : Dom.StartTimeout(tick, ms);
 	}
 
 	public void Stop()

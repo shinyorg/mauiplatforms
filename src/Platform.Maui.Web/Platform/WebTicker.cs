@@ -19,7 +19,7 @@ public class WebTicker : Ticker
 		if (_running)
 			return;
 		_running = true;
-		Dom.StartTicker(() => Fire?.Invoke());
+		Dom.StartTicker(WebTasks.Logged("Animation tick", () => Fire?.Invoke()));
 	}
 
 	public override void Stop()

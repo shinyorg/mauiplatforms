@@ -141,8 +141,8 @@ public static class WebCss
 		if (shape is null || bounds.Width <= 0 || bounds.Height <= 0)
 			return null;
 		var path = shape.PathForBounds(bounds);
-		var d = path?.ToDefinitionString();
-		return string.IsNullOrWhiteSpace(d) ? null : d.Trim();
+		var d = path is null ? null : WebCanvas.PathData(path);
+		return string.IsNullOrWhiteSpace(d) ? null : d;
 	}
 
 	public static string? Clip(IShape? clip, Size size)

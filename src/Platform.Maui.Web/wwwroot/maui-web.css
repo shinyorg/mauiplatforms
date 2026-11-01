@@ -81,6 +81,9 @@ html, body {
 .maui-hidden { visibility: hidden !important; }
 .maui-collapsed { display: none !important; }
 .maui-clip { overflow: hidden; }
+/* MAUI's ZIndex orders siblings within their parent, so each container is its own stacking context:
+   a negative ZIndex must not drop a child behind its ancestors' backgrounds. */
+.maui-layout, .maui-content-view, .maui-border { isolation: isolate; }
 
 /* Text */
 .maui-label {

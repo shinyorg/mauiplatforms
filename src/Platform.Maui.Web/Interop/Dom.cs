@@ -113,6 +113,9 @@ internal static partial class Dom
 	[JSImport("observeResize", Module)]
 	public static partial int ObserveResize(JSObject el, [JSMarshalAs<JSType.Function<JSType.Number, JSType.Number>>] Action<double, double> callback);
 
+	[JSImport("observeVisibility", Module)]
+	public static partial int ObserveVisibility(JSObject el, [JSMarshalAs<JSType.Function<JSType.Boolean>>] Action<bool> callback);
+
 	[JSImport("unobserve", Module)]
 	public static partial void Unobserve(int id);
 
@@ -223,6 +226,9 @@ internal static partial class Dom
 
 	[JSImport("drawCommands", Module)]
 	public static partial void DrawCommands(JSObject canvas, double width, double height, string commands);
+
+	[JSImport("registerCanvasImage", Module)]
+	public static partial void RegisterCanvasImage(int id, byte[] bytes);
 
 	[JSImport("measureText", Module)]
 	[return: JSMarshalAs<JSType.Array<JSType.Number>>]

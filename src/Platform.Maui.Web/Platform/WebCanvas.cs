@@ -200,9 +200,48 @@ public sealed class WebCanvas : ICanvas
 	public void DrawText(Microsoft.Maui.Graphics.Text.IAttributedText value, float x, float y, float width, float height)
 		=> DrawString(value.Text, x, y, width, height, HorizontalAlignment.Left, VerticalAlignment.Top);
 
-	// Platform images are not available to the browser canvas.
+	/// <summary>
+	/// Images are drawn by the browser: each IImage is given an id, and its encoded bytes are sent to
+	/// the page once (see <see cref="TakePendingImages"/>), where the browser decodes them.
+	/// </summary>
 	public void DrawImage(Microsoft.Maui.Graphics.IImage image, float x, float y, float width, float height)
 	{
+		if (image is null || width <= 0 || height <= 0)
+			return;
+		if (!s_imageIds.TryGetValue(image, out var id))
+		{
+			byte[] bytes;
+			try
+			{
+				using var stream = new MemoryStream();
+				image.Save(stream);
+				bytes = stream.ToArray();
+			}
+			catch (Exception ex)
+			{
+				Console.Error.WriteLine($"[maui-web] GraphicsView image could not be encoded: {ex.Message}");
+				return;
+			}
+			id = new ImageId(++s_nextImageId);
+			s_imageIds.Add(image, id);
+			_pendingImages.Add((id.Value, bytes));
+		}
+		Command("image", id.Value, x, y, width, height);
+	}
+
+	sealed record ImageId(int Value);
+
+	// Weak, so images the drawable drops are not kept alive by having been drawn once.
+	static readonly System.Runtime.CompilerServices.ConditionalWeakTable<Microsoft.Maui.Graphics.IImage, ImageId> s_imageIds = new();
+	static int s_nextImageId;
+	readonly List<(int Id, byte[] Bytes)> _pendingImages = new();
+
+	/// <summary>Images first drawn since the last call, which the page has not been sent yet.</summary>
+	internal List<(int Id, byte[] Bytes)> TakePendingImages()
+	{
+		var pending = new List<(int Id, byte[] Bytes)>(_pendingImages);
+		_pendingImages.Clear();
+		return pending;
 	}
 
 	public void Rotate(float degrees, float x, float y)
@@ -283,7 +322,96 @@ public sealed class WebCanvas : ICanvas
 		_ => "left",
 	};
 
-	void Path(string op, PathF path) => Command(op, path.ToDefinitionString().Trim());
+	void Path(string op, PathF path) => Command(op, PathData(path));
+
+	/// <summary>
+	/// SVG path data for a PathF. PathF.ToDefinitionString() drops arc segments, which would leave
+	/// every DrawArc/FillArc and AddArc path empty, so arcs are written as SVG arc commands here.
+	/// </summary>
+	internal static string PathData(PathF path)
+	{
+		var data = new StringBuilder();
+		var hasCurrentPoint = false;
+		for (var i = 0; i < path.OperationCount; i++)
+		{
+			switch (path.GetSegmentInfo(i, out var point, out var angle, out var clockwise))
+			{
+				case PathOperation.Move:
+					Append(data, 'M', path[point]);
+					hasCurrentPoint = true;
+					break;
+				case PathOperation.Line:
+					Append(data, 'L', path[point]);
+					break;
+				case PathOperation.Quad:
+					Append(data, 'Q', path[point], path[point + 1]);
+					break;
+				case PathOperation.Cubic:
+					Append(data, 'C', path[point], path[point + 1], path[point + 2]);
+					break;
+				case PathOperation.Arc:
+					AppendArc(data, path[point], path[point + 1], path.GetArcAngle(angle), path.GetArcAngle(angle + 1), path.GetArcClockwise(clockwise), hasCurrentPoint);
+					hasCurrentPoint = true;
+					break;
+				case PathOperation.Close:
+					data.Append("Z ");
+					break;
+			}
+		}
+		return data.ToString().Trim();
+	}
+
+	static void Append(StringBuilder data, char command, params PointF[] points)
+	{
+		data.Append(command);
+		foreach (var p in points)
+			data.Append(Num(p.X)).Append(' ').Append(Num(p.Y)).Append(' ');
+	}
+
+	// Follows the Skia backend: angles are degrees, counterclockwise from 3 o'clock in a y-up sense,
+	// on the ellipse inscribed in the two corner points; the arc is joined to the current point by a line.
+	static void AppendArc(StringBuilder data, PointF corner1, PointF corner2, float startAngle, float endAngle, bool clockwise, bool hasCurrentPoint)
+	{
+		var cx = (corner1.X + corner2.X) / 2d;
+		var cy = (corner1.Y + corner2.Y) / 2d;
+		var rx = Math.Abs(corner2.X - corner1.X) / 2d;
+		var ry = Math.Abs(corner2.Y - corner1.Y) / 2d;
+		var full = Math.Abs(endAngle - startAngle) >= 360;
+
+		while (startAngle < 0) startAngle += 360;
+		while (endAngle < 0) endAngle += 360;
+		double sweep = full ? 360 : clockwise
+			? (endAngle > startAngle ? 360 - (endAngle - startAngle) : startAngle - endAngle)
+			: (startAngle > endAngle ? 360 - (startAngle - endAngle) : endAngle - startAngle);
+
+		PointF At(double degrees)
+		{
+			var radians = degrees * Math.PI / 180;
+			return new((float)(cx + rx * Math.Cos(radians)), (float)(cy - ry * Math.Sin(radians)));
+		}
+
+		Append(data, hasCurrentPoint ? 'L' : 'M', At(startAngle));
+		if (sweep <= 0 || rx <= 0 || ry <= 0)
+			return;
+
+		// Clockwise on screen is decreasing angle here, and SVG's sweep flag 1.
+		var direction = clockwise ? -1 : 1;
+		var sweepFlag = clockwise ? '1' : '0';
+		void Arc(PointF to, bool large)
+			=> data.Append('A').Append(Num(rx)).Append(' ').Append(Num(ry)).Append(" 0 ").Append(large ? '1' : '0').Append(' ').Append(sweepFlag).Append(' ')
+				.Append(Num(to.X)).Append(' ').Append(Num(to.Y)).Append(' ');
+
+		if (sweep >= 360)
+		{
+			// One SVG arc can't start and end at the same point: draw two halves.
+			Arc(At(startAngle + direction * 180), false);
+			Arc(At(startAngle), false);
+		}
+		else
+		{
+			Arc(At(startAngle + direction * sweep), sweep > 180);
+		}
+	}
 
 	void Command(string name, params object?[] args)
 	{

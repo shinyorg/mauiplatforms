@@ -116,7 +116,7 @@ public class ImageHandler : WebElementHandler<IImage, WebElement>
 	protected override void ConnectHandler(WebElement platformView)
 	{
 		base.ConnectHandler(platformView);
-		foreach (var subscription in _loader.Connect(() => VirtualView?.InvalidateMeasure()))
+		foreach (var subscription in _loader.Connect(() => CurrentView?.InvalidateMeasure()))
 			Track(subscription);
 	}
 
@@ -170,11 +170,11 @@ public class ImageButtonHandler : WebElementHandler<IImageButton, WebElement>
 	protected override void ConnectHandler(WebElement platformView)
 	{
 		base.ConnectHandler(platformView);
-		foreach (var subscription in _loader.Connect(() => VirtualView?.InvalidateMeasure()))
+		foreach (var subscription in _loader.Connect(() => CurrentView?.InvalidateMeasure()))
 			Track(subscription);
-		Track(platformView.On("click", () => VirtualView?.Clicked()));
-		Track(platformView.On("pointerdown", () => VirtualView?.Pressed()));
-		Track(platformView.On("pointerup", () => VirtualView?.Released()));
+		Track(platformView.On("click", () => CurrentView?.Clicked()));
+		Track(platformView.On("pointerdown", () => CurrentView?.Pressed()));
+		Track(platformView.On("pointerup", () => CurrentView?.Released()));
 	}
 
 	protected override void DisconnectHandler(WebElement platformView)

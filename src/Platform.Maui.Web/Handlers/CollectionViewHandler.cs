@@ -170,7 +170,7 @@ public class CollectionViewHandler : WebElementHandler<ItemsView, WebElement>
 		Dom.Enqueue(() =>
 		{
 			_rebuildPending = false;
-			if (VirtualView is not null && MauiContext is not null)
+			if (CurrentView is not null && MauiContext is not null)
 				Rebuild();
 		});
 	}
@@ -187,7 +187,7 @@ public class CollectionViewHandler : WebElementHandler<ItemsView, WebElement>
 		if (dropCache)
 		{
 			foreach (var (view, _) in _viewCache.Values)
-				VirtualView?.RemoveLogicalChild(view);
+				CurrentView?.RemoveLogicalChild(view);
 			_viewCache.Clear();
 		}
 	}

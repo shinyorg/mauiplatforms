@@ -74,4 +74,44 @@ public class WebCanvasTests
 		Assert.Equal("stroke", stroke[0].GetString());
 		Assert.Equal("M0 0 L10 10", stroke[1].GetString());
 	}
+
+	[Fact]
+	public void ArcsAreWrittenAsSvgArcs()
+	{
+		// PathF.ToDefinitionString() drops arcs; DrawArc must still produce geometry.
+		var canvas = new WebCanvas();
+		canvas.DrawArc(0, 0, 100, 100, 0, 90, false, false);
+		var d = Commands(canvas).Single(c => c[0].GetString() == "stroke")[1].GetString();
+		// Counterclockwise quarter from 3 o'clock to 12 o'clock on a 100x100 circle.
+		Assert.Equal("M100 50 A50 50 0 0 0 50 0", d);
+	}
+
+	[Fact]
+	public void ClockwiseArcUsesTheLongWayRound()
+	{
+		var path = new PathF();
+		path.AddArc(0, 0, 100, 100, 0, 90, true);
+		Assert.Equal("M100 50 A50 50 0 1 1 50 0", WebCanvas.PathData(path));
+	}
+
+	[Fact]
+	public void FullCircleArcIsTwoHalves()
+	{
+		var path = new PathF();
+		path.MoveTo(0, 0);
+		path.AddArc(0, 0, 100, 100, 0, 360, false);
+		path.Close();
+		Assert.Equal("M0 0 L100 50 A50 50 0 0 0 0 50 A50 50 0 0 0 100 50 Z", WebCanvas.PathData(path));
+	}
+
+	[Fact]
+	public void LinesAndCurvesRoundTrip()
+	{
+		var path = new PathF();
+		path.MoveTo(1, 2);
+		path.LineTo(3, 4);
+		path.QuadTo(5, 6, 7, 8);
+		path.CurveTo(9, 10, 11, 12, 13, 14);
+		Assert.Equal("M1 2 L3 4 Q5 6 7 8 C9 10 11 12 13 14", WebCanvas.PathData(path));
+	}
 }

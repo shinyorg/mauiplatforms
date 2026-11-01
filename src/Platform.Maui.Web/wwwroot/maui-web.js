@@ -198,6 +198,15 @@ export function observeResize(el, callback) {
     return id;
 }
 
+// Reports whether the element intersects the viewport (true/false) whenever that changes.
+export function observeVisibility(el, callback) {
+    const io = new IntersectionObserver(entries => callback(entries[entries.length - 1].isIntersecting));
+    io.observe(el);
+    const id = nextListenerId++;
+    listeners.set(id, { el, type: 'visibility', fn: null, ro: io });
+    return id;
+}
+
 export function unobserve(id) {
     const l = listeners.get(id);
     if (!l) return;
@@ -394,6 +403,22 @@ export function frameUrl(frame) {
 
 // ---- GraphicsView ---------------------------------------------------------
 
+// GraphicsView images, decoded once by the browser. A canvas that tries to draw one before it has
+// decoded is sent 'maui-image-ready' when it has, and redraws.
+const canvasImages = new Map();
+
+export function registerCanvasImage(id, bytes) {
+    const img = new Image();
+    const entry = { img, ready: false, waiting: new Set() };
+    canvasImages.set(id, entry);
+    img.onload = () => {
+        entry.ready = true;
+        for (const canvas of entry.waiting) canvas.dispatchEvent(new Event('maui-image-ready'));
+        entry.waiting.clear();
+    };
+    img.src = URL.createObjectURL(new Blob([bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes)]));
+}
+
 // Replays the command list recorded by WebCanvas.cs onto a 2D context sized for the device pixel ratio.
 export function drawCommands(canvas, width, height, json) {
     const dpr = window.devicePixelRatio || 1;
@@ -437,6 +462,12 @@ export function drawCommands(canvas, width, height, json) {
                 break;
             }
             case 'text': ctx.textAlign = a[3]; ctx.textBaseline = a[4]; ctx.fillText(a[0], a[1], a[2]); break;
+            case 'image': {
+                const entry = canvasImages.get(a[0]);
+                if (entry?.ready) ctx.drawImage(entry.img, a[1], a[2], a[3], a[4]);
+                else entry?.waiting.add(canvas);
+                break;
+            }
             case 'translate': ctx.translate(a[0], a[1]); break;
             case 'rotate': ctx.rotate(a[0]); break;
             case 'scale': ctx.scale(a[0], a[1]); break;

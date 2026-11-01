@@ -48,10 +48,10 @@ public class ButtonHandler : WebElementHandler<IButton, WebElement>
 	protected override void ConnectHandler(WebElement platformView)
 	{
 		base.ConnectHandler(platformView);
-		Track(platformView.On("click", () => VirtualView?.Clicked()));
-		Track(platformView.On("pointerdown", () => VirtualView?.Pressed()));
-		Track(platformView.On("pointerup", () => VirtualView?.Released()));
-		Track(platformView.On("pointercancel", () => VirtualView?.Released()));
+		Track(platformView.On("click", () => CurrentView?.Clicked()));
+		Track(platformView.On("pointerdown", () => CurrentView?.Pressed()));
+		Track(platformView.On("pointerup", () => CurrentView?.Released()));
+		Track(platformView.On("pointercancel", () => CurrentView?.Released()));
 	}
 
 	protected override void DisconnectHandler(WebElement platformView)
@@ -149,12 +149,12 @@ public class ButtonHandler : WebElementHandler<IButton, WebElement>
 				{
 					_image = new WebElement("img");
 					_image.SetAttribute("alt", "");
-					Track(_image.On("load", () => VirtualView?.InvalidateMeasure()));
+					Track(_image.On("load", () => CurrentView?.InvalidateMeasure()));
 					PlatformView.Insert(0, _image);
 				}
 				_image.SetAttribute("src", url);
 			}
-			VirtualView?.InvalidateMeasure();
+			CurrentView?.InvalidateMeasure();
 		}
 		catch (OperationCanceledException)
 		{

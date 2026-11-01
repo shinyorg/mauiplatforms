@@ -67,8 +67,10 @@ public class ContentViewHandler : WebElementHandler<IContentView, WebElement>
 		WebLayoutScheduler.Request();
 	}
 
+	// A Border always clips its content to its stroke shape, as on the native backends; other
+	// content views clip only when IsClippedToBounds asks them to.
 	public static void MapClipsToBounds(ContentViewHandler handler, IContentView view)
-		=> handler.PlatformView.ToggleClass("maui-clip", view is Microsoft.Maui.Controls.TemplatedView { IsClippedToBounds: true });
+		=> handler.PlatformView.ToggleClass("maui-clip", view is IBorderView or Microsoft.Maui.Controls.TemplatedView { IsClippedToBounds: true });
 }
 
 /// <summary>ContentPage. Pages fill the space they are given.</summary>

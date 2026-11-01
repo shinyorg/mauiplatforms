@@ -183,6 +183,12 @@ public abstract class WebElementHandler<TVirtualView, TPlatformView> : ViewHandl
 	where TPlatformView : WebElement
 {
 	readonly List<IDisposable> _subscriptions = new();
+
+	/// <summary>
+	/// The virtual view, or null once the handler has been disconnected. Use this in deferred work
+	/// (queued callbacks, image loads): the typed <c>VirtualView</c> throws instead of returning null.
+	/// </summary>
+	protected TVirtualView? CurrentView => ((IElementHandler)this).VirtualView as TVirtualView;
 	readonly (double W, double H, Size Size)[] _measureCache = new (double, double, Size)[2];
 	int _measureCacheCount;
 	int _measureCacheGeneration = -1;
@@ -326,7 +332,7 @@ public abstract class WebElementHandler<TVirtualView, TPlatformView> : ViewHandl
 		var resized = frame.Size != ArrangedFrame.Size;
 		ArrangedFrame = frame;
 		PlatformView.SetFrame(frame);
-		if (resized && VirtualView?.Clip is not null)
+		if (resized && CurrentView?.Clip is not null)
 			WebElementHandler.MapClip(this, VirtualView);
 	}
 

@@ -172,7 +172,7 @@ public class EntryHandler : TextInputHandler<IEntry>
 		Track(platformView.OnKey("keydown", key =>
 		{
 			if (key == "Enter")
-				VirtualView?.Completed();
+				CurrentView?.Completed();
 		}));
 	}
 
@@ -219,7 +219,7 @@ public class SearchBarHandler : TextInputHandler<ISearchBar>
 		Track(platformView.OnKey("keydown", key =>
 		{
 			if (key == "Enter")
-				VirtualView?.SearchButtonPressed();
+				CurrentView?.SearchButtonPressed();
 		}));
 	}
 
@@ -241,7 +241,7 @@ public class EditorHandler : TextInputHandler<IEditor>
 	protected override void ConnectHandler(WebElement platformView)
 	{
 		base.ConnectHandler(platformView);
-		Track(platformView.On("blur", () => VirtualView?.Completed()));
+		Track(platformView.On("blur", () => CurrentView?.Completed()));
 	}
 
 	protected override void OnInput(string value)

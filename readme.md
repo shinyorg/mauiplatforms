@@ -192,6 +192,11 @@ public class App : Application
 
 Everything else is standard MAUI: XAML or C# pages, `Shell`, `NavigationPage`, bindings, styles, `DisplayAlertAsync`.
 
+> **Already have a MAUI app?** Add a web project beside it that links the app's XAML and C#
+> (leaving `Platforms/` and `MauiProgram.cs` behind), or move the UI into a shared library that also
+> targets plain `net10.0`. XAML needs no web-specific setup. See
+> [XAML and existing MAUI apps](docs/web/readme.md#xaml-and-existing-maui-apps) for the project file.
+
 #### 7. Add resources (optional)
 
 The same folders as a MAUI single project are picked up automatically and served from the site root:
@@ -333,7 +338,7 @@ All layouts work on both platforms: `VerticalStackLayout`, `HorizontalStackLayou
 
 | Feature | tvOS | Web |
 |---------|------|-----|
-| GraphicsView | — | ✅ Canvas 2D |
+| GraphicsView | — | ✅ Canvas 2D (paths, arcs, text, gradients, images); redraws at most once per frame, not while off screen |
 | Shapes (Rectangle, Ellipse, Line, Polyline, Polygon, Path) | ✅ | ✅ SVG |
 | Shadow | ✅ | ✅ `box-shadow` |
 | Gradient Brushes (Linear, Radial) | — | ✅ CSS gradients |
@@ -364,6 +369,20 @@ All layouts work on both platforms: `VerticalStackLayout`, `HorizontalStackLayou
 | InputTransparent | — | ✅ `pointer-events` |
 | Toolbar | — | ✅ ToolbarItems in the navigation bar |
 | Window Resize Relayout | — | ✅ |
+| XAML | — (C# pages) | ✅ XamlC and SourceGen inflators, including trimmed Release |
+
+### Third-party control libraries
+
+Controls built from standard MAUI views run unchanged; controls that ship their own platform
+handlers only for iOS, Android or Windows need a web handler first. As a check, the core
+[Shiny.Maui.Controls](https://github.com/shinyorg/controls) 2.3.1 package was run against the
+backend unmodified: 71 of its 74 controls render and run without errors, from TableView, DataGrid,
+the schedulers and Chat to dialogs, toasts, floating panels and walkthroughs. `CarouselGallery`,
+`StaggeredGrid` and `VirtualizedGrid` use native recycler views and have no web handler. A few
+features fall short: the `ImageEditor` canvas stays blank and `SignaturePad` exports an empty PNG
+(both rely on platform image APIs plain `net10.0` lacks), the indeterminate `ProgressBar` doesn't
+animate (it starts in `Loaded`, which fires before layout on `net10.0`), and DataGrid inline row
+editing doesn't appear.
 
 ## Lifecycle Events
 
@@ -479,6 +498,9 @@ dotnet test tests/Platform.Maui.Web.Tests
 dotnet publish samples/SampleWeb -c Release -o artifacts/SampleWeb
 node tests/browser/smoke.mjs artifacts/SampleWeb/wwwroot
 cd tests/playwright && npm ci && npx playwright install chromium webkit && npx playwright test
+
+# Web: regenerate the README screenshots (docs/web/images) from the published sample
+cd tests/playwright && npm run screenshots
 ```
 
 ## Key Technical Notes
@@ -486,7 +508,7 @@ cd tests/playwright && npm ci && npx playwright install chromium webkit && npx p
 * MAUI NuGet packages resolve to the `net10.0` (platform-agnostic) assembly for unsupported TFMs. `ToPlatform()` returns `object` — custom `ViewExtensions` casts to the native view type.
 * The platform-agnostic `ViewHandler` has no-op `PlatformArrange` and returns `Size.Zero`. Custom base handlers (`TvOSViewHandler`, `WebElementHandler`) override these to bridge MAUI layout to native view frames.
 * Controls registers stub handlers (which throw) for every control type on unsupported platforms, so each backend registers its own handler for every concrete type. The web backend has a unit test that fails if any type still resolves to a stub.
-* The tvOS sample uses pure C# pages (no XAML); the web sample also compiles XAML pages.
+* The tvOS sample uses pure C# pages (no XAML). On the web, XAML needs no backend support: the `Microsoft.Maui.Controls` package compiles `*.xaml` and adds MAUI's implicit usings in any project, `UseMaui` or not. An existing app's XAML can be reused by a web project that links its files; see [XAML and existing MAUI apps](docs/web/readme.md#xaml-and-existing-maui-apps).
 
 ## Dialogs
 
@@ -507,7 +529,7 @@ MAUI's dialog system uses an internal `AlertManager` with `IAlertManagerSubscrip
 * TV remote menu button handling
 
 ### Web Specific
-* CollectionView virtualization
+* CollectionView virtualization (every item is realized; very large sources exhaust the tab)
 * Pull-to-refresh and swipe-item gestures, pinch, drag and drop
 * MenuBar and context menus
 * Browser history integration for navigation
