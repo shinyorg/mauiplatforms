@@ -1,22 +1,19 @@
 <Solution>
-  <Folder Name="/samples/">
-    <Project Path="samples/SampleTv/SampleTv.csproj" />
-    <Project Path="samples\SampleMac\SampleMac.csproj" />
-  </Folder>
-  <Folder Name="/Solution/">
-    <File Path=".github\workflows\build.yml" />
-    <File Path="Directory.build.props" />
-    <File Path="LICENSE" />
-    <File Path="maui_appletv.mp4" />
-    <File Path="maui_macos.mp4" />
-    <File Path="nuget.png" />
-    <File Path="readme.md" />
-  </Folder>
-  <Folder Name="/src/">
-    <Project Path="src\Platform.Maui.Essentials.MacOS\Platform.Maui.Essentials.MacOS.csproj" />
-    <Project Path="src\Platform.Maui.Essentials.TvOS\Platform.Maui.Essentials.TvOS.csproj" />
-    <Project Path="src\Platform.Maui.MacOS\Platform.Maui.MacOS.csproj" />
-    <Project Path="src\Platform.Maui.MacOS.BlazorWebView\Platform.Maui.MacOS.BlazorWebView.csproj" />
-    <Project Path="src\Platform.Maui.TvOS\Platform.Maui.TvOS.csproj" />
-  </Folder>
+    <Folder Name="/samples/">
+        <Project Path="samples/SampleTv/SampleTv.csproj"/>
+        <Project Path="samples/SampleWeb/SampleWeb.csproj"/>
+    </Folder>
+    <Folder Name="/Solution/">
+        <File Path=".github\workflows\build.yml"/>
+        <File Path="Directory.build.props"/>
+        <File Path="LICENSE"/>
+        <File Path="maui_appletv.mp4"/>
+        <File Path="nuget.png"/>
+        <File Path="readme.md"/>
+    </Folder>
+    <Project Path="tests\Platform.Maui.Web.Tests\Platform.Maui.Web.Tests.csproj"/>
+    <Project Path="src\Platform.Maui.Essentials.TvOS\Platform.Maui.Essentials.TvOS.csproj"/>
+    <Project Path="src\Platform.Maui.Essentials.Web\Platform.Maui.Essentials.Web.csproj"/>
+    <Project Path="src\Platform.Maui.TvOS\Platform.Maui.TvOS.csproj"/>
+    <Project Path="src\Platform.Maui.Web\Platform.Maui.Web.csproj"/>
 </Solution>

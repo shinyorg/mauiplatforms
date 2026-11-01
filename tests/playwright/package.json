@@ -1,0 +1,16 @@
+{
+  "name": "platform-maui-web-playwright",
+  "private": true,
+  "description": "End-to-end tests for the .NET MAUI web backend, run against the published SampleWeb app.",
+  "type": "module",
+  "scripts": {
+    "publish-sample": "dotnet publish ../../samples/SampleWeb/SampleWeb.csproj -c Release -o ../../artifacts/SampleWeb",
+    "test": "playwright test",
+    "test:chromium": "playwright test --project=chromium",
+    "report": "playwright show-report",
+    "screenshots": "node screenshots.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1"
+  }
+}

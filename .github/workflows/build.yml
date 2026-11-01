@@ -46,19 +46,42 @@ jobs:
           dotnet-version: '10.0.x'
 
     - name: Add .NET Workloads
-      run: dotnet workload install maui tvos macos
+      run: dotnet workload install maui tvos
 
     - name: Build
       run: dotnet build build.slnf -m -property:Configuration=Release
 
-    - name: Build Sample App (arm64)
-      run: dotnet build samples/SampleMac/SampleMac.csproj -c Release -p:GeneratePackageOnBuild=false -r osx-arm64
-
-    - name: Build Sample App (x64)
-      run: dotnet build samples/SampleMac/SampleMac.csproj -c Release -p:GeneratePackageOnBuild=false -r osx-x64
-
     - name: Test
       run: dotnet test build.slnf --no-build -property:Configuration=Release --logger "console;verbosity=normal" || true
+
+    - name: Publish Web Sample
+      run: dotnet publish samples/SampleWeb/SampleWeb.csproj -c Release -o artifacts/SampleWeb
+
+    - name: Web Smoke Test (headless Chrome)
+      run: node tests/browser/smoke.mjs artifacts/SampleWeb/wwwroot
+      env:
+        CHROME: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+
+    - name: Setup Node
+      uses: actions/setup-node@v5
+      with:
+        node-version: '22'
+
+    - name: Web End-to-End Tests (Playwright)
+      working-directory: tests/playwright
+      run: |
+        npm ci
+        npx playwright install chromium webkit
+        npx playwright test
+
+    - name: Post Playwright Report
+      if: failure()
+      uses: actions/upload-artifact@v7
+      with:
+        name: playwright-report
+        path: |
+          tests/playwright/playwright-report
+          tests/playwright/test-results
 
     - name: Post NuGet Artifacts
       if: github.event_name == 'push'
@@ -67,11 +90,11 @@ jobs:
         name: nuget-artifacts
         path: '**/*.nupkg'
 
-    - name: Post Sample App
+    - name: Post Web Sample
       uses: actions/upload-artifact@v7
       with:
-        name: SampleMac
-        path: 'samples/SampleMac/bin/Release/net10.0-macos/**/*.app'
+        name: SampleWeb
+        path: 'artifacts/SampleWeb/wwwroot'
 
     - name: NuGet Login (OIDC)
       id: nuget-login

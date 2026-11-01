@@ -1,0 +1,107 @@
+<Project>
+
+  <!--
+    Everything lives in this one .targets file: the static web assets SDK generates its own
+    Platform.Maui.Web.props in the package, so a props file of ours would be dropped when packing.
+    Being a .targets file also means the app's own EnableDefaultMauiResourceItems is respected.
+  -->
+  <ItemGroup>
+    <AvailableItemName Include="MauiAsset" />
+    <AvailableItemName Include="MauiImage" />
+    <AvailableItemName Include="MauiIcon" />
+    <AvailableItemName Include="MauiFont" />
+    <AvailableItemName Include="MauiSplashScreen" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <DefineConstants>$(DefineConstants);WEB;BROWSER</DefineConstants>
+    <EnableDefaultMauiResourceItems Condition="'$(EnableDefaultMauiResourceItems)' == ''">true</EnableDefaultMauiResourceItems>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(EnableDefaultMauiResourceItems)' == 'true'">
+    <MauiImage Include="Resources\Images\**\*" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder)" />
+    <MauiFont Include="Resources\Fonts\**\*" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder)" />
+    <MauiAsset Include="Resources\Raw\**\*" Exclude="$(DefaultItemExcludes);$(DefaultExcludesInProjectFolder)">
+      <LogicalName>%(RecursiveDir)%(Filename)%(Extension)</LogicalName>
+    </MauiAsset>
+  </ItemGroup>
+
+  <!-- App identity read by WebAppInfo. -->
+  <ItemGroup>
+    <AssemblyMetadata Include="MauiApplicationId" Value="$(ApplicationId)" Condition="'$(ApplicationId)' != ''" />
+    <AssemblyMetadata Include="MauiApplicationTitle" Value="$(ApplicationTitle)" Condition="'$(ApplicationTitle)' != ''" />
+    <AssemblyMetadata Include="MauiApplicationDisplayVersion" Value="$(ApplicationDisplayVersion)" Condition="'$(ApplicationDisplayVersion)' != ''" />
+    <AssemblyMetadata Include="MauiApplicationVersion" Value="$(ApplicationVersion)" Condition="'$(ApplicationVersion)' != ''" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(EnableDefaultMauiResourceItems)' == 'true' and '@(MauiIcon)' == ''">
+    <MauiIcon Include="Resources\AppIcon\appicon.svg" Condition="Exists('Resources\AppIcon\appicon.svg')" />
+    <MauiIcon Include="Resources\AppIcon\appicon.png" Condition="!Exists('Resources\AppIcon\appicon.svg') and Exists('Resources\AppIcon\appicon.png')" />
+  </ItemGroup>
+
+  <!-- A WebAssembly app only runs in the browser; saying so keeps the platform analyzer quiet. -->
+  <ItemGroup Condition="'$(RuntimeIdentifier)' == 'browser-wasm' and '$(OutputType)' == 'Exe'">
+    <AssemblyAttribute Include="System.Runtime.Versioning.SupportedOSPlatformAttribute">
+      <_Parameter1>browser</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <!--
+    SVG MauiImages are deployed as SVG (browsers render them natively) and listed in assembly
+    metadata so "name.png" references resolve to "name.svg" at runtime.
+  -->
+  <Target Name="_MauiWebVectorImageMetadata" BeforeTargets="AssignTargetPaths">
+    <ItemGroup>
+      <AssemblyMetadata Include="MauiWebVectorImage" Value="%(MauiImage.Filename)" Condition="'%(MauiImage.Extension)' == '.svg'" />
+    </ItemGroup>
+  </Target>
+
+  <!--
+    MAUI resources are served from the app's root, next to index.html, as static web assets.
+    They are staged under obj/ at their final paths and registered with that folder as their
+    content root, so the dev server (dotnet run) and publish both find the real files. Linking them
+    as wwwroot Content instead makes the SDK assume they live in wwwroot/, and the dev server then
+    answers with empty files.
+  -->
+  <Target Name="_MauiWebStaticWebAssets" AfterTargets="ResolveProjectStaticWebAssets" Condition="'$(UsingMicrosoftNETSdkStaticWebAssets)' == 'true'">
+    <PropertyGroup>
+      <_MauiWebStagingDir>$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)', '$(IntermediateOutputPath)', 'mauiweb'))</_MauiWebStagingDir>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <_MauiWebResource Include="@(MauiImage);@(MauiFont)">
+        <MauiWebPath>%(Filename)%(Extension)</MauiWebPath>
+      </_MauiWebResource>
+      <_MauiWebResource Include="@(MauiAsset)">
+        <MauiWebPath Condition="'%(MauiAsset.LogicalName)' != ''">%(MauiAsset.LogicalName)</MauiWebPath>
+        <MauiWebPath Condition="'%(MauiAsset.LogicalName)' == ''">%(MauiAsset.RecursiveDir)%(MauiAsset.Filename)%(MauiAsset.Extension)</MauiWebPath>
+      </_MauiWebResource>
+      <_MauiWebResource Include="@(MauiIcon)">
+        <MauiWebPath>favicon%(Extension)</MauiWebPath>
+      </_MauiWebResource>
+    </ItemGroup>
+
+    <Copy SourceFiles="@(_MauiWebResource)" DestinationFiles="@(_MauiWebResource->'$(_MauiWebStagingDir)%(MauiWebPath)')" SkipUnchangedFiles="true" Condition="'@(_MauiWebResource)' != ''">
+      <Output TaskParameter="CopiedFiles" ItemName="FileWrites" />
+    </Copy>
+
+    <ItemGroup>
+      <_MauiWebStaged Include="@(_MauiWebResource->'$(_MauiWebStagingDir)%(MauiWebPath)')">
+        <RelativePath>$([System.String]::Copy('%(_MauiWebResource.MauiWebPath)').Replace('\', '/'))</RelativePath>
+        <ContentRoot>$(_MauiWebStagingDir)</ContentRoot>
+      </_MauiWebStaged>
+      <FileWrites Include="@(_MauiWebStaged)" />
+    </ItemGroup>
+
+    <DefineStaticWebAssets CandidateAssets="@(_MauiWebStaged)" SourceType="Discovered" SourceId="$(PackageId)"
+                           ContentRoot="$(_MauiWebStagingDir)" BasePath="$(StaticWebAssetBasePath)" Condition="'@(_MauiWebStaged)' != ''">
+      <Output TaskParameter="Assets" ItemName="StaticWebAsset" />
+      <Output TaskParameter="Assets" ItemName="_MauiWebAsset" />
+    </DefineStaticWebAssets>
+
+    <DefineStaticWebAssetEndpoints CandidateAssets="@(_MauiWebAsset)" ContentTypeMappings="@(StaticWebAssetContentTypeMapping)" Condition="'@(_MauiWebAsset)' != ''">
+      <Output TaskParameter="Endpoints" ItemName="StaticWebAssetEndpoint" />
+    </DefineStaticWebAssetEndpoints>
+  </Target>
+
+</Project>

@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk.WebAssembly">
+
+    <PropertyGroup>
+        <TargetFramework>$(BaseTargetFramework)</TargetFramework>
+        <OutputType>Exe</OutputType>
+        <RootNamespace>SampleWeb</RootNamespace>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <ApplicationId>org.shiny.web</ApplicationId>
+        <ApplicationTitle>MAUI Web</ApplicationTitle>
+        <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+        <ApplicationVersion>1</ApplicationVersion>
+        <IsPackable>false</IsPackable>
+        <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+        <GenerateDocumentationFile>false</GenerateDocumentationFile>
+        <!-- Keep full exception messages in trimmed builds; remove to save a little download size. -->
+        <UseSystemResourceKeys>false</UseSystemResourceKeys>
+    </PropertyGroup>
+
+    <!-- The gallery pages (ported from the maui-labs GTK4 sample) use string-path bindings and
+         QueryProperty, which need reflection; keep the sample's own members out of trimming. -->
+    <PropertyGroup>
+        <NoWarn>$(NoWarn);IL2026</NoWarn>
+    </PropertyGroup>
+    <ItemGroup>
+        <TrimmerRootAssembly Include="SampleWeb" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\src\Platform.Maui.Web\Platform.Maui.Web.csproj" />
+        <ProjectReference Include="..\..\src\Platform.Maui.Essentials.Web\Platform.Maui.Essentials.Web.csproj" />
+    </ItemGroup>
+
+    <!-- Package consumers get this from the package's build/ folder; a project reference must import it. -->
+    <Import Project="..\..\src\Platform.Maui.Web\buildTransitive\Platform.Maui.Web.targets" />
+
+</Project>

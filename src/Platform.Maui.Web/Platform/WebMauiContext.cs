@@ -1,0 +1,62 @@
+using System.Collections.Concurrent;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Microsoft.Maui.Platform.Web;
+
+public class WebMauiContext : IMauiContext
+{
+	readonly WrappedServiceProvider _services;
+	readonly Lazy<IMauiHandlersFactory> _handlers;
+
+	public WebMauiContext(IServiceProvider services)
+	{
+		_services = new WrappedServiceProvider(services ?? throw new ArgumentNullException(nameof(services)));
+		_handlers = new Lazy<IMauiHandlersFactory>(() => _services.GetRequiredService<IMauiHandlersFactory>());
+	}
+
+	public IServiceProvider Services => _services;
+
+	public IMauiHandlersFactory Handlers => _handlers.Value;
+
+	internal void AddSpecific<TService>(TService instance) where TService : class
+	{
+		_services.AddSpecific(typeof(TService), static state => state, instance);
+	}
+
+	internal void AddWeakSpecific<TService>(TService instance) where TService : class
+	{
+		_services.AddSpecific(typeof(TService), static state => ((WeakReference)state).Target, new WeakReference(instance));
+	}
+
+	public WebMauiContext MakeApplicationScope(IPlatformApplication platformApp)
+	{
+		var appContext = new WebMauiContext(Services);
+		appContext.AddSpecific(platformApp);
+		return appContext;
+	}
+
+	public WebMauiContext MakeWindowScope(WebWindow platformWindow)
+	{
+		var windowContext = new WebMauiContext(Services);
+		windowContext.AddWeakSpecific(platformWindow);
+		return windowContext;
+	}
+
+	class WrappedServiceProvider(IServiceProvider inner) : IServiceProvider
+	{
+		readonly ConcurrentDictionary<Type, (object State, Func<object, object?> Getter)> _scopeStatic = new();
+
+		public object? GetService(Type serviceType)
+		{
+			if (_scopeStatic.TryGetValue(serviceType, out var scope))
+				return scope.Getter(scope.State);
+
+			return inner.GetService(serviceType);
+		}
+
+		public void AddSpecific(Type type, Func<object, object?> getter, object state)
+		{
+			_scopeStatic[type] = (state, getter);
+		}
+	}
+}

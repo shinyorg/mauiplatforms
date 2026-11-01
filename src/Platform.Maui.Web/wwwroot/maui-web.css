@@ -1,0 +1,324 @@
+/* Base styles for Microsoft.Maui.Platform.Web.
+   MAUI computes every frame, so views are absolutely positioned and never flow. */
+
+:root {
+    --maui-bg: #ffffff;
+    --maui-fg: #1f1f1f;
+    --maui-muted: #6b6b6b;
+    --maui-accent: #512bd4;
+    --maui-accent-fg: #ffffff;
+    --maui-surface: #f4f4f6;
+    --maui-border: #d4d4d8;
+    --maui-backdrop: rgb(0 0 0 / 0.4);
+    --maui-font: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
+    color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root:not([data-maui-theme="light"]) {
+        --maui-bg: #161618;
+        --maui-fg: #ececef;
+        --maui-muted: #a0a0a8;
+        --maui-accent: #9c84ff;
+        --maui-accent-fg: #0d0d0f;
+        --maui-surface: #222226;
+        --maui-border: #3a3a40;
+        color-scheme: dark;
+    }
+}
+
+:root[data-maui-theme="dark"] {
+    --maui-bg: #161618;
+    --maui-fg: #ececef;
+    --maui-muted: #a0a0a8;
+    --maui-accent: #9c84ff;
+    --maui-accent-fg: #0d0d0f;
+    --maui-surface: #222226;
+    --maui-border: #3a3a40;
+    color-scheme: dark;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    background: var(--maui-bg);
+    color: var(--maui-fg);
+}
+
+.maui-window {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    font-family: var(--maui-font);
+    font-size: 14px;
+    line-height: normal;
+    background: var(--maui-bg);
+    color: var(--maui-fg);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.maui-window *, .maui-measure-host *, .maui-measure-host { box-sizing: border-box; }
+
+.maui-view {
+    position: absolute;
+    left: 0;
+    top: 0;
+    margin: 0;
+}
+
+.maui-measure-host {
+    position: absolute;
+    left: -100000px;
+    top: 0;
+    visibility: hidden;
+    pointer-events: none;
+    font-family: var(--maui-font);
+    font-size: 14px;
+}
+
+.maui-hidden { visibility: hidden !important; }
+.maui-collapsed { display: none !important; }
+.maui-clip { overflow: hidden; }
+
+/* Text */
+.maui-label {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    overflow: hidden;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    cursor: inherit;
+}
+.maui-label > span { display: block; }
+.maui-label.nowrap { white-space: pre; }
+.maui-label.truncate > span { white-space: pre; overflow: hidden; text-overflow: ellipsis; }
+.maui-label.clamp > span { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* Buttons */
+.maui-button, .maui-image-button {
+    font: inherit;
+    color: var(--maui-accent-fg);
+    background: var(--maui-accent);
+    border: 0 solid transparent;
+    border-radius: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: filter 120ms ease, opacity 120ms ease;
+}
+.maui-button:hover:not(:disabled) { filter: brightness(1.08); }
+.maui-button:active:not(:disabled) { filter: brightness(0.92); }
+.maui-button:disabled, .maui-image-button:disabled { opacity: 0.45; cursor: default; }
+.maui-button img { max-height: 100%; }
+.maui-image-button { background: transparent; padding: 0; overflow: hidden; }
+.maui-image-button > img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+
+/* Text input */
+.maui-entry, .maui-editor, .maui-picker, .maui-date-picker, .maui-time-picker, .maui-search-bar {
+    font: inherit;
+    color: var(--maui-fg);
+    background: var(--maui-bg);
+    border: 1px solid var(--maui-border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    outline: none;
+    min-width: 0;
+}
+.maui-entry:focus, .maui-editor:focus, .maui-picker:focus, .maui-date-picker:focus, .maui-time-picker:focus, .maui-search-bar:focus {
+    border-color: var(--maui-accent);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--maui-accent) 30%, transparent);
+}
+.maui-entry::placeholder, .maui-editor::placeholder, .maui-search-bar::placeholder { color: var(--maui-placeholder, var(--maui-muted)); }
+.maui-editor { resize: none; }
+.maui-entry[data-measure], .maui-search-bar[data-measure] { width: 180px; }
+
+/* Toggles */
+.maui-check-box { margin: 0; width: 20px; height: 20px; accent-color: var(--maui-check, var(--maui-accent)); cursor: pointer; }
+
+.maui-switch { display: inline-block; width: 46px; height: 28px; cursor: pointer; }
+.maui-switch > input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.maui-switch > .track {
+    position: absolute; inset: 2px 0;
+    border-radius: 999px;
+    background: var(--maui-switch-off, var(--maui-border));
+    transition: background 150ms ease;
+    pointer-events: none;
+}
+.maui-switch > .thumb {
+    position: absolute; top: 4px; left: 3px;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--maui-switch-thumb, #ffffff);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
+    transition: transform 150ms ease;
+    pointer-events: none;
+}
+.maui-switch.on > .track { background: var(--maui-switch-on, var(--maui-accent)); }
+.maui-switch.on > .thumb { transform: translateX(20px); }
+.maui-switch > input:focus-visible ~ .track { outline: 2px solid var(--maui-accent); outline-offset: 2px; }
+
+.maui-radio { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; white-space: nowrap; }
+.maui-radio > input { margin: 0; width: 18px; height: 18px; accent-color: var(--maui-accent); cursor: pointer; }
+
+.maui-slider { margin: 0; accent-color: var(--maui-slider-min, var(--maui-accent)); cursor: pointer; height: 28px; }
+.maui-progress { appearance: none; -webkit-appearance: none; height: 6px; border: 0; border-radius: 3px; overflow: hidden; background: var(--maui-progress-track, var(--maui-border)); }
+.maui-progress::-webkit-progress-bar { background: var(--maui-progress-track, var(--maui-border)); }
+.maui-progress::-webkit-progress-value { background: var(--maui-progress, var(--maui-accent)); transition: width 120ms ease; }
+.maui-progress::-moz-progress-bar { background: var(--maui-progress, var(--maui-accent)); }
+
+.maui-stepper { display: inline-flex; border: 1px solid var(--maui-border); border-radius: 6px; overflow: hidden; }
+.maui-stepper > button {
+    font: inherit; font-size: 18px; line-height: 1;
+    width: 44px; height: 32px; border: 0; margin: 0;
+    background: var(--maui-surface); color: var(--maui-fg); cursor: pointer;
+}
+.maui-stepper > button + button { border-left: 1px solid var(--maui-border); }
+.maui-stepper > button:disabled { opacity: 0.4; cursor: default; }
+
+/* The ring stays square and centred whatever size the layout arranges the view at, as native
+   spinners do; a stretched indicator would otherwise spin as a giant ellipse. */
+.maui-activity-indicator { width: 32px; height: 32px; container-type: size; }
+.maui-activity-indicator > div {
+    --maui-spinner-size: min(70cqmin, 48px);
+    position: absolute;
+    width: var(--maui-spinner-size); height: var(--maui-spinner-size);
+    left: calc(50% - var(--maui-spinner-size) / 2); top: calc(50% - var(--maui-spinner-size) / 2);
+    box-sizing: border-box;
+    border-radius: 50%;
+    border: 3px solid color-mix(in srgb, var(--maui-spinner, var(--maui-accent)) 25%, transparent);
+    border-top-color: var(--maui-spinner, var(--maui-accent));
+    animation: maui-spin 0.8s linear infinite;
+}
+.maui-activity-indicator:not(.running) { visibility: hidden; }
+@keyframes maui-spin { to { transform: rotate(360deg); } }
+
+/* Images & shapes */
+.maui-image { object-fit: contain; display: block; user-select: none; -webkit-user-drag: none; }
+.maui-shape, .maui-shape > svg { overflow: visible; }
+.maui-shape > svg { position: absolute; left: 0; top: 0; }
+.maui-border-stroke { position: absolute; inset: 0; pointer-events: none; border-style: solid; border-color: transparent; border-width: 0; }
+.maui-border-stroke-svg { position: absolute; inset: 0; pointer-events: none; overflow: visible; }
+
+/* Scrolling */
+.maui-scroll { overflow: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+.maui-scroll.no-bars { scrollbar-width: none; }
+.maui-scroll.no-bars::-webkit-scrollbar { display: none; }
+
+/* Pages & navigation */
+.maui-page { overflow: hidden; background: var(--maui-page-bg, transparent); }
+.maui-navbar {
+    display: flex; align-items: center; gap: 4px;
+    padding: 0 8px;
+    background: var(--maui-navbar-bg, var(--maui-surface));
+    color: var(--maui-navbar-fg, var(--maui-fg));
+    border-bottom: 1px solid var(--maui-border);
+    z-index: 2;
+}
+.maui-navbar > .title { flex: 1; font-weight: 600; font-size: 17px; padding: 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.maui-navbar button, .maui-tabbar button {
+    font: inherit; color: inherit; background: transparent; border: 0; border-radius: 6px;
+    padding: 8px 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+}
+.maui-navbar button:hover, .maui-tabbar button:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
+.maui-navbar button[hidden] { display: none; }
+.maui-navbar button[aria-label="Open navigation"] { font-size: 20px; padding: 6px 10px; }
+.maui-navbar button img, .maui-tabbar button img { width: 20px; height: 20px; object-fit: contain; }
+.maui-nav-content { overflow: hidden; }
+.maui-nav-content > .maui-view { transition: none; }
+.maui-nav-content > .entering { animation: maui-nav-in 180ms ease-out; }
+@keyframes maui-nav-in { from { transform: translateX(24px); opacity: 0; } }
+
+.maui-tabbar {
+    display: flex; align-items: stretch; gap: 2px;
+    padding: 0 6px;
+    background: var(--maui-tabbar-bg, var(--maui-surface));
+    color: var(--maui-tabbar-fg, var(--maui-muted));
+    border-bottom: 1px solid var(--maui-border);
+    overflow-x: auto; scrollbar-width: none;
+    z-index: 2;
+}
+.maui-tabbar.bottom { border-bottom: 0; border-top: 1px solid var(--maui-border); justify-content: space-around; }
+.maui-tabbar.bottom button { flex: 1; flex-direction: column; gap: 2px; font-size: 12px; justify-content: center; }
+.maui-tabbar button { border-radius: 0; border-bottom: 2px solid transparent; }
+.maui-tabbar.bottom button { border-bottom: 0; border-top: 2px solid transparent; }
+.maui-tabbar button.selected { color: var(--maui-tab-selected, var(--maui-accent)); border-color: currentColor; }
+
+.maui-flyout-pane {
+    background: var(--maui-flyout-bg, var(--maui-surface));
+    border-right: 1px solid var(--maui-border);
+    overflow: hidden;
+    z-index: 4;
+    transition: transform 200ms ease, visibility 0s;
+}
+.maui-flyout-pane.overlay { box-shadow: 4px 0 24px rgb(0 0 0 / 0.25); }
+/* Hide once the slide-out finishes so the shadow cannot bleed into view and focus can't enter. */
+.maui-flyout-pane.closed { transform: translateX(-105%); visibility: hidden; transition: transform 200ms ease, visibility 0s 200ms; }
+.maui-flyout-backdrop { position: absolute; inset: 0; background: var(--maui-backdrop); z-index: 3; }
+.maui-flyout-backdrop[hidden] { display: none; }
+
+.maui-shell-items { position: absolute; inset: 0; overflow-y: auto; padding: 8px 0; }
+.maui-shell-items > .header { padding: 16px 20px 8px; font-weight: 700; font-size: 18px; }
+.maui-shell-item {
+    display: flex; align-items: center; gap: 12px;
+    width: calc(100% - 20px); margin: 1px 10px; padding: 10px 12px; border: 0; border-radius: 10px; background: transparent;
+    font: inherit; color: var(--maui-fg); text-align: left; cursor: pointer;
+}
+.maui-shell-item:focus-visible, .maui-navbar button:focus-visible, .maui-tabbar button:focus-visible { outline: 2px solid var(--maui-accent); outline-offset: -2px; }
+.maui-shell-item:hover { background: color-mix(in srgb, var(--maui-fg) 7%, transparent); }
+.maui-shell-item.selected { color: var(--maui-accent); background: color-mix(in srgb, var(--maui-accent) 12%, transparent); font-weight: 600; }
+.maui-shell-item img { width: 20px; height: 20px; object-fit: contain; }
+
+.maui-modal-backdrop { position: absolute; inset: 0; background: var(--maui-backdrop); z-index: 10; animation: maui-fade-in 160ms ease-out; }
+.maui-modal-dialog {
+    overflow: hidden; border-radius: 14px; background: var(--maui-bg);
+    box-shadow: 0 16px 56px rgb(0 0 0 / 0.35); animation: maui-dialog-in 180ms ease-out;
+}
+@keyframes maui-fade-in { from { opacity: 0; } }
+@keyframes maui-dialog-in { from { transform: translateY(12px) scale(0.98); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .maui-modal-backdrop, .maui-modal-dialog, .maui-modal-layer { animation: none; } }
+.maui-modal-layer { position: absolute; inset: 0; background: var(--maui-bg); z-index: 10; animation: maui-modal-in 200ms ease-out; }
+@keyframes maui-modal-in { from { transform: translateY(32px); opacity: 0; } }
+
+/* Collections */
+.maui-collection { overflow: auto; overscroll-behavior: contain; }
+.maui-collection-item { cursor: default; }
+.maui-collection.selectable .maui-collection-item { cursor: pointer; }
+
+.maui-webview { border: 0; background: #ffffff; }
+
+/* Dialogs (DisplayAlert / DisplayActionSheet / DisplayPromptAsync) */
+.maui-dialog {
+    border: 0; border-radius: 14px; padding: 20px 20px 14px;
+    min-width: min(320px, calc(100vw - 32px)); max-width: min(480px, calc(100vw - 32px));
+    background: var(--maui-bg); color: var(--maui-fg);
+    box-shadow: 0 12px 48px rgb(0 0 0 / 0.3);
+    font-family: var(--maui-font); font-size: 14px;
+}
+.maui-dialog::backdrop { background: var(--maui-backdrop); }
+.maui-dialog-title { margin: 0 0 8px; font-size: 17px; font-weight: 600; }
+.maui-dialog-message { margin: 0 0 16px; color: var(--maui-muted); white-space: pre-wrap; line-height: 1.4; }
+.maui-dialog-input {
+    width: 100%; box-sizing: border-box; font: inherit; color: var(--maui-fg); background: var(--maui-bg);
+    border: 1px solid var(--maui-border); border-radius: 6px; padding: 8px 10px; margin-bottom: 16px; outline: none;
+}
+.maui-dialog-input:focus { border-color: var(--maui-accent); }
+.maui-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.maui-dialog-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+.maui-dialog-list > .maui-dialog-button { text-align: left; width: 100%; }
+.maui-dialog-button {
+    font: inherit; border: 0; border-radius: 8px; padding: 9px 16px; cursor: pointer;
+    background: var(--maui-surface); color: var(--maui-fg);
+}
+.maui-dialog-button:hover { filter: brightness(0.96); }
+.maui-dialog-button.primary { background: var(--maui-accent); color: var(--maui-accent-fg); }
+.maui-dialog-button.destructive { color: #d92d20; }
+
+/* Announcements for SemanticScreenReader */
+.maui-sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.maui-input-passthrough > * { pointer-events: auto; }

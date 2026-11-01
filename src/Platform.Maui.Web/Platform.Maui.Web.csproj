@@ -1,0 +1,44 @@
+<!-- The Razor SDK is used only for its static web asset pipeline, which ships wwwroot/maui-web.*
+     to consumers under _content/Platform.Maui.Web/. No Razor components or Blazor are involved. -->
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>$(BaseTargetFramework)</TargetFramework>
+        <RootNamespace>Microsoft.Maui.Platform.Web</RootNamespace>
+        <PackageVersion>$(WebPackageVersion)</PackageVersion>
+        <Description>A .NET MAUI backend for the browser. Runs MAUI apps on WebAssembly, rendering real DOM elements without Blazor.</Description>
+        <PackageTags>$(PackageTags) web wasm webassembly browser dom</PackageTags>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <IsTrimmable>true</IsTrimmable>
+        <AddRazorSupportForMvc>false</AddRazorSupportForMvc>
+        <!-- Public API is documented in docs/web rather than XML doc comments on every member. -->
+        <NoWarn>$(NoWarn);CS1591</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <SupportedPlatform Include="browser" />
+        <InternalsVisibleTo Include="Platform.Maui.Essentials.Web" />
+        <InternalsVisibleTo Include="Platform.Maui.Web.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Maui.Controls" Version="$(WebMauiVersion)" />
+    </ItemGroup>
+
+    <!-- Ship build targets with the NuGet package -->
+    <ItemGroup>
+        <None Include="buildTransitive\Platform.Maui.Web.targets" Pack="true" PackagePath="build;buildTransitive" />
+    </ItemGroup>
+
+    <!-- The static web assets SDK marks this library's own dev-server manifests as content, so a
+         project reference copies them into the app's bin next to the app's manifest, and `dotnet run`
+         can then load the library's manifest instead and 404 most of _framework/. A library is never
+         run, so keep them out of the output entirely (both manifests have been added by the time the
+         endpoints one has; GetCopyToOutputDirectoryItems runs them in that order). -->
+    <Target Name="_MauiWebKeepDevManifestsOutOfReferencers" AfterTargets="AddStaticWebAssetEndpointsBuildManifest">
+        <ItemGroup>
+            <ContentWithTargetPath Remove="$(StaticWebAssetDevelopmentManifestPath);$(StaticWebAssetEndpointsBuildManifestPath)" />
+        </ItemGroup>
+    </Target>
+
+</Project>

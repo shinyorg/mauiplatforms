@@ -1,0 +1,1 @@
+This text file is a MauiAsset, served from the site root and read with FileSystem.OpenAppPackageFileAsync.

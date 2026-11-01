@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>MAUI Web Gallery</title>
+    <link rel="icon" href="favicon.svg" />
+    <style>
+        /* The gallery palette for the backend's chrome (Shell, dialogs, native inputs).
+           Mirrors Theme.cs; html:root outranks the backend stylesheet's :root rules. */
+        html:root {
+            --maui-bg: #FBFAFE; --maui-fg: #1B1530; --maui-muted: #6A6483; --maui-surface: #F1EEFA;
+            --maui-border: #E2DDF2; --maui-accent: #5B3FE0; --maui-accent-fg: #FFFFFF;
+            --maui-flyout-bg: #FBFAFE; --maui-navbar-bg: #FBFAFE;
+            --maui-font: "InstrumentSans", system-ui, -apple-system, "Segoe UI", sans-serif;
+        }
+        @media (prefers-color-scheme: dark) {
+            html:root:not([data-maui-theme="light"]) {
+                --maui-bg: #121019; --maui-fg: #EEEAFB; --maui-muted: #A39DBB; --maui-surface: #1C1828;
+                --maui-border: #2C2740; --maui-accent: #9B87FF; --maui-accent-fg: #120F1E;
+                --maui-flyout-bg: #121019; --maui-navbar-bg: #121019;
+            }
+        }
+        html:root[data-maui-theme="dark"] {
+            --maui-bg: #121019; --maui-fg: #EEEAFB; --maui-muted: #A39DBB; --maui-surface: #1C1828;
+            --maui-border: #2C2740; --maui-accent: #9B87FF; --maui-accent-fg: #120F1E;
+            --maui-flyout-bg: #121019; --maui-navbar-bg: #121019;
+        }
+        html, body { background: var(--maui-bg, #FBFAFE); }
+        #maui-loading {
+            position: fixed; inset: 0; display: grid; place-items: center;
+            font: 15px system-ui, sans-serif; color: #6A6483;
+        }
+        @media (prefers-color-scheme: dark) { html, body { background: #121019; } #maui-loading { color: #A39DBB; } }
+    </style>
+    <script type="module" src="./main.js"></script>
+</head>
+<body>
+    <div id="maui-loading">Starting .NET…</div>
+</body>
+</html>
