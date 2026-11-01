@@ -11,7 +11,6 @@
         <ApplicationTitle>MAUI Sample</ApplicationTitle>
         <ApplicationId>org.shiny.samples</ApplicationId>
         <ApplicationIdGuid>85C81D9D-257A-496B-96D8-E4922B5D6864</ApplicationIdGuid>
-        <MauiVersion>10.0.31</MauiVersion>
 
         <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
         <ApplicationVersion>1</ApplicationVersion>

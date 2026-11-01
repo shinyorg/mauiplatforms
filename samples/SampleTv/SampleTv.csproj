@@ -11,7 +11,6 @@
         <ApplicationTitle>MAUI tvOS</ApplicationTitle>
         <ApplicationId>org.shiny.tvos</ApplicationId>
         <ApplicationIdGuid>C5E91D2A-367B-4F8C-A1D3-8B4F22E5D691</ApplicationIdGuid>
-        <MauiVersion>10.0.31</MauiVersion>
 
         <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
         <ApplicationVersion>1</ApplicationVersion>

@@ -1,16 +1,26 @@
 <Project>
     <PropertyGroup>
         <BaseTargetFramework>net10.0</BaseTargetFramework>
-        <MauiVersion>10.0.31</MauiVersion>
+        <!-- One MAUI version for every backend and sample. -->
+        <MauiVersion>10.0.120</MauiVersion>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
 
-        <PackageVersion>0.1.0-alpha-0001</PackageVersion>
+        <!--
+            The tvOS and web packages share one version. NextVersion is the next release:
+            - CI branch builds publish $(NextVersion)-preview.<run> (PreviewLabel)
+            - pushing a tag vX.Y.Z publishes exactly X.Y.Z (ReleaseVersion, set by CI from the tag)
+            - local builds are $(NextVersion)-dev, so they never look like a release
+        -->
+        <NextVersion>0.4.0</NextVersion>
+        <PreviewLabel Condition="'$(PreviewLabel)' == ''">dev</PreviewLabel>
+        <PlatformsPackageVersion Condition="'$(ReleaseVersion)' != ''">$(ReleaseVersion)</PlatformsPackageVersion>
+        <PlatformsPackageVersion Condition="'$(ReleaseVersion)' == ''">$(NextVersion)-$(PreviewLabel)</PlatformsPackageVersion>
+        <PackageVersion>$(PlatformsPackageVersion)</PackageVersion>
+        <TvOSPackageVersion>$(PlatformsPackageVersion)</TvOSPackageVersion>
+        <WebPackageVersion>$(PlatformsPackageVersion)</WebPackageVersion>
+        <!-- The archived macOS backend's last release (archive/macos is not built). -->
         <MacOSPackageVersion>0.3.0</MacOSPackageVersion>
-        <TvOSPackageVersion>0.1.0-alpha-0001</TvOSPackageVersion>
-        <WebPackageVersion>0.1.0-alpha-0001</WebPackageVersion>
-        <!-- The web backend tracks a newer MAUI than tvOS. -->
-        <WebMauiVersion>10.0.120</WebMauiVersion>
         <Description>MAUI Platforms</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Copyright>Copyright (c) $([System.DateTime]::Now.Year) Allan Ritchie</Copyright>
@@ -31,6 +41,8 @@
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <!-- Every package lands in one folder for CI to push and attach to releases. -->
+        <PackageOutputPath>$(MSBuildThisFileDirectory)artifacts/nuget</PackageOutputPath>
         <PublishRepositoryUrl>True</PublishRepositoryUrl>
         <EmbedUntrackedSources>True</EmbedUntrackedSources>
     </PropertyGroup>

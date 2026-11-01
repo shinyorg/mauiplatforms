@@ -467,6 +467,9 @@ var model = DeviceInfo.Model;
 
 Install the latest .NET 10 SDK from [dotnet.microsoft.com](https://dotnet.microsoft.com/download/dotnet/10.0).
 
+Both backends build against .NET MAUI **10.0.120** (`MauiVersion` in [`Directory.build.props`](Directory.build.props)),
+so apps using the packages get MAUI 10.0.120 or later.
+
 ### Workloads
 
 ```bash
@@ -503,6 +506,23 @@ cd tests/playwright && npm ci && npx playwright install chromium webkit && npx p
 cd tests/playwright && npm run screenshots
 ```
 
+## Versions & releases
+
+The tvOS and web packages share one version, set by `NextVersion` in
+[`Directory.build.props`](Directory.build.props). CI ([`.github/workflows/build.yml`](.github/workflows/build.yml))
+builds and tests every push and pull request:
+
+| Trigger | Packages | Published to |
+|---|---|---|
+| Push to `main` | `<NextVersion>-preview.<run number>` | nuget.org |
+| Tag `vX.Y.Z` or `vX.Y.Z-beta.N` | exactly `X.Y.Z` / `X.Y.Z-beta.N` | nuget.org, plus a GitHub Release with the packages and the web sample |
+| Other branches, pull requests | `<NextVersion>-preview.<run number>` | build artifacts only |
+| Local builds | `<NextVersion>-dev` | `artifacts/nuget` |
+
+To release, push a tag, e.g. `git tag v0.4.0 && git push origin v0.4.0`. A tag with a suffix
+(`v0.4.0-beta.1`) is marked as a prerelease. After a release, bump `NextVersion` (here to `0.4.1` or
+`0.5.0`) so the next previews sort above it.
+
 ## Key Technical Notes
 
 * MAUI NuGet packages resolve to the `net10.0` (platform-agnostic) assembly for unsupported TFMs. `ToPlatform()` returns `object` — custom `ViewExtensions` casts to the native view type.
@@ -516,23 +536,50 @@ Dialogs (`DisplayAlertAsync`, `DisplayActionSheetAsync`, `DisplayPromptAsync`) a
 
 MAUI's dialog system uses an internal `AlertManager` with `IAlertManagerSubscription`. The web backend implements it with `DispatchProxy` (which works on WebAssembly, including trimmed builds). tvOS uses AOT compilation, which doesn't support `DispatchProxy`. Until `IAlertManagerSubscription` is made public in MAUI (see the [proposal](https://gist.github.com/Redth/fc07a982bcff79cf925168f241a12c95)), tvOS dialog support is blocked.
 
-## TODO
+## Status: TODO and known gaps
+
+Both backends are experimental. This is what is missing or doesn't work yet; anything not listed in
+the [handler tables](#handlers-implemented) above is also unsupported.
+
+### Web
+
+**Not working yet**
+* **CollectionView isn't virtualized.** Every item is realized, so very large sources (thousands of
+  templated rows) exhaust the browser tab. Page large lists with `RemainingItemsThreshold`.
+* **Gestures:** pull-to-refresh, swipe-item reveal, `PinchGestureRecognizer` and drag and drop.
+  RefreshView shows its spinner and SwipeView its content only.
+* **Not rendered:** ListView and TableView (obsolete; placeholders), HybridWebView (placeholder),
+  BlazorWebView, MenuBar and context menus (`ContextFlyout`).
+* **CarouselView `Loop`**, **`Application.OpenWindow`** (multi-window) and **browser history
+  integration** (the Back button and deep links don't drive MAUI navigation).
+* **WebView:** script evaluation and history only work for same-origin content.
+* **Threads:** only the default single-threaded WebAssembly runtime is supported.
+
+**Behaves differently from native**
+* **`Loaded` fires before the first layout pass** (sizes are still -1), which is MAUI Controls' own
+  behaviour on platform-agnostic targets. Do size-dependent work in `SizeChanged`.
+* **GraphicsView images** draw, but MAUI's `net10.0` `PlatformImage` can't decode, so an image's
+  `Width`/`Height` are wrong; code that sizes drawing from them misplaces it.
+* **Essentials:** SecureStorage throws (a browser has nowhere safe to keep secrets), FileSystem
+  directories live in memory and are lost on reload, and pickers, clipboard reads, sharing and
+  motion sensors need a user gesture.
+* **XAML:** the XamlC and SourceGen inflators are verified; the Runtime inflator isn't tested.
+
+More detail is in the [web guide](docs/web/readme.md#known-limitations).
+
+### tvOS
+
+* **Dialogs** (`DisplayAlertAsync` and friends) aren't supported; see [Dialogs](#dialogs).
+* **Missing controls:** Editor, Stepper, CheckBox, RadioButton, ImageButton, DatePicker, TimePicker,
+  WebView, ListView, TableView, IndicatorView, RefreshView, SwipeView and GraphicsView.
+* **Missing pages and navigation:** FlyoutPage, Shell and modal pages.
+* **Gestures:** only tap.
+* **Platform integration:** Focus Engine, Top Shelf extensions and TV remote Menu button handling.
 
 ### General
-* Multitarget `Sample` project
-* Multi-window support
-* Accessibility support
 
-### tvOS Specific
-* Focus Engine integration
-* Top Shelf extensions
-* TV remote menu button handling
-
-### Web Specific
-* CollectionView virtualization (every item is realized; very large sources exhaust the tab)
-* Pull-to-refresh and swipe-item gestures, pinch, drag and drop
-* MenuBar and context menus
-* Browser history integration for navigation
+* The multitargeted [`samples/Sample`](samples/Sample) project doesn't build yet; use `SampleTv` and `SampleWeb`.
+* Multi-window support, and accessibility beyond the web backend's ARIA roles and live regions.
 
 ## Commercial Support
 

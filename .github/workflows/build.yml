@@ -1,18 +1,20 @@
 ﻿name: Build
 
+# Builds and tests the tvOS and web backends on every push and pull request.
+# - Pushes to main publish preview packages to nuget.org: <NextVersion>-preview.<run number>.
+# - Pushing a tag vX.Y.Z (or vX.Y.Z-beta.1 and so on) publishes exactly that version to nuget.org
+#   and creates a GitHub Release with the packages and the web sample attached.
+# NextVersion lives in Directory.build.props.
+
 on:
   workflow_dispatch:
-    inputs:
-      logLevel:
-        description: 'Log level'
-        required: true
-        default: 'warning'
   push:
     branches:
     - main
     - dev
     - preview
-    - v*
+    tags:
+    - 'v*'
   pull_request:
     branches:
     - main
@@ -21,13 +23,14 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Only superseded pull request runs are cancelled; a publishing run is never cut off midway.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
     permissions:
       id-token: write   # required for NuGet trusted publishing (OIDC)
-      contents: read
+      contents: write   # required to create GitHub Releases for tags
 
     runs-on: macos-26
 
@@ -48,14 +51,30 @@ jobs:
     - name: Add .NET Workloads
       run: dotnet workload install maui tvos
 
+    - name: Version
+      id: version
+      run: |
+        if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+          version="${GITHUB_REF_NAME#v}"
+          echo "args=-p:ReleaseVersion=$version" >> "$GITHUB_OUTPUT"
+          echo "release=true" >> "$GITHUB_OUTPUT"
+          if [[ "$version" == *-* ]]; then echo "prerelease=true" >> "$GITHUB_OUTPUT"; else echo "prerelease=false" >> "$GITHUB_OUTPUT"; fi
+          echo "Release $version"
+        else
+          echo "args=-p:PreviewLabel=preview.${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          echo "release=false" >> "$GITHUB_OUTPUT"
+          echo "Preview build ${{ github.run_number }}"
+        fi
+
     - name: Build
-      run: dotnet build build.slnf -m -property:Configuration=Release
+      run: dotnet build build.slnf -m -c Release ${{ steps.version.outputs.args }}
 
     - name: Test
-      run: dotnet test build.slnf --no-build -property:Configuration=Release --logger "console;verbosity=normal" || true
+      run: dotnet test build.slnf --no-build -c Release ${{ steps.version.outputs.args }} --logger "console;verbosity=normal"
 
     - name: Publish Web Sample
-      run: dotnet publish samples/SampleWeb/SampleWeb.csproj -c Release -o artifacts/SampleWeb
+      # No packing here: the packages were built above, and a rebuild would add -dev copies to artifacts/nuget.
+      run: dotnet publish samples/SampleWeb/SampleWeb.csproj -c Release -o artifacts/SampleWeb -p:GeneratePackageOnBuild=false ${{ steps.version.outputs.args }}
 
     - name: Web Smoke Test (headless Chrome)
       run: node tests/browser/smoke.mjs artifacts/SampleWeb/wwwroot
@@ -84,11 +103,12 @@ jobs:
           tests/playwright/test-results
 
     - name: Post NuGet Artifacts
-      if: github.event_name == 'push'
       uses: actions/upload-artifact@v7
       with:
         name: nuget-artifacts
-        path: '**/*.nupkg'
+        path: |
+          artifacts/nuget/*.nupkg
+          artifacts/nuget/*.snupkg
 
     - name: Post Web Sample
       uses: actions/upload-artifact@v7
@@ -98,11 +118,23 @@ jobs:
 
     - name: NuGet Login (OIDC)
       id: nuget-login
-      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/v'))
+      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || steps.version.outputs.release == 'true')
       uses: NuGet/login@v1
       with:
         user: aritchie
 
     - name: Publish NuGets
-      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/v'))
-      run: dotnet nuget push **\*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }} --skip-duplicate
+      if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || steps.version.outputs.release == 'true')
+      # Symbol packages (.snupkg) next to each .nupkg are pushed with it.
+      run: dotnet nuget push "artifacts/nuget/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }} --skip-duplicate
+
+    - name: Create GitHub Release
+      if: steps.version.outputs.release == 'true'
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        (cd artifacts/SampleWeb && zip -qr ../SampleWeb-wwwroot.zip wwwroot)
+        flags=(--title "$GITHUB_REF_NAME" --generate-notes)
+        if [[ "${{ steps.version.outputs.prerelease }}" == "true" ]]; then flags+=(--prerelease); fi
+        gh release create "$GITHUB_REF_NAME" "${flags[@]}" \
+          artifacts/nuget/*.nupkg artifacts/nuget/*.snupkg artifacts/SampleWeb-wwwroot.zip
