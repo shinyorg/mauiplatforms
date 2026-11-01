@@ -330,13 +330,21 @@ export async function renderGlyph(glyph, fontFamily, size, color) {
     await Promise.all(pendingFonts);
     try { await document.fonts.load(font, glyph); } catch { /* fall back to whatever is loaded */ }
     const canvas = document.createElement('canvas');
-    canvas.width = Math.ceil(size * scale);
-    canvas.height = Math.ceil(size * scale);
     const ctx = canvas.getContext('2d');
-    ctx.font = font;
-    ctx.fillStyle = color || 'currentColor';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
+    const setup = () => {
+        ctx.font = font;
+        ctx.fillStyle = color || 'currentColor';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+    };
+    // Icon glyphs can be wider than 1em (Font Awesome draws many at 1.25em), so grow the bitmap
+    // around the centre point to fit the glyph's ink instead of clipping it to a size x size square.
+    setup();
+    const m = ctx.measureText(glyph);
+    const square = Math.ceil(size * scale);
+    canvas.width = Math.max(square, 2 * Math.ceil(Math.max(m.actualBoundingBoxLeft, m.actualBoundingBoxRight)));
+    canvas.height = Math.max(square, 2 * Math.ceil(Math.max(m.actualBoundingBoxAscent, m.actualBoundingBoxDescent)));
+    setup(); // resizing a canvas resets its context state
     ctx.fillText(glyph, canvas.width / 2, canvas.height / 2);
     return canvas.toDataURL('image/png');
 }
