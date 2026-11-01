@@ -40,3 +40,31 @@ test('transforms apply CSS transforms', async ({ app, page }) => {
   await expect.poll(() => page.locator('.maui-nav-content .maui-view').evaluateAll(views =>
     views.filter(v => (v as HTMLElement).style.transform && (v as HTMLElement).style.transform !== 'none').length)).toBeGreaterThan(0);
 });
+
+test('FontImageSource glyphs wider than 1em are not clipped', async ({ app, page }) => {
+  await app.open();
+  const result = await page.evaluate(async () => {
+    const { renderGlyph } = await import(new URL('_content/Platform.Maui.Web/maui-web.js', document.baseURI).href);
+    const size = 20, scale = window.devicePixelRatio || 1;
+    const decode = async (url: string) => {
+      const img = new Image();
+      img.src = url;
+      await img.decode();
+      return [img.naturalWidth, img.naturalHeight];
+    };
+    const ctx = document.createElement('canvas').getContext('2d')!;
+    ctx.font = `${size * scale}px sans-serif`;
+    const wide = ctx.measureText('WW');
+    return {
+      square: Math.ceil(size * scale),
+      inkWidth: wide.actualBoundingBoxLeft + wide.actualBoundingBoxRight,
+      wide: await decode(await renderGlyph('WW', 'sans-serif', size, '#000')),
+      narrow: await decode(await renderGlyph('i', 'sans-serif', size, '#000')),
+    };
+  });
+  // A glyph wider than the requested size gets a wider bitmap instead of being cut off...
+  expect(result.inkWidth).toBeGreaterThan(result.square);
+  expect(result.wide[0]).toBeGreaterThanOrEqual(Math.floor(result.inkWidth));
+  // ...while one that fits still renders into the size x size square.
+  expect(result.narrow).toEqual([result.square, result.square]);
+});
