@@ -13,6 +13,12 @@ class ThemeAwareViewController : UIViewController
 {
     public Action? OnThemeChanged { get; set; }
 
+    /// <summary>Set briefly while a programmatic focus request is resolved.</summary>
+    internal UIView? PendingFocus { get; set; }
+
+    public override IUIFocusEnvironment[] PreferredFocusEnvironments =>
+        PendingFocus is { } pending ? new IUIFocusEnvironment[] { pending } : base.PreferredFocusEnvironments;
+
     public override void TraitCollectionDidChange(UITraitCollection? previousTraitCollection)
     {
         base.TraitCollectionDidChange(previousTraitCollection);
@@ -37,10 +43,15 @@ public partial class WindowHandler : ElementHandler<IWindow, UIWindow>
     {
     }
 
+    /// <summary>The scene the next window is created in, set by the scene delegate.</summary>
+    internal static UIWindowScene? PendingScene { get; set; }
+
 #pragma warning disable CA1422
     protected override UIWindow CreatePlatformElement()
     {
-        var window = new UIWindow(UIScreen.MainScreen.Bounds);
+        var window = PendingScene is { } scene
+            ? new UIWindow(scene)
+            : new UIWindow(UIScreen.MainScreen.Bounds);
         _rootViewController = new ThemeAwareViewController();
         _rootViewController.OnThemeChanged = () =>
         {
@@ -52,7 +63,6 @@ public partial class WindowHandler : ElementHandler<IWindow, UIWindow>
         SyncUserAppTheme();
 
         window.RootViewController = _rootViewController;
-        window.MakeKeyAndVisible();
         return window;
     }
 #pragma warning restore CA1422

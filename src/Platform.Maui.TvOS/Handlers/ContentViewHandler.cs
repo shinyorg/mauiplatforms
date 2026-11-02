@@ -66,7 +66,6 @@ public partial class ContentViewHandler : TvOSViewHandler<IContentView, TvOSCont
 
     public static void MapBackground(ContentViewHandler handler, IContentView contentView)
     {
-        if (contentView.Background is Graphics.SolidPaint solidPaint && solidPaint.Color != null)
-            handler.PlatformView.BackgroundColor = solidPaint.Color.ToPlatformColor();
+        TvOSBackground.Apply(handler.PlatformView, contentView.Background);
     }
 }

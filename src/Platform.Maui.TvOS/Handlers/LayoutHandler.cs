@@ -103,8 +103,7 @@ public partial class LayoutHandler : TvOSViewHandler<ILayout, TvOSContainerView>
 
     public static void MapBackground(LayoutHandler handler, ILayout layout)
     {
-        if (layout.Background is Graphics.SolidPaint solidPaint && solidPaint.Color != null)
-            handler.PlatformView.BackgroundColor = solidPaint.Color.ToPlatformColor();
+        TvOSBackground.Apply(handler.PlatformView, layout.Background);
     }
 
     public static void MapClipsToBounds(LayoutHandler handler, ILayout layout)

@@ -1,16 +1,25 @@
 using System.Linq;
 using CoreAnimation;
 using CoreGraphics;
+using Foundation;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Handlers;
 using UIKit;
 
 namespace Microsoft.Maui.Platform.TvOS.Handlers;
 
-public class BorderUIView : UIView
+public class BorderUIView : UIView, ITvOSFocusableView
 {
     public Func<double, double, Size>? CrossPlatformMeasure { get; set; }
     public Func<Rect, Size>? CrossPlatformArrange { get; set; }
+
+    public Action? PrimaryAction { get; set; }
+    public Action<bool>? FocusChanged { get; set; }
+
+    /// <summary>True while focused; the handler draws a focus ring along the shape.</summary>
+    public bool ShowsFocusRing { get; private set; }
+
+    internal Action? FocusRingChanged { get; set; }
 
     public override CGSize SizeThatFits(CGSize size)
     {
@@ -21,10 +30,63 @@ public class BorderUIView : UIView
         }
         return base.SizeThatFits(size);
     }
+
+    public override void LayoutSubviews()
+    {
+        base.LayoutSubviews();
+
+        var bounds = Bounds;
+        if (bounds.Width <= 0 || bounds.Height <= 0)
+            return;
+
+        // Arrange the content (inset by stroke and padding) — measure first, as MAUI requires.
+        CrossPlatformMeasure?.Invoke((double)bounds.Width, (double)bounds.Height);
+        CrossPlatformArrange?.Invoke(new Rect(0, 0, (double)bounds.Width, (double)bounds.Height));
+    }
+
+    public override bool CanBecomeFocused => TvOSFocusableBehavior.CanBecomeFocused(this, PrimaryAction);
+
+    public override void DidUpdateFocus(UIFocusUpdateContext context, UIFocusAnimationCoordinator coordinator)
+    {
+        base.DidUpdateFocus(context, coordinator);
+
+        bool? focused = context.NextFocusedView == this ? true
+            : context.PreviouslyFocusedView == this ? false
+            : null;
+        if (focused is not bool isFocused)
+            return;
+
+        // The shape mask clips shadows, so a focused border lifts and gains a ring instead.
+        TvOSFocusEffect.Animate(this, isFocused, coordinator, shadow: false);
+        ShowsFocusRing = isFocused;
+        FocusRingChanged?.Invoke();
+        FocusChanged?.Invoke(isFocused);
+    }
+
+    public override void PressesBegan(NSSet<UIPress> presses, UIPressesEvent evt)
+    {
+        if (!TvOSFocusableBehavior.HandlePressesBegan(this, presses, PrimaryAction))
+            base.PressesBegan(presses, evt);
+    }
+
+    public override void PressesEnded(NSSet<UIPress> presses, UIPressesEvent evt)
+    {
+        if (!TvOSFocusableBehavior.HandlePressesEnded(this, presses, PrimaryAction))
+            base.PressesEnded(presses, evt);
+    }
+
+    public override void PressesCancelled(NSSet<UIPress> presses, UIPressesEvent evt)
+    {
+        if (!TvOSFocusableBehavior.HandlePressesCancelled(this, presses, PrimaryAction))
+            base.PressesCancelled(presses, evt);
+    }
 }
 
 public partial class BorderHandler : TvOSViewHandler<IBorderView, BorderUIView>
 {
+    /// <summary>Width of the ring drawn around a focused, tappable Border.</summary>
+    public static double FocusRingThickness { get; set; } = 4;
+
     CAShapeLayer? _borderLayer;
     Size _lastSize;
 
@@ -59,6 +121,7 @@ public partial class BorderHandler : TvOSViewHandler<IBorderView, BorderUIView>
     protected override void ConnectHandler(BorderUIView platformView)
     {
         base.ConnectHandler(platformView);
+        platformView.FocusRingChanged = UpdateBorder;
         platformView.CrossPlatformMeasure = VirtualViewMeasure;
         platformView.CrossPlatformArrange = VirtualViewArrange;
     }
@@ -67,6 +130,7 @@ public partial class BorderHandler : TvOSViewHandler<IBorderView, BorderUIView>
     {
         platformView.CrossPlatformMeasure = null;
         platformView.CrossPlatformArrange = null;
+        platformView.FocusRingChanged = null;
         _borderLayer?.RemoveFromSuperLayer();
         _borderLayer = null;
         base.DisconnectHandler(platformView);
@@ -128,13 +192,22 @@ public partial class BorderHandler : TvOSViewHandler<IBorderView, BorderUIView>
         _borderLayer.Path = cgPath;
         _borderLayer.FillColor = null;
 
-        // Stroke color
-        if (VirtualView.Stroke is SolidPaint solidStroke && solidStroke.Color is not null)
-            _borderLayer.StrokeColor = solidStroke.Color.ToPlatformColor().CGColor;
+        // Stroke color. The mask clips the outer half of the stroke, so it is drawn at twice
+        // the requested thickness to show the full width inside the shape.
+        if (PlatformView.ShowsFocusRing)
+        {
+            _borderLayer.StrokeColor = UIColor.White.CGColor;
+            _borderLayer.LineWidth = (nfloat)(Math.Max(VirtualView.StrokeThickness, FocusRingThickness) * 2);
+        }
         else
-            _borderLayer.StrokeColor = UIColor.Clear.CGColor;
+        {
+            if (VirtualView.Stroke is SolidPaint solidStroke && solidStroke.Color is not null)
+                _borderLayer.StrokeColor = solidStroke.Color.ToPlatformColor().CGColor;
+            else
+                _borderLayer.StrokeColor = UIColor.Clear.CGColor;
 
-        _borderLayer.LineWidth = (nfloat)VirtualView.StrokeThickness;
+            _borderLayer.LineWidth = (nfloat)(VirtualView.StrokeThickness * 2);
+        }
 
         _borderLayer.LineCap = VirtualView.StrokeLineCap switch
         {
@@ -181,10 +254,9 @@ public partial class BorderHandler : TvOSViewHandler<IBorderView, BorderUIView>
 
     public static void MapBackground(BorderHandler handler, IBorderView border)
     {
-        if (border.Background is SolidPaint solidPaint && solidPaint.Color is not null)
-            handler.PlatformView.BackgroundColor = solidPaint.Color.ToPlatformColor();
-        else
+        if (border.Background is null or SolidPaint { Color: null })
             handler.PlatformView.BackgroundColor = UIColor.Clear;
+        TvOSBackground.Apply(handler.PlatformView, border.Background);
     }
 
     public static void MapStrokeShape(BorderHandler handler, IBorderView border) => handler.UpdateBorder();

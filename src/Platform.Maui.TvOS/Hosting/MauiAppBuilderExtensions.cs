@@ -13,6 +13,7 @@ public static class MauiAppBuilderExtensions
     public static MauiAppBuilder UseTvOSMauiApp<[DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TApp>(this MauiAppBuilder builder) where TApp : class, IApplication
     {
         builder.Services.TryAddSingleton<IApplication, TApp>();
+        TvOSViewProperties.EnsureRegistered();
 
         builder.ConfigureMauiHandlers(handlers =>
         {
@@ -41,6 +42,9 @@ public static class MauiAppBuilderExtensions
         });
 
         builder.Services.TryAddSingleton<IDispatcher, TvOSDispatcher>();
+
+        // DisplayAlertAsync / DisplayActionSheetAsync / DisplayPromptAsync
+        TvOSDialogs.Register(builder.Services);
 
         return builder;
     }

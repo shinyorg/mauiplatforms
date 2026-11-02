@@ -14,6 +14,9 @@
         <GenerateDocumentationFile>false</GenerateDocumentationFile>
         <!-- Keep full exception messages in trimmed builds; remove to save a little download size. -->
         <UseSystemResourceKeys>false</UseSystemResourceKeys>
+        <!-- AOT-compile to WebAssembly on publish (needs the wasm-tools workload). Debug/dotnet run
+             still uses the interpreter; code AOT can't handle falls back to it at runtime. -->
+        <RunAOTCompilation>true</RunAOTCompilation>
     </PropertyGroup>
 
     <!-- The gallery pages (ported from the maui-labs GTK4 sample) use string-path bindings and

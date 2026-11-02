@@ -65,9 +65,6 @@ public partial class ContentPageHandler : TvOSViewHandler<IContentView, TvOSCont
 
     public static void MapBackground(ContentPageHandler handler, IContentView page)
     {
-        if (page.Background is Graphics.SolidPaint solidPaint && solidPaint.Color != null)
-            handler.PlatformView.BackgroundColor = solidPaint.Color.ToPlatformColor();
-        else
-            handler.PlatformView.BackgroundColor = UIColor.Black; // default tvOS background
+        TvOSBackground.Apply(handler.PlatformView, page.Background);
     }
 }

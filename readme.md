@@ -266,7 +266,7 @@ src/
   Platform.Maui.Essentials.Web/     # Web Essentials library
 samples/
   Sample/                           # Shared sample code (Pages, Platforms/)
-  SampleTv/                         # tvOS sample app
+  SampleTv/                         # tvOS sample app (a streaming-style catalog driven by the Siri Remote)
   SampleWeb/                        # Web gallery app
 tests/
   Platform.Maui.Web.Tests/          # Web unit tests (xUnit)
@@ -322,7 +322,7 @@ archive/
 
 | Control | tvOS | Web |
 |---------|------|-----|
-| CollectionView | ✅ Virtualized | ✅ Templates, grouping, selection, EmptyView, Header/Footer (not virtualized) |
+| CollectionView | ✅ Virtualized UICollectionView: focusable items, selection, list/grid/horizontal layouts, EmptyView | ✅ Templates, grouping, selection, EmptyView, Header/Footer (not virtualized) |
 | CarouselView | ✅ Horizontal paging | ✅ CSS scroll snapping |
 | ListView | — | — (placeholder; use CollectionView) |
 | TableView | — | — (placeholder) |
@@ -341,13 +341,13 @@ All layouts work on both platforms: `VerticalStackLayout`, `HorizontalStackLayou
 | GraphicsView | — | ✅ Canvas 2D (paths, arcs, text, gradients, images); redraws at most once per frame, not while off screen |
 | Shapes (Rectangle, Ellipse, Line, Polyline, Polygon, Path) | ✅ | ✅ SVG |
 | Shadow | ✅ | ✅ `box-shadow` |
-| Gradient Brushes (Linear, Radial) | — | ✅ CSS gradients |
+| Gradient Brushes (Linear, Radial) | ✅ Layouts, Border, pages (controls use the first stop) | ✅ CSS gradients |
 
 ### Gestures
 
 | Gesture | tvOS | Web |
 |---------|------|-----|
-| Tap | ✅ | ✅ |
+| Tap | ✅ Select on the remote (the view becomes focusable) | ✅ |
 | Pan | — | ✅ |
 | Swipe | — | ✅ |
 | Pinch | — | — |
@@ -361,12 +361,12 @@ All layouts work on both platforms: `VerticalStackLayout`, `HorizontalStackLayou
 | Window | UIWindow + UIViewController | Full-viewport element, `ResizeObserver` |
 | Dispatcher | GCD (DispatchQueue.MainQueue) | JS event loop (`MessageChannel`) |
 | DispatcherTimer | NSTimer | `setTimeout` / `setInterval` |
-| Dialogs (Alert, Confirm, Prompt) | — | ✅ `<dialog>` |
+| Dialogs (Alert, Confirm, Prompt) | ✅ UIAlertController | ✅ `<dialog>` |
 | Font Management | ✅ | ✅ CSS Font Loading API (variable fonts) |
 | Dark/Light Mode | ✅ | ✅ `prefers-color-scheme` and `UserAppTheme` |
 | Animations | ✅ | ✅ `requestAnimationFrame` ticker |
 | FormattedText / Spans | — | ✅ |
-| InputTransparent | — | ✅ `pointer-events` |
+| InputTransparent | ✅ | ✅ `pointer-events` |
 | Toolbar | — | ✅ ToolbarItems in the navigation bar |
 | Window Resize Relayout | — | ✅ |
 | XAML | — (C# pages) | ✅ XamlC and SourceGen inflators, including trimmed Release |
@@ -530,11 +530,26 @@ To release, push a tag, e.g. `git tag v0.4.0 && git push origin v0.4.0`. A tag w
 * Controls registers stub handlers (which throw) for every control type on unsupported platforms, so each backend registers its own handler for every concrete type. The web backend has a unit test that fails if any type still resolves to a stub.
 * The tvOS sample uses pure C# pages (no XAML). On the web, XAML needs no backend support: the `Microsoft.Maui.Controls` package compiles `*.xaml` and adds MAUI's implicit usings in any project, `UseMaui` or not. An existing app's XAML can be reused by a web project that links its files; see [XAML and existing MAUI apps](docs/web/readme.md#xaml-and-existing-maui-apps).
 
+* tvOS apps built with the tvOS 27 SDK must use the UIScene life cycle. `TvOSMauiApplication` returns the scene configuration from code and `TvOSMauiSceneDelegate` hosts the MAUI window, so apps need no `UIApplicationSceneManifest` in Info.plist.
+
+## tvOS: focus and the Siri Remote
+
+There is no touch on Apple TV: the remote moves the system focus engine between focusable views and Select activates the focused one. The tvOS backend maps MAUI onto that:
+
+* **Buttons, switches, pickers, sliders, entries** are focusable and lift when focused, as tvOS controls do.
+* **Any view with a `TapGestureRecognizer`** (a `Border` card, a layout) becomes focusable; Select raises its taps (`Tapped` and `Command`). A focused `Border` shows a ring along its shape.
+* **CollectionView items** are focusable cells. Select picks the item (`SelectionMode` Single or Multiple) and raises taps on the template's root. Templates get the `Selected` and `Focused` visual states.
+* **`view.Focus()`** moves focus programmatically.
+* **Menu** pops the current `NavigationPage` page (and leaves the app from the root), and focus returns to the item that opened the page.
+* **Tabs** switch as focus moves along the tab bar; moving up from a page returns to the selected tab.
+
+`CollectionViewHandler.FocusInset` keeps room around items so a focused item can grow without being clipped.
+
 ## Dialogs
 
-Dialogs (`DisplayAlertAsync`, `DisplayActionSheetAsync`, `DisplayPromptAsync`) are supported on the **web** as HTML `<dialog>` elements, but are **not yet supported on tvOS**.
+Dialogs (`DisplayAlertAsync`, `DisplayActionSheetAsync`, `DisplayPromptAsync`) are supported on both backends: as HTML `<dialog>` elements on the **web** and as `UIAlertController` on **tvOS**.
 
-MAUI's dialog system uses an internal `AlertManager` with `IAlertManagerSubscription`. The web backend implements it with `DispatchProxy` (which works on WebAssembly, including trimmed builds). tvOS uses AOT compilation, which doesn't support `DispatchProxy`. Until `IAlertManagerSubscription` is made public in MAUI (see the [proposal](https://gist.github.com/Redth/fc07a982bcff79cf925168f241a12c95)), tvOS dialog support is blocked.
+MAUI's dialog system uses an internal `AlertManager`. The web backend implements its internal `IAlertManagerSubscription` with `DispatchProxy` (which works on WebAssembly, including trimmed builds). tvOS can't use `DispatchProxy` (no runtime code generation, even in the simulator), so it registers the keyed `Func<Page, …Arguments, Task<…>>` services MAUI 10's `AlertManager` looks up (`TvOSDialogs`), which work under full AOT.
 
 ## Status: TODO and known gaps
 
@@ -569,12 +584,12 @@ More detail is in the [web guide](docs/web/readme.md#known-limitations).
 
 ### tvOS
 
-* **Dialogs** (`DisplayAlertAsync` and friends) aren't supported; see [Dialogs](#dialogs).
 * **Missing controls:** Editor, Stepper, CheckBox, RadioButton, ImageButton, DatePicker, TimePicker,
   WebView, ListView, TableView, IndicatorView, RefreshView, SwipeView and GraphicsView.
 * **Missing pages and navigation:** FlyoutPage, Shell and modal pages.
-* **Gestures:** only tap.
-* **Platform integration:** Focus Engine, Top Shelf extensions and TV remote Menu button handling.
+* **Gestures:** only tap (Select on the remote).
+* **CollectionView:** grouping, headers and footers.
+* **Platform integration:** Top Shelf extensions, and remote swipes/play-pause outside the controls that handle them.
 
 ### General
 

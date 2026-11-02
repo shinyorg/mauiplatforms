@@ -6,11 +6,71 @@ using UIKit;
 
 namespace Microsoft.Maui.Platform.TvOS.Handlers;
 
+/// <summary>A tab in the tvOS tab bar: dim when idle, bright when selected, white when focused.</summary>
+public class TvOSTabButton : UIButton
+{
+    bool _selected;
+
+    public TvOSTabButton()
+    {
+        Layer.CornerRadius = 30;
+        TitleLabel!.Font = UIFont.SystemFontOfSize(29, UIFontWeight.Semibold);
+#pragma warning disable CA1422 // ContentEdgeInsets: no UIButtonConfiguration
+        ContentEdgeInsets = new UIEdgeInsets(12, 36, 12, 36);
+#pragma warning restore CA1422
+        UpdateAppearance();
+    }
+
+    /// <summary>Raised when the focus engine moves onto this tab.</summary>
+    public Action? GotFocus { get; set; }
+
+    public bool IsSelectedTab
+    {
+        get => _selected;
+        set { _selected = value; UpdateAppearance(); }
+    }
+
+    public override void DidUpdateFocus(UIFocusUpdateContext context, UIFocusAnimationCoordinator coordinator)
+    {
+        base.DidUpdateFocus(context, coordinator);
+        if (context.NextFocusedView == this)
+        {
+            coordinator.AddCoordinatedAnimations(() =>
+            {
+                UpdateAppearance();
+                TvOSTransforms.SetFocusScale(this, 1.08f);
+            }, null);
+            GotFocus?.Invoke();
+        }
+        else if (context.PreviouslyFocusedView == this)
+        {
+            coordinator.AddCoordinatedAnimations(() =>
+            {
+                UpdateAppearance();
+                TvOSTransforms.SetFocusScale(this, 1);
+            }, null);
+        }
+    }
+
+    void UpdateAppearance()
+    {
+        var focused = Focused;
+        BackgroundColor = focused ? UIColor.White
+            : _selected ? UIColor.FromWhiteAlpha(1, 0.18f)
+            : UIColor.Clear;
+        SetTitleColor(focused ? UIColor.FromRGB(20, 20, 24)
+            : _selected ? UIColor.White
+            : UIColor.FromWhiteAlpha(1, 0.6f), UIControlState.Normal);
+    }
+}
+
 public class TabbedContainerView : TvOSContainerView
 {
+    readonly UIVisualEffectView _tabBarBackground;
     readonly UIStackView _tabBar;
     readonly UIView _contentArea;
-    readonly List<UIButton> _tabButtons = new();
+    readonly UIFocusGuide _toSelectedTab = new();
+    readonly List<TvOSTabButton> _tabButtons = new();
 
     UIView? _currentPageView;
     int _selectedIndex = -1;
@@ -20,10 +80,18 @@ public class TabbedContainerView : TvOSContainerView
 
     public TabbedContainerView()
     {
+        _tabBarBackground = new UIVisualEffectView(UIBlurEffect.FromStyle(UIBlurEffectStyle.Dark))
+        {
+            TranslatesAutoresizingMaskIntoConstraints = false,
+            ClipsToBounds = true,
+        };
+        _tabBarBackground.Layer.CornerRadius = 40;
+
         _tabBar = new UIStackView
         {
             Axis = UILayoutConstraintAxis.Horizontal,
-            Distribution = UIStackViewDistribution.FillEqually,
+            Distribution = UIStackViewDistribution.Fill,
+            Alignment = UIStackViewAlignment.Center,
             Spacing = 8,
             TranslatesAutoresizingMaskIntoConstraints = false,
         };
@@ -34,20 +102,32 @@ public class TabbedContainerView : TvOSContainerView
             BackgroundColor = UIColor.Clear,
         };
 
-        AddSubview(_tabBar);
         AddSubview(_contentArea);
+        AddSubview(_tabBarBackground);
+        _tabBarBackground.ContentView.AddSubview(_tabBar);
+        AddLayoutGuide(_toSelectedTab);
 
         NSLayoutConstraint.ActivateConstraints(new[]
         {
-            _tabBar.TopAnchor.ConstraintEqualTo(TopAnchor, 20),
-            _tabBar.LeadingAnchor.ConstraintEqualTo(LeadingAnchor, 60),
-            _tabBar.TrailingAnchor.ConstraintEqualTo(TrailingAnchor, -60),
-            _tabBar.HeightAnchor.ConstraintEqualTo(80),
+            _tabBarBackground.TopAnchor.ConstraintEqualTo(TopAnchor, 36),
+            _tabBarBackground.CenterXAnchor.ConstraintEqualTo(CenterXAnchor),
+            _tabBarBackground.HeightAnchor.ConstraintEqualTo(80),
 
-            _contentArea.TopAnchor.ConstraintEqualTo(_tabBar.BottomAnchor, 10),
+            _tabBar.LeadingAnchor.ConstraintEqualTo(_tabBarBackground.ContentView.LeadingAnchor, 10),
+            _tabBar.TrailingAnchor.ConstraintEqualTo(_tabBarBackground.ContentView.TrailingAnchor, -10),
+            _tabBar.CenterYAnchor.ConstraintEqualTo(_tabBarBackground.ContentView.CenterYAnchor),
+
+            _contentArea.TopAnchor.ConstraintEqualTo(_tabBarBackground.BottomAnchor, 12),
             _contentArea.LeadingAnchor.ConstraintEqualTo(LeadingAnchor),
             _contentArea.TrailingAnchor.ConstraintEqualTo(TrailingAnchor),
             _contentArea.BottomAnchor.ConstraintEqualTo(BottomAnchor),
+
+            // Moving up from anywhere under the bar lands on the selected tab, not the
+            // tab that happens to sit above the focused item.
+            _toSelectedTab.LeadingAnchor.ConstraintEqualTo(LeadingAnchor),
+            _toSelectedTab.TrailingAnchor.ConstraintEqualTo(TrailingAnchor),
+            _toSelectedTab.TopAnchor.ConstraintEqualTo(_tabBarBackground.TopAnchor),
+            _toSelectedTab.BottomAnchor.ConstraintEqualTo(_tabBarBackground.BottomAnchor),
         });
     }
 
@@ -60,9 +140,9 @@ public class TabbedContainerView : TvOSContainerView
         for (int i = 0; i < titles.Count; i++)
         {
             var index = i;
-            var btn = new UIButton(UIButtonType.System);
+            var btn = new TvOSTabButton();
             btn.SetTitle(titles[i], UIControlState.Normal);
-            btn.TitleLabel!.Font = UIFont.BoldSystemFontOfSize(28);
+            btn.GotFocus = () => OnTabSelected?.Invoke(index);
             btn.PrimaryActionTriggered += (s, e) => OnTabSelected?.Invoke(index);
             _tabButtons.Add(btn);
             _tabBar.AddArrangedSubview(btn);
@@ -83,21 +163,18 @@ public class TabbedContainerView : TvOSContainerView
     void UpdateTabAppearance()
     {
         for (int i = 0; i < _tabButtons.Count; i++)
-        {
-            var btn = _tabButtons[i];
-            if (i == _selectedIndex)
-            {
-                btn.SetTitleColor(UIColor.White, UIControlState.Normal);
-                btn.BackgroundColor = UIColor.FromRGBA(74, 144, 226, 255);
-                btn.Layer.CornerRadius = 12;
-            }
-            else
-            {
-                btn.SetTitleColor(UIColor.LightGray, UIControlState.Normal);
-                btn.BackgroundColor = UIColor.FromRGBA(42, 42, 74, 255);
-                btn.Layer.CornerRadius = 12;
-            }
-        }
+            _tabButtons[i].IsSelectedTab = i == _selectedIndex;
+
+        var selected = _selectedIndex >= 0 && _selectedIndex < _tabButtons.Count ? _tabButtons[_selectedIndex] : null;
+        _toSelectedTab.PreferredFocusEnvironments = selected != null ? new IUIFocusEnvironment[] { selected } : Array.Empty<IUIFocusEnvironment>();
+        // The guide only matters while focus is below the bar.
+        _toSelectedTab.Enabled = selected != null && !_tabButtons.Any(b => b.Focused);
+    }
+
+    public override void DidUpdateFocus(UIFocusUpdateContext context, UIFocusAnimationCoordinator coordinator)
+    {
+        base.DidUpdateFocus(context, coordinator);
+        _toSelectedTab.Enabled = _selectedIndex >= 0 && !_tabButtons.Any(b => b.Focused);
     }
 
     public void ShowContent(UIView view)
@@ -124,7 +201,19 @@ public class TabbedContainerView : TvOSContainerView
 public partial class TabbedPageHandler : TvOSViewHandler<ITabbedView, TabbedContainerView>
 {
     public static readonly IPropertyMapper<ITabbedView, TabbedPageHandler> Mapper =
-        new PropertyMapper<ITabbedView, TabbedPageHandler>(ViewMapper);
+        new PropertyMapper<ITabbedView, TabbedPageHandler>(ViewMapper)
+        {
+            [nameof(TabbedPage.CurrentPage)] = MapCurrentPage,
+        };
+
+    int _shownIndex = -1;
+
+    /// <summary>Lets the app switch tabs by setting TabbedPage.CurrentPage.</summary>
+    public static void MapCurrentPage(TabbedPageHandler handler, ITabbedView view)
+    {
+        if (handler.TabbedPage is { CurrentPage: { } current } tabbedPage)
+            handler.SelectPage(tabbedPage.Children.IndexOf(current));
+    }
 
     public TabbedPageHandler() : base(Mapper)
     {
@@ -175,8 +264,9 @@ public partial class TabbedPageHandler : TvOSViewHandler<ITabbedView, TabbedCont
 
         PlatformView.SetTabs(titles);
 
+        _shownIndex = -1;
         if (TabbedPage.Children.Count > 0)
-            SelectPage(0);
+            SelectPage(Math.Max(0, TabbedPage.Children.IndexOf(TabbedPage.CurrentPage)));
     }
 
     void OnTabSelected(int index)
@@ -188,6 +278,9 @@ public partial class TabbedPageHandler : TvOSViewHandler<ITabbedView, TabbedCont
     {
         if (TabbedPage == null || index < 0 || index >= TabbedPage.Children.Count || MauiContext == null)
             return;
+        if (index == _shownIndex)
+            return;
+        _shownIndex = index;
 
         TabbedPage.CurrentPage = TabbedPage.Children[index];
         PlatformView.SelectTab(index);

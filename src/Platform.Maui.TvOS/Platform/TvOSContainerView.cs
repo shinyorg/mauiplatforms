@@ -1,17 +1,57 @@
 using CoreGraphics;
+using Foundation;
 using Microsoft.Maui.Graphics;
 using UIKit;
 
 namespace Microsoft.Maui.Platform.TvOS;
 
-public class TvOSContainerView : UIView
+public class TvOSContainerView : UIView, ITvOSFocusableView
 {
     public Func<double, double, Graphics.Size>? CrossPlatformMeasure { get; set; }
     public Func<Graphics.Rect, Graphics.Size>? CrossPlatformArrange { get; set; }
 
+    public Action? PrimaryAction { get; set; }
+    public Action<bool>? FocusChanged { get; set; }
+
     public TvOSContainerView()
     {
         BackgroundColor = UIColor.Clear;
+    }
+
+    public override bool CanBecomeFocused => TvOSFocusableBehavior.CanBecomeFocused(this, PrimaryAction);
+
+    public override void DidUpdateFocus(UIFocusUpdateContext context, UIFocusAnimationCoordinator coordinator)
+    {
+        base.DidUpdateFocus(context, coordinator);
+
+        if (context.NextFocusedView == this)
+        {
+            TvOSFocusEffect.Animate(this, true, coordinator);
+            FocusChanged?.Invoke(true);
+        }
+        else if (context.PreviouslyFocusedView == this)
+        {
+            TvOSFocusEffect.Animate(this, false, coordinator);
+            FocusChanged?.Invoke(false);
+        }
+    }
+
+    public override void PressesBegan(NSSet<UIPress> presses, UIPressesEvent evt)
+    {
+        if (!TvOSFocusableBehavior.HandlePressesBegan(this, presses, PrimaryAction))
+            base.PressesBegan(presses, evt);
+    }
+
+    public override void PressesEnded(NSSet<UIPress> presses, UIPressesEvent evt)
+    {
+        if (!TvOSFocusableBehavior.HandlePressesEnded(this, presses, PrimaryAction))
+            base.PressesEnded(presses, evt);
+    }
+
+    public override void PressesCancelled(NSSet<UIPress> presses, UIPressesEvent evt)
+    {
+        if (!TvOSFocusableBehavior.HandlePressesCancelled(this, presses, PrimaryAction))
+            base.PressesCancelled(presses, evt);
     }
 
     public override CGSize SizeThatFits(CGSize size)

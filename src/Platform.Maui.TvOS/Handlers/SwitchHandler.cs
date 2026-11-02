@@ -3,7 +3,7 @@ using UIKit;
 
 namespace Microsoft.Maui.Platform.TvOS.Handlers;
 
-public partial class SwitchHandler : TvOSViewHandler<ISwitch, UIButton>
+public partial class SwitchHandler : TvOSViewHandler<ISwitch, TvOSButton>
 {
     public static readonly IPropertyMapper<ISwitch, SwitchHandler> Mapper =
         new PropertyMapper<ISwitch, SwitchHandler>(ViewMapper)
@@ -19,20 +19,24 @@ public partial class SwitchHandler : TvOSViewHandler<ISwitch, UIButton>
     {
     }
 
-    protected override UIButton CreatePlatformView()
+    // tvOS has no UISwitch: the switch is a toggle button that lifts on focus like any other.
+    protected override TvOSButton CreatePlatformView()
     {
-        var button = new UIButton(UIButtonType.System);
-        button.SetTitle("OFF", UIControlState.Normal);
+        var button = new TvOSButton();
+#pragma warning disable CA1422 // ContentEdgeInsets: no UIButtonConfiguration
+        button.ContentEdgeInsets = new UIEdgeInsets(16, 36, 16, 36);
+#pragma warning restore CA1422
+        button.TitleLabel!.Font = UIFont.SystemFontOfSize(29, UIFontWeight.Semibold);
         return button;
     }
 
-    protected override void ConnectHandler(UIButton platformView)
+    protected override void ConnectHandler(TvOSButton platformView)
     {
         base.ConnectHandler(platformView);
         platformView.PrimaryActionTriggered += OnToggled;
     }
 
-    protected override void DisconnectHandler(UIButton platformView)
+    protected override void DisconnectHandler(TvOSButton platformView)
     {
         platformView.PrimaryActionTriggered -= OnToggled;
         base.DisconnectHandler(platformView);
@@ -56,20 +60,21 @@ public partial class SwitchHandler : TvOSViewHandler<ISwitch, UIButton>
 
     public static void MapIsOn(SwitchHandler handler, ISwitch view)
     {
-        handler.PlatformView.SetTitle(view.IsOn ? "ON" : "OFF", UIControlState.Normal);
-        handler.PlatformView.BackgroundColor = view.IsOn
-            ? UIColor.SystemGreen
-            : UIColor.SystemGray;
+        handler.PlatformView.SetTitle(view.IsOn ? "●  On" : "○  Off", UIControlState.Normal);
+        UpdateColors(handler, view);
+        view.InvalidateMeasure();
     }
 
-    public static void MapTrackColor(SwitchHandler handler, ISwitch view)
-    {
-        if (!view.IsOn && view.TrackColor != null)
-            handler.PlatformView.BackgroundColor = view.TrackColor.ToPlatformColor();
-    }
+    public static void MapTrackColor(SwitchHandler handler, ISwitch view) => UpdateColors(handler, view);
 
-    public static void MapThumbColor(SwitchHandler handler, ISwitch view)
+    public static void MapThumbColor(SwitchHandler handler, ISwitch view) => UpdateColors(handler, view);
+
+    static void UpdateColors(SwitchHandler handler, ISwitch view)
     {
-        // No thumb on button-based toggle
+        // On: the track (OnColor) color, or the system green. Off: the standard translucent button.
+        handler.PlatformView.CustomBackground = view.IsOn
+            ? view.TrackColor?.ToPlatformColor() ?? UIColor.SystemGreen
+            : null;
+        handler.PlatformView.TextColor = view.ThumbColor?.ToPlatformColor() ?? UIColor.White;
     }
 }

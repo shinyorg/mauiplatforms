@@ -23,33 +23,13 @@
         <ProjectReference Include="..\..\src\Platform.Maui.Essentials.TvOS\Platform.Maui.Essentials.TvOS.csproj" />
     </ItemGroup>
 
+    <!-- The pages live in this project; only the tvOS entry point is shared with samples/Sample. -->
     <ItemGroup>
-        <Compile Include="..\Sample\App.cs">
-            <Link>App.cs</Link>
-        </Compile>
-        <Compile Include="..\Sample\AppColors.cs">
-            <Link>AppColors.cs</Link>
-        </Compile>
-        <Compile Include="..\Sample\MainPage.cs">
-            <Link>MainPage.cs</Link>
-        </Compile>
-        <Compile Include="..\Sample\CollectionViewPage.cs">
-            <Link>CollectionViewPage.cs</Link>
-        </Compile>
-        <Compile Include="..\Sample\EssentialsPage.cs">
-            <Link>EssentialsPage.cs</Link>
-        </Compile>
-        <Compile Include="..\Sample\StoragePage.cs">
-            <Link>StoragePage.cs</Link>
-        </Compile>
-        <Compile Include="..\Sample\Pages\MapPage.cs">
-            <Link>Pages\MapPage.cs</Link>
-        </Compile>
         <Compile Include="..\Sample\Platforms\tvOS\Main.cs">
             <Link>Main.cs</Link>
         </Compile>
         <Compile Include="..\Sample\Platforms\tvOS\MauiTvOSApp.cs">
-            <Link>MauiMacOSApp.cs</Link>
+            <Link>MauiTvOSApp.cs</Link>
         </Compile>
         <BundleResource Include="..\Sample\Platforms\tvOS\Info.plist">
             <Link>Info.plist</Link>

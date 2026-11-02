@@ -46,25 +46,23 @@ public partial class ImageHandler : TvOSViewHandler<IImage, UIImageView>
 
     public static void MapSource(ImageHandler handler, IImage image)
     {
-        Console.WriteLine($"[ImageHandler] MapSource called, image type: {image.GetType().Name}");
-
         if (image is IImageSourcePart imageSourcePart)
-        {
-            Console.WriteLine($"[ImageHandler] Source type: {imageSourcePart.Source?.GetType().Name ?? "null"}");
             handler.LoadImageSource(imageSourcePart);
-        }
-        else
-        {
-            Console.Error.WriteLine($"[ImageHandler] Image does not implement IImageSourcePart");
-        }
     }
+
+    static readonly HttpClient Http = new();
+    static readonly NSCache Cache = new() { CountLimit = 200 };
+
+    // Bumped on every source change, so a download that finishes after the view moved on
+    // to another source (a recycled CollectionView cell) is dropped instead of shown.
+    int _loadVersion;
 
     void LoadImageSource(IImageSourcePart imageSourcePart)
     {
+        var version = ++_loadVersion;
         var source = imageSourcePart.Source;
         if (source == null)
         {
-            Console.WriteLine("[ImageHandler] Source is null, clearing image");
             PlatformView.Image = null;
             imageSourcePart.UpdateIsLoading(false);
             return;
@@ -72,71 +70,65 @@ public partial class ImageHandler : TvOSViewHandler<IImage, UIImageView>
 
         imageSourcePart.UpdateIsLoading(true);
 
-        if (source is IUriImageSource uriImageSource)
+        switch (source)
         {
-            var uri = uriImageSource.Uri;
-            Console.WriteLine($"[ImageHandler] Loading URI image: {uri}");
-            if (uri != null)
-            {
-                LoadFromUri(uri, imageSourcePart);
-            }
-            else
-            {
+            case IUriImageSource { Uri: { } uri }:
+                if (Cache.ObjectForKey(new NSString(uri.AbsoluteUri)) is UIImage cached)
+                {
+                    PlatformView.Image = cached;
+                    imageSourcePart.UpdateIsLoading(false);
+                }
+                else
+                {
+                    // Clear the previous image so a recycled view doesn't show stale art.
+                    PlatformView.Image = null;
+                    LoadFromUri(uri, imageSourcePart, version);
+                }
+                break;
+
+            case IFileImageSource { File: { Length: > 0 } fileName }:
+                PlatformView.Image = UIImage.FromBundle(fileName) ?? UIImage.FromFile(fileName);
+                imageSourcePart.UpdateIsLoading(false);
+                break;
+
+            default:
                 PlatformView.Image = null;
                 imageSourcePart.UpdateIsLoading(false);
-            }
-        }
-        else if (source is IFileImageSource fileImageSource)
-        {
-            var fileName = fileImageSource.File;
-            Console.WriteLine($"[ImageHandler] Loading file image: {fileName}");
-            if (!string.IsNullOrEmpty(fileName))
-            {
-                var uiImage = UIImage.FromBundle(fileName) ?? UIImage.FromFile(fileName);
-                PlatformView.Image = uiImage;
-                Console.WriteLine($"[ImageHandler] File image loaded: {uiImage != null}");
-            }
-
-            imageSourcePart.UpdateIsLoading(false);
-        }
-        else
-        {
-            Console.Error.WriteLine($"[ImageHandler] Unsupported source type: {source.GetType().Name}");
-            PlatformView.Image = null;
-            imageSourcePart.UpdateIsLoading(false);
+                break;
         }
     }
 
-    async void LoadFromUri(Uri uri, IImageSourcePart imageSourcePart)
+    async void LoadFromUri(Uri uri, IImageSourcePart imageSourcePart, int version)
     {
         try
         {
-            Console.WriteLine($"[ImageHandler] Starting HTTP download: {uri}");
-            using var client = new HttpClient();
-            var data = await client.GetByteArrayAsync(uri);
-            Console.WriteLine($"[ImageHandler] Downloaded {data.Length} bytes");
+            var data = await Http.GetByteArrayAsync(uri);
+            var uiImage = UIImage.LoadFromData(NSData.FromArray(data));
+            if (uiImage != null)
+                Cache.SetObjectforKey(uiImage, new NSString(uri.AbsoluteUri));
 
-            var nsData = NSData.FromArray(data);
-            var uiImage = UIImage.LoadFromData(nsData);
-            Console.WriteLine($"[ImageHandler] UIImage created: {uiImage != null}, size: {uiImage?.Size}");
+            if (version != _loadVersion || PlatformView == null)
+                return;
 
-            if (PlatformView != null)
+            PlatformView.Image = uiImage;
+            if (uiImage != null)
             {
-                PlatformView.Image = uiImage;
-                Console.WriteLine("[ImageHandler] Image set on UIImageView");
-
-                // Force layout update after async image load
-                PlatformView.SetNeedsLayout();
-                PlatformView.Superview?.SetNeedsLayout();
+                // Fade in rather than pop.
+                PlatformView.Alpha = 0;
+                UIView.Animate(0.25, () => PlatformView.Alpha = (nfloat)VirtualView.Opacity);
             }
+            // Only an image without a fixed size can change the layout around it.
+            if (VirtualView is { } view && !(view.Width >= 0 && view.Height >= 0))
+                view.InvalidateMeasure();
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"[ImageHandler] Failed to load image from URI: {ex}");
+            Console.Error.WriteLine($"[ImageHandler] Failed to load image from {uri}: {ex.Message}");
         }
         finally
         {
-            imageSourcePart.UpdateIsLoading(false);
+            if (version == _loadVersion)
+                imageSourcePart.UpdateIsLoading(false);
         }
     }
 }

@@ -18,9 +18,10 @@ public abstract class TvOSViewHandler<TVirtualView, TPlatformView> : ViewHandler
 {
     static TvOSViewHandler()
     {
-        if (ViewMapper is PropertyMapper<IView, IViewHandler> mapper)
-            mapper[nameof(IView.Shadow)] = MapShadow;
+        TvOSViewProperties.EnsureRegistered();
     }
+
+    TvOSTapGestureManager? _tapGestures;
 
     protected TvOSViewHandler(IPropertyMapper mapper) : base(mapper)
     {
@@ -30,27 +31,33 @@ public abstract class TvOSViewHandler<TVirtualView, TPlatformView> : ViewHandler
     {
     }
 
-    public static void MapShadow(IViewHandler handler, IView view)
+    protected override void ConnectHandler(TPlatformView platformView)
     {
-        var platformView = handler.PlatformView as UIView;
-        if (platformView?.Layer == null)
-            return;
+        base.ConnectHandler(platformView);
 
-        var shadow = view.Shadow;
-        if (shadow == null)
+        if (VirtualView is Microsoft.Maui.Controls.View view && platformView is ITvOSFocusableView focusable)
         {
-            platformView.Layer.ShadowOpacity = 0;
-            return;
+            _tapGestures = new TvOSTapGestureManager(view, focusable);
+            focusable.FocusChanged = focused => UpdateFocusVisualState(view, focused);
         }
+    }
 
-        platformView.Layer.ShadowOpacity = shadow.Opacity;
-        platformView.Layer.ShadowRadius = shadow.Radius;
-        platformView.Layer.ShadowOffset = new CGSize((float)shadow.Offset.X, (float)shadow.Offset.Y);
+    protected override void DisconnectHandler(TPlatformView platformView)
+    {
+        _tapGestures?.Dispose();
+        _tapGestures = null;
+        if (platformView is ITvOSFocusableView focusable)
+            focusable.FocusChanged = null;
 
-        if (shadow.Paint is SolidPaint solidPaint && solidPaint.Color is not null)
-            platformView.Layer.ShadowColor = solidPaint.Color.ToPlatformColor().CGColor;
-        else
-            platformView.Layer.ShadowColor = UIColor.Black.CGColor;
+        base.DisconnectHandler(platformView);
+    }
+
+    /// <summary>Moves a focusable view into the "Focused" visual state while the remote is on it.</summary>
+    internal static void UpdateFocusVisualState(Microsoft.Maui.Controls.VisualElement view, bool focused)
+    {
+        if (focused && Microsoft.Maui.Controls.VisualStateManager.GoToState(view, "Focused"))
+            return;
+        Microsoft.Maui.Controls.VisualStateManager.GoToState(view, view.IsEnabled ? "Normal" : "Disabled");
     }
 
     public override void PlatformArrange(Rect rect)
@@ -65,13 +72,8 @@ public abstract class TvOSViewHandler<TVirtualView, TPlatformView> : ViewHandler
         var width = Sanitize(rect.Width);
         var height = Sanitize(rect.Height);
 
-        // Set Center and Bounds rather than Frame because Frame is
-        // undefined if the CALayer's transform is anything other than identity.
-        var centerX = x + (width / 2.0);
-        var centerY = y + (height / 2.0);
-
-        platformView.Center = new CGPoint(centerX, centerY);
-        platformView.Bounds = new CGRect(0, 0, width, height);
+        TvOSTransforms.Arrange(platformView, new CGRect(x, y, width, height));
+        TvOSBackground.UpdateFrame(platformView);
     }
 
     public override Size GetDesiredSize(double widthConstraint, double heightConstraint)
