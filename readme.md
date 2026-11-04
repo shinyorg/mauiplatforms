@@ -4,8 +4,6 @@
 [![NuGet](https://img.shields.io/nuget/v/Platform.Maui.Essentials.TvOS.svg?label=Platform.Maui.Essentials.TvOS)](https://www.nuget.org/packages/Platform.Maui.Essentials.TvOS/)
 [![NuGet](https://img.shields.io/nuget/v/Platform.Maui.Web.svg?label=Platform.Maui.Web)](https://www.nuget.org/packages/Platform.Maui.Web/)
 [![NuGet](https://img.shields.io/nuget/v/Platform.Maui.Web.Essentials.svg?label=Platform.Maui.Web.Essentials)](https://www.nuget.org/packages/Platform.Maui.Web.Essentials/)
-[![NuGet](https://img.shields.io/nuget/v/Shiny.Maui.Controls.Camera.Web.svg?label=Shiny.Maui.Controls.Camera.Web)](https://www.nuget.org/packages/Shiny.Maui.Controls.Camera.Web/)
-[![NuGet](https://img.shields.io/nuget/v/Shiny.Maui.Controls.MediaElement.Web.svg?label=Shiny.Maui.Controls.MediaElement.Web)](https://www.nuget.org/packages/Shiny.Maui.Controls.MediaElement.Web/)
 
 Custom .NET MAUI backends for platforms MAUI doesn't officially support: **Apple TV** (tvOS via UIKit) and
 the **web** (WebAssembly, rendering real DOM elements, without Blazor).
@@ -391,8 +389,9 @@ editing doesn't appear.
 #### Shiny CameraView and MediaElement
 
 `Shiny.Maui.Controls.Camera` and `Shiny.Maui.Controls.MediaElement` ship native handlers only, so this
-repo provides their web backends as separate packages. Reference them next to `Platform.Maui.Web` and
-call the web registration **instead of** `UseShinyCamera()` / `UseShinyMediaElement()`:
+repo provides their web backends as separate projects (not published to NuGet yet; SampleWeb references
+them directly). Reference them next to `Platform.Maui.Web` and call the web registration **instead of**
+`UseShinyCamera()` / `UseShinyMediaElement()`:
 
 ```csharp
 builder

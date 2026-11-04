@@ -7,6 +7,8 @@
         <RootNamespace>Shiny.Maui.Controls.Camera.Web</RootNamespace>
         <PackageId>Shiny.Maui.Controls.Camera.Web</PackageId>
         <PackageVersion>$(WebPackageVersion)</PackageVersion>
+        <!-- Not published to NuGet yet: built only as part of SampleWeb. -->
+        <IsPackable>false</IsPackable>
         <Description>Browser backend for the Shiny .NET MAUI CameraView on Platform.Maui.Web, built on getUserMedia and MediaRecorder. Pairs with Shiny.Maui.Controls.Camera.</Description>
         <PackageTags>$(PackageTags) web wasm webassembly browser camera getusermedia</PackageTags>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
