@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:local="clr-namespace:Sample.Features.Buttons"
+             x:Class="Sample.Features.Buttons.ButtonsPage"
+             x:DataType="local:ButtonsViewModel"
+             Title="ShinyButton"
+             AutomationId="ButtonsPage">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="18">
+
+            <Label Text="ShinyButton"
+                   FontSize="22"
+                   FontAttributes="Bold" />
+
+            <Label AutomationId="ButtonsStatusLabel" Text="{Binding StatusMessage}" FontSize="14" />
+
+            <BoxView HeightRequest="1" Color="LightGray" />
+
+            <!-- ============================================================ -->
+            <Label Text="Appearance × Type" FontAttributes="Bold" />
+            <Label Text="Every combination is resolved from the theme tokens, so the theme switcher restyles all of them."
+                   FontSize="12" />
+
+            <FlexLayout Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
+                <shiny:ShinyButton AutomationId="FilledButton" Text="Filled" Appearance="Filled" Type="Primary"
+                                   Command="{Binding NoteCommand}" CommandParameter="Filled"
+                                   Margin="0,0,8,8" />
+                <shiny:ShinyButton Text="Tonal" Appearance="Tonal" Type="Primary"
+                                   Command="{Binding NoteCommand}" CommandParameter="Tonal"
+                                   Margin="0,0,8,8" />
+                <shiny:ShinyButton Text="Outlined" Appearance="Outlined" Type="Primary"
+                                   Command="{Binding NoteCommand}" CommandParameter="Outlined"
+                                   Margin="0,0,8,8" />
+                <shiny:ShinyButton Text="Text" Appearance="Text" Type="Primary"
+                                   Command="{Binding NoteCommand}" CommandParameter="Text"
+                                   Margin="0,0,8,8" />
+                <shiny:ShinyButton Text="Elevated" Appearance="Elevated" Type="Primary"
+                                   Command="{Binding NoteCommand}" CommandParameter="Elevated"
+                                   Margin="0,0,8,8" />
+            </FlexLayout>
+
+            <FlexLayout Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
+                <shiny:ShinyButton Text="Success" Type="Success" LeftMotionIcon="check"
+                                   Command="{Binding NoteCommand}" CommandParameter="Success"
+                                   Margin="0,0,8,8" />
+                <shiny:ShinyButton Text="Warning" Type="Warning" LeftMotionIcon="warning"
+                                   Command="{Binding NoteCommand}" CommandParameter="Warning"
+                                   Margin="0,0,8,8" />
+                <shiny:ShinyButton Text="Delete" Type="Critical" Appearance="Outlined" LeftMotionIcon="trash"
+                                   Command="{Binding NoteCommand}" CommandParameter="Delete"
+                                   Margin="0,0,8,8" />
+                <shiny:ShinyButton Text="Info" Type="Info" Appearance="Tonal" LeftMotionIcon="info"
+                                   Command="{Binding NoteCommand}" CommandParameter="Info"
+                                   Margin="0,0,8,8" />
+                <shiny:ShinyButton Text="Brand" ButtonBackgroundColor="#E91E63" TextColor="White"
+                                   Command="{Binding NoteCommand}" CommandParameter="Brand"
+                                   Margin="0,0,8,8" />
+            </FlexLayout>
+
+            <BoxView HeightRequest="1" Color="LightGray" />
+
+            <!-- ============================================================ -->
+            <Label Text="Motion icons in the slots" FontAttributes="Bold" />
+            <Label Text="Tap one: the icon plays a cycle and the button still raises its command. The icon takes its colour from the button's foreground."
+                   FontSize="12" />
+
+            <shiny:ShinyButton Text="Notifications" LeftMotionIcon="bell" Appearance="Tonal"
+                               Command="{Binding NoteCommand}" CommandParameter="Bell"
+                               HorizontalOptions="Start" />
+
+            <shiny:ShinyButton Text="Continue" RightMotionIcon="arrow-right" Appearance="Filled"
+                               Command="{Binding NoteCommand}" CommandParameter="Continue"
+                               HorizontalOptions="Start" />
+
+            <shiny:ShinyButton Text="Refresh feed" LeftMotionIcon="refresh" RightMotionIcon="chevron-down"
+                               Appearance="Outlined"
+                               Command="{Binding NoteCommand}" CommandParameter="Refresh"
+                               HorizontalOptions="Start" />
+
+            <shiny:ShinyButton Text="Upload" LeftMotionIcon="upload" ContentLayout="Top"
+                               Appearance="Elevated" IconSize="28"
+                               Command="{Binding NoteCommand}" CommandParameter="Upload"
+                               HorizontalOptions="Start" />
+
+            <BoxView HeightRequest="1" Color="LightGray" />
+
+            <!-- ============================================================ -->
+            <Label Text="Busy modes" FontAttributes="Bold" />
+            <Label Text="All three run the same async command. The button goes busy on its own — nothing binds IsBusy."
+                   FontSize="12" />
+
+            <shiny:ShinyButton Text="Save (ReplaceLeftIcon)"
+                               AutomationId="BusyReplaceLeftIcon"
+                               LeftMotionIcon="download"
+                               BusyText="Saving..."
+                               BusyMode="ReplaceLeftIcon"
+                               Command="{Binding SaveCommand}"
+                               HorizontalOptions="Start" />
+
+            <shiny:ShinyButton Text="Save (ReplaceContent)"
+                               AutomationId="BusyReplaceContent"
+                               BusyMode="ReplaceContent"
+                               Appearance="Tonal"
+                               Command="{Binding SaveCommand}"
+                               HorizontalOptions="Start" />
+
+            <shiny:ShinyButton Text="Save (KeepContent)"
+                               AutomationId="BusyKeepContent"
+                               LeftMotionIcon="cloud"
+                               BusyMode="KeepContent"
+                               Appearance="Outlined"
+                               Command="{Binding SaveCommand}"
+                               HorizontalOptions="Start" />
+
+            <shiny:ShinyButton Text="Save (native spinner)"
+                               AutomationId="BusyNativeSpinner"
+                               BusyMotionIcon=""
+                               BusyText="Saving..."
+                               Appearance="Elevated"
+                               Command="{Binding SaveCommand}"
+                               HorizontalOptions="Start" />
+
+            <HorizontalStackLayout Spacing="8">
+                <CheckBox AutomationId="ShouldFailCheckBox" IsChecked="{Binding ShouldFail}" />
+                <Label Text="Make the save fail (shows the Error state)" VerticalOptions="Center" />
+            </HorizontalStackLayout>
+
+            <BoxView HeightRequest="1" Color="LightGray" />
+
+            <!-- ============================================================ -->
+            <Label Text="Success &amp; error states" FontAttributes="Bold" />
+            <Label Text="Bound to State. Both revert after StateRevertDelay; a delay of zero would hold."
+                   FontSize="12" />
+
+            <shiny:ShinyButton Text="Submit"
+                               AutomationId="SubmitButton"
+                               State="{Binding ManualState}"
+                               BusyText="Submitting..."
+                               SuccessText="Submitted"
+                               ErrorText="Failed"
+                               StateRevertDelay="0:0:2"
+                               Command="{Binding SubmitCommand}"
+                               HorizontalOptions="Start" />
+
+            <HorizontalStackLayout Spacing="8">
+                <shiny:ShinyButton Text="Force success"
+                                   AutomationId="ForceSuccess" Appearance="Text" Type="Success"
+                                   Command="{Binding ShowSuccessCommand}" />
+                <shiny:ShinyButton Text="Force error"
+                                   AutomationId="ForceError" Appearance="Text" Type="Critical"
+                                   Command="{Binding ShowErrorCommand}" />
+            </HorizontalStackLayout>
+
+            <BoxView HeightRequest="1" Color="LightGray" />
+
+            <!-- ============================================================ -->
+            <Label Text="Command state" FontAttributes="Bold" />
+            <Label Text="The first button follows its command's CanExecute. The second is switched off by the consumer, so it stays off no matter what the command says."
+                   FontSize="12" />
+
+            <shiny:ShinyButton Text="Guarded action"
+                               AutomationId="GuardedAction"
+                               LeftMotionIcon="lock"
+                               Command="{Binding GuardedCommand}"
+                               HorizontalOptions="Start" />
+
+            <shiny:ShinyButton AutomationId="ExplicitlyDisabledButton" Text="Explicitly disabled"
+                               IsEnabled="False"
+                               Command="{Binding GuardedCommand}"
+                               Appearance="Outlined"
+                               HorizontalOptions="Start" />
+
+            <shiny:ShinyButton Text="Toggle CanExecute"
+                               AutomationId="ToggleCanExecute"
+                               Appearance="Text"
+                               Command="{Binding ToggleCanSubmitCommand}"
+                               HorizontalOptions="Start" />
+
+            <BoxView HeightRequest="1" Color="LightGray" />
+
+            <!-- ============================================================ -->
+            <Label Text="Shapes &amp; sizes" FontAttributes="Bold" />
+
+            <FlexLayout Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
+                <shiny:ShinyButton Text="Pill" CornerRadius="24" Margin="0,0,8,8"
+                                   Command="{Binding NoteCommand}" CommandParameter="Pill" />
+                <shiny:ShinyButton Text="Square" CornerRadius="0" Margin="0,0,8,8"
+                                   Command="{Binding NoteCommand}" CommandParameter="Square" />
+                <shiny:ShinyButton Text="Small" FontSize="12" IconSize="14" LeftMotionIcon="star"
+                                   ContentPadding="10,6" CornerRadius="6" Margin="0,0,8,8"
+                                   Command="{Binding NoteCommand}" CommandParameter="Small" />
+                <shiny:ShinyButton Text="Large" FontSize="19" IconSize="26" LeftMotionIcon="heart"
+                                   ContentPadding="24,14" CornerRadius="14" Margin="0,0,8,8"
+                                   Command="{Binding NoteCommand}" CommandParameter="Large" />
+            </FlexLayout>
+
+            <shiny:ShinyButton Text="Full width"
+                               LeftMotionIcon="share"
+                               HorizontalOptions="Fill"
+                               Command="{Binding NoteCommand}" CommandParameter="Full width" />
+
+            <shiny:ShinyButton LeftMotionIcon="settings"
+                               CornerRadius="22"
+                               ContentPadding="11"
+                               AutomationId="IconOnlyButton"
+                               SemanticProperties.Description="Settings"
+                               Command="{Binding NoteCommand}" CommandParameter="Settings"
+                               HorizontalOptions="Start" />
+
+            <BoxView HeightRequest="1" Color="LightGray" Margin="0,0,0,20" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

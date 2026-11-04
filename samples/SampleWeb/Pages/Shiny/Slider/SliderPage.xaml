@@ -1,0 +1,232 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shiny="http://shiny.net/maui/controls"
+    xmlns:local="clr-namespace:Sample.Features.Slider"
+    xmlns:sys="clr-namespace:System;assembly=netstandard"
+    x:Class="Sample.Features.Slider.SliderPage"
+    x:DataType="local:SliderViewModel"
+    Title="Slider"
+    AutomationId="SliderPage">
+
+    <ScrollView Padding="16">
+        <VerticalStackLayout Spacing="24">
+
+            <!-- Basic Temperature -->
+            <Label Text="Temperature" FontSize="18" FontAttributes="Bold" />
+            <shiny:Slider AutomationId="TemperatureSlider"
+                                  Value="{Binding Temperature}"
+                                  Minimum="0"
+                                  Maximum="100"
+                                  ValueFormat="0°" />
+            <Label AutomationId="TemperatureLabel" Text="{Binding Temperature, StringFormat='{0:0}°'}" />
+
+            <!-- Custom Colors -->
+            <Label Text="Custom Colors (Green → Yellow)" FontSize="18" FontAttributes="Bold" />
+            <shiny:Slider AutomationId="IntensitySlider"
+                                  Value="{Binding Intensity}"
+                                  Minimum="0"
+                                  Maximum="10"
+                                  Step="0.5"
+                                  ColdColor="#10B981"
+                                  HotColor="#F59E0B"
+                                  ValueFormat="0.#" />
+            <Label AutomationId="IntensityLabel" Text="{Binding Intensity, StringFormat='Intensity: {0:0.#}'}" />
+
+            <!-- Large Track & Thumb -->
+            <Label Text="Large Track &amp; Thumb" FontSize="18" FontAttributes="Bold" />
+            <shiny:Slider AutomationId="VolumeSlider" Value="{Binding Volume}"
+                                  Minimum="0"
+                                  Maximum="100"
+                                  TrackHeight="12"
+                                  ThumbSize="32"
+                                  ColdColor="#6366F1"
+                                  HotColor="#EC4899" />
+            <Label Text="{Binding Volume, StringFormat='Volume: {0:0}'}" />
+
+            <!-- No Tooltip -->
+            <Label Text="No Tooltip" FontSize="18" FontAttributes="Bold" />
+            <shiny:Slider Value="{Binding Opacity}"
+                                  Minimum="0"
+                                  Maximum="1"
+                                  Step="0.01"
+                                  ShowTooltip="False"
+                                  ColdColor="#94A3B8"
+                                  HotColor="#1E293B" />
+            <Label Text="{Binding Opacity, StringFormat='Opacity: {0:P0}'}" />
+
+            <!-- Fine Step -->
+            <Label Text="Fine Step (0.1)" FontSize="18" FontAttributes="Bold" />
+            <shiny:Slider Value="{Binding FineValue}"
+                                  Minimum="0"
+                                  Maximum="5"
+                                  Step="0.1"
+                                  ColdColor="#06B6D4"
+                                  HotColor="#F97316"
+                                  ValueFormat="0.0" />
+            <Label Text="{Binding FineValue, StringFormat='Value: {0:0.0}'}" />
+
+            <!-- Stop Points -->
+            <Label Text="Stop Points (snap to marks)" FontSize="18" FontAttributes="Bold" />
+            <shiny:Slider AutomationId="QualitySlider"
+                                  Value="{Binding Quality}"
+                                  Minimum="0"
+                                  Maximum="3"
+                                  ShowTooltip="False"
+                                  ColdColor="#94A3B8"
+                                  HotColor="#F59E0B">
+                <shiny:Slider.Marks>
+                    <shiny:SliderMark Value="0" Text="Draft" Color="#94A3B8" />
+                    <shiny:SliderMark Value="1" Text="Good" Color="#38BDF8" />
+                    <shiny:SliderMark Value="2" Text="Better" Color="#22C55E" />
+                    <shiny:SliderMark Value="3" Text="Best" Color="#F59E0B" />
+                </shiny:Slider.Marks>
+            </shiny:Slider>
+            <Label AutomationId="QualityLabel" Text="{Binding Quality, StringFormat='Quality: {0:0}'}" />
+
+            <!-- Bubble Marks -->
+            <Label Text="Bubbles" FontSize="18" FontAttributes="Bold" />
+            <shiny:Slider AutomationId="PlanSlider"
+                                  Value="{Binding Plan}"
+                                  Minimum="0"
+                                  Maximum="100"
+                                  MarkShape="Bubble"
+                                  ShowTooltip="False"
+                                  ColdColor="#6366F1"
+                                  HotColor="#EC4899">
+                <shiny:Slider.Marks>
+                    <shiny:SliderMark Value="0" Text="Free" Color="#E0E7FF" TextColor="#3730A3" />
+                    <shiny:SliderMark Value="50" Text="Pro" Color="#6366F1" TextColor="White" />
+                    <shiny:SliderMark Value="100" Text="Team" Color="#EC4899" TextColor="White" />
+                </shiny:Slider.Marks>
+            </shiny:Slider>
+            <Label Text="{Binding Plan, StringFormat='Plan: {0:0}'}" />
+
+            <!-- Reference Ticks -->
+            <Label Text="Reference Ticks (no snapping)" FontSize="18" FontAttributes="Bold" />
+            <shiny:Slider AutomationId="PressureSlider"
+                                  Value="{Binding Pressure}"
+                                  Minimum="0"
+                                  Maximum="60"
+                                  Step="1"
+                                  SnapToMarks="False"
+                                  MarkShape="Line"
+                                  TrackHeight="10"
+                                  ColdColor="#0EA5E9"
+                                  HotColor="#DC2626"
+                                  ValueFormat="0 psi">
+                <shiny:Slider.Marks>
+                    <shiny:SliderMark Value="15" Text="Low" />
+                    <shiny:SliderMark Value="32" Text="Target" Color="#22C55E" />
+                    <shiny:SliderMark Value="50" Text="Max" Color="#DC2626" />
+                </shiny:Slider.Marks>
+            </shiny:Slider>
+            <Label AutomationId="PressureLabel" Text="{Binding Pressure, StringFormat='Pressure: {0:0} psi'}" />
+
+            <!-- DragCompletedCommand: react once, when the thumb is let go -->
+            <Label Text="Commit on Release (DragCompleted)" FontSize="18" FontAttributes="Bold" />
+            <shiny:Slider AutomationId="SetpointSlider"
+                                  Value="{Binding Setpoint}"
+                                  Minimum="0"
+                                  Maximum="100"
+                                  DragCompletedCommand="{Binding CommitSetpointCommand}" />
+            <Label AutomationId="SetpointLiveLabel" Text="{Binding Setpoint, StringFormat='Live: {0:0}'}" />
+            <Label AutomationId="SetpointCommitted" Text="{Binding CommittedSetpoint}" />
+
+            <!-- Bound Marks: the stops come from the view model -->
+            <Label Text="Bound Marks (MarksSource)" FontSize="18" FontAttributes="Bold" />
+            <shiny:Slider AutomationId="BookmarkSlider"
+                                  Value="{Binding Position}"
+                                  Minimum="0"
+                                  Maximum="100"
+                                  SnapToMarks="False"
+                                  MarkShape="Line"
+                                  MarksSource="{Binding Bookmarks}"
+                                  ValueFormat="0" />
+            <HorizontalStackLayout Spacing="8">
+                <Button AutomationId="AddBookmarkButton" Text="Bookmark here" Command="{Binding AddBookmarkCommand}" />
+                <Button AutomationId="ClearBookmarksButton" Text="Clear" Command="{Binding ClearBookmarksCommand}" />
+            </HorizontalStackLayout>
+
+            <!-- Custom Thumb: the value rides in it -->
+            <Label Text="Custom Thumb (the value rides in it)" FontSize="18" FontAttributes="Bold" />
+            <shiny:Slider AutomationId="BrightnessSlider"
+                                  Value="{Binding Brightness}"
+                                  Minimum="0"
+                                  Maximum="100"
+                                  ShowTooltip="False"
+                                  ThumbWidth="52"
+                                  ThumbHeight="28"
+                                  ThumbPadding="4,0"
+                                  ColdColor="#0EA5E9"
+                                  HotColor="#F59E0B">
+                <shiny:Slider.ThumbTemplate>
+                    <!-- The template's binding context is the slider's own value, so it is typed as a double. -->
+                    <DataTemplate x:DataType="sys:Double">
+                        <Label Text="{Binding ., StringFormat='{0:0}%'}"
+                               FontSize="11"
+                               FontAttributes="Bold"
+                               HorizontalTextAlignment="Center"
+                               VerticalTextAlignment="Center" />
+                    </DataTemplate>
+                </shiny:Slider.ThumbTemplate>
+            </shiny:Slider>
+            <Label AutomationId="BrightnessLabel" Text="{Binding Brightness, StringFormat='Brightness: {0:0}%'}" />
+
+            <!-- Custom Thumb: a glyph -->
+            <Label Text="Custom Thumb (a glyph)" FontSize="18" FontAttributes="Bold" />
+            <shiny:Slider AutomationId="WarmthSlider"
+                                  Value="{Binding Warmth}"
+                                  Minimum="0"
+                                  Maximum="100"
+                                  ThumbSize="34"
+                                  ColdColor="#3B82F6"
+                                  HotColor="#EF4444"
+                                  ValueFormat="0&#176;">
+                <shiny:Slider.ThumbTemplate>
+                    <DataTemplate x:DataType="sys:Double">
+                        <Label Text="&#x2600;"
+                               FontSize="16"
+                               HorizontalTextAlignment="Center"
+                               VerticalTextAlignment="Center" />
+                    </DataTemplate>
+                </shiny:Slider.ThumbTemplate>
+            </shiny:Slider>
+            <Label Text="{Binding Warmth, StringFormat='Warmth: {0:0}&#176;'}" />
+
+            <!-- Vertical -->
+            <Label Text="Vertical" FontSize="18" FontAttributes="Bold" />
+            <HorizontalStackLayout Spacing="32" HorizontalOptions="Center">
+                <shiny:Slider AutomationId="BassSlider"
+                                      Orientation="Vertical"
+                                      VerticalLength="180"
+                                      Value="{Binding Bass}"
+                                      Minimum="0"
+                                      Maximum="10"
+                                      Step="1"
+                                      ColdColor="#0EA5E9"
+                                      HotColor="#22C55E" />
+                <shiny:Slider AutomationId="TrebleSlider"
+                                      Orientation="Vertical"
+                                      VerticalLength="180"
+                                      Value="{Binding Treble}"
+                                      Minimum="0"
+                                      Maximum="10"
+                                      ShowTooltip="False"
+                                      ColdColor="#8B5CF6"
+                                      HotColor="#F97316">
+                    <shiny:Slider.Marks>
+                        <shiny:SliderMark Value="0" Text="Flat" />
+                        <shiny:SliderMark Value="5" Text="Mid" />
+                        <shiny:SliderMark Value="10" Text="Bright" />
+                    </shiny:Slider.Marks>
+                </shiny:Slider>
+            </HorizontalStackLayout>
+            <Label AutomationId="BassLabel" Text="{Binding Bass, StringFormat='Bass: {0:0}'}" />
+            <Label Text="{Binding Treble, StringFormat='Treble: {0:0}'}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

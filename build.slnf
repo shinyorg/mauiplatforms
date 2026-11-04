@@ -6,6 +6,8 @@
       "src\\Platform.Maui.Essentials.Web\\Platform.Maui.Essentials.Web.csproj",
       "src\\Platform.Maui.TvOS\\Platform.Maui.TvOS.csproj",
       "src\\Platform.Maui.Web\\Platform.Maui.Web.csproj",
+      "src\\Shiny.Maui.Controls.Camera.Web\\Shiny.Maui.Controls.Camera.Web.csproj",
+      "src\\Shiny.Maui.Controls.MediaElement.Web\\Shiny.Maui.Controls.MediaElement.Web.csproj",
       "tests\\Platform.Maui.Web.Tests\\Platform.Maui.Web.Tests.csproj"
     ]
   }

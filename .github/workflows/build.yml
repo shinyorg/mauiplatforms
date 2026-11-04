@@ -4,6 +4,7 @@
 # - Pushes to main publish preview packages to nuget.org: <NextVersion>-preview.<run number>.
 # - Pushing a tag vX.Y.Z (or vX.Y.Z-beta.1 and so on) publishes exactly that version to nuget.org
 #   and creates a GitHub Release with the packages and the web sample attached.
+# - Pushes to main also deploy the web sample to GitHub Pages (https://shinyorg.github.io/mauiplatforms/).
 # NextVersion lives in Directory.build.props.
 
 on:
@@ -116,6 +117,22 @@ jobs:
         name: SampleWeb
         path: 'artifacts/SampleWeb/wwwroot'
 
+    - name: Prepare GitHub Pages Site
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      # The same trimmed, AOT-compiled build the Playwright suite just tested. Pages can't serve the
+      # precompressed .br/.gz copies, so they're left out. Relative URLs in index.html and main.js
+      # let the app run below the site root (/mauiplatforms/), which the suite also covers.
+      run: |
+        mkdir -p artifacts/pages
+        rsync -a --exclude '*.br' --exclude '*.gz' artifacts/SampleWeb/wwwroot/ artifacts/pages/
+        touch artifacts/pages/.nojekyll
+
+    - name: Post GitHub Pages Site
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: actions/upload-pages-artifact@v5
+      with:
+        path: artifacts/pages
+
     - name: NuGet Login (OIDC)
       id: nuget-login
       if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || steps.version.outputs.release == 'true')
@@ -138,3 +155,22 @@ jobs:
         if [[ "${{ steps.version.outputs.prerelease }}" == "true" ]]; then flags+=(--prerelease); fi
         gh release create "$GITHUB_REF_NAME" "${flags[@]}" \
           artifacts/nuget/*.nupkg artifacts/nuget/*.snupkg artifacts/SampleWeb-wwwroot.zip
+
+  # Publishes the web sample uploaded by the build job. Needs Settings > Pages > Source: GitHub Actions.
+  pages:
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    steps:
+    - name: Deploy to GitHub Pages
+      id: deploy
+      uses: actions/deploy-pages@v5

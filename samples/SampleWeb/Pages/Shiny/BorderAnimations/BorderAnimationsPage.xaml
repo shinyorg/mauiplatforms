@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shiny="http://shiny.net/maui/controls"
+    x:Class="Sample.Features.BorderAnimations.BorderAnimationsPage"
+    Title="Border Animations"
+    AutomationId="BorderAnimationsPage">
+
+    <ScrollView Padding="16">
+        <VerticalStackLayout Spacing="20">
+
+            <Label Text="Border Beam" FontSize="18" FontAttributes="Bold" />
+            <Label Text="A short beam of light travelling around the border." FontSize="13" />
+
+            <shiny:BorderBeam AutomationId="BeamCard"
+                              CornerRadius="16"
+                              Padding="20"
+                              Background="{AppThemeBinding Light=#FFFFFF, Dark=#18181B}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Login" FontSize="20" FontAttributes="Bold" />
+                    <Label Text="Enter your credentials to access your account." FontSize="13" Opacity="0.7" />
+                    <Button Text="Sign in" Margin="0,8,0,0" AutomationId="BeamCardButton" />
+                </VerticalStackLayout>
+            </shiny:BorderBeam>
+
+            <Label Text="Two beams" FontSize="18" FontAttributes="Bold" />
+            <Label Text="A contentless beam is a plain overlay: lay a reversed one over the card." FontSize="13" />
+
+            <Grid>
+                <shiny:BorderBeam AutomationId="DoubleBeamCard"
+                                  CornerRadius="16"
+                                  BorderWidth="2"
+                                  Size="80"
+                                  Duration="0:0:8"
+                                  Padding="20"
+                                  Background="{AppThemeBinding Light=#FFFFFF, Dark=#18181B}">
+                    <Label Text="Gradients run both ways round. Taps go straight through the overlay."
+                           FontSize="14" />
+                </shiny:BorderBeam>
+                <shiny:BorderBeam CornerRadius="16"
+                                  BorderWidth="2"
+                                  Size="80"
+                                  Duration="0:0:8"
+                                  Reverse="True"
+                                  InitialOffset="50"
+                                  ColorFrom="#40C4FF"
+                                  ColorTo="#22C55E"
+                                  TrackColor="Transparent"
+                                  InputTransparent="True" />
+            </Grid>
+
+            <Label Text="Shine Border" FontSize="18" FontAttributes="Bold" />
+            <Label Text="A multi-colour glow drifting across the border and back." FontSize="13" />
+
+            <shiny:ShineBorder AutomationId="ShineCard"
+                               CornerRadius="16"
+                               BorderWidth="2"
+                               Padding="20"
+                               ShineColors="#A07CFE,#FE8FB5,#FFBE7B"
+                               Duration="0:0:8"
+                               Background="{AppThemeBinding Light=#FFFFFF, Dark=#18181B}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Pro plan" FontSize="20" FontAttributes="Bold" />
+                    <Label Text="Everything in Free, plus unlimited projects." FontSize="13" Opacity="0.7" AutomationId="ShineCardText" />
+                </VerticalStackLayout>
+            </shiny:ShineBorder>
+
+            <shiny:ShineBorder CornerRadius="28"
+                               BorderWidth="3"
+                               Padding="16,10"
+                               ShineColors="#22D3EE"
+                               TrackColor="Transparent"
+                               HorizontalOptions="Center">
+                <Label Text="Single colour, pill shaped" FontSize="14" />
+            </shiny:ShineBorder>
+
+            <Label Text="Running" FontSize="18" FontAttributes="Bold" />
+            <HorizontalStackLayout Spacing="8">
+                <Switch x:Name="RunningSwitch" AutomationId="RunningSwitch" IsToggled="True" />
+                <Label Text="Animate" VerticalOptions="Center" />
+            </HorizontalStackLayout>
+
+            <HorizontalStackLayout Spacing="12" HorizontalOptions="Center">
+                <shiny:BorderBeam AutomationId="RunningBeam"
+                                  IsRunning="{Binding IsToggled, Source={x:Reference RunningSwitch}}"
+                                  CornerRadius="999"
+                                  BorderWidth="2"
+                                  Padding="18,8">
+                    <Label Text="Beam" />
+                </shiny:BorderBeam>
+                <shiny:ShineBorder AutomationId="RunningShine"
+                                   IsRunning="{Binding IsToggled, Source={x:Reference RunningSwitch}}"
+                                   CornerRadius="999"
+                                   BorderWidth="2"
+                                   Padding="18,8">
+                    <Label Text="Shine" />
+                </shiny:ShineBorder>
+            </HorizontalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

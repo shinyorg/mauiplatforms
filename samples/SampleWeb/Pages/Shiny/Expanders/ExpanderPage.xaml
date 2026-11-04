@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:local="clr-namespace:Sample.Features.Expanders"
+             x:Class="Sample.Features.Expanders.ExpanderPage"
+             x:DataType="local:ExpanderViewModel"
+             Title="Expander"
+             AutomationId="ExpanderPage">
+
+    <ScrollView Padding="16">
+        <VerticalStackLayout Spacing="24">
+
+            <!-- ============================================================ -->
+            <!-- Basics -->
+            <!-- ============================================================ -->
+            <Label Text="Header + content" FontSize="18" FontAttributes="Bold" />
+            <Label Text="A header you tap and content that animates in beneath it. Every colour and size falls back to a theme token when you leave it alone." />
+
+            <shiny:Expander HeaderText="Shipping"
+                            HeaderDetail="Arrives Tuesday"
+                            AutomationId="BasicExpander">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="123 Fake Street" />
+                    <Label Text="Springfield" />
+                    <Label Text="Standard delivery, no signature required." />
+                </VerticalStackLayout>
+            </shiny:Expander>
+
+
+            <!-- ============================================================ -->
+            <!-- Motion playground -->
+            <!-- ============================================================ -->
+            <Label Text="Motion" FontSize="18" FontAttributes="Bold" />
+            <Label Text="Fade, slide and height are independent flags — turn on any combination. Height is the one that makes everything below move with the reveal." />
+
+            <Grid ColumnDefinitions="Auto,*,Auto,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="8" RowSpacing="4">
+                <Label Grid.Row="0" Grid.Column="0" Text="Fade" VerticalOptions="Center" />
+                <Switch Grid.Row="0" Grid.Column="1" IsToggled="{Binding UseFade}" HorizontalOptions="Start" AutomationId="FadeSwitch" />
+                <Label Grid.Row="0" Grid.Column="2" Text="Slide" VerticalOptions="Center" />
+                <Switch Grid.Row="0" Grid.Column="3" IsToggled="{Binding UseSlide}" HorizontalOptions="Start" AutomationId="SlideSwitch" />
+                <Label Grid.Row="1" Grid.Column="0" Text="Height" VerticalOptions="Center" />
+                <Switch Grid.Row="1" Grid.Column="1" IsToggled="{Binding UseHeight}" HorizontalOptions="Start" AutomationId="HeightSwitch" />
+            </Grid>
+
+            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="8">
+                <Label Grid.Row="0" Grid.Column="0" Text="Slide from" VerticalOptions="Center" />
+                <Picker Grid.Row="0" Grid.Column="1"
+                        ItemsSource="{Binding SlideFroms}"
+                        SelectedItem="{Binding SlideFrom}"
+                        AutomationId="SlideFromPicker" />
+
+                <Label Grid.Row="1" Grid.Column="0" Text="Direction" VerticalOptions="Center" />
+                <Picker Grid.Row="1" Grid.Column="1"
+                        ItemsSource="{Binding Directions}"
+                        SelectedItem="{Binding Direction}"
+                        AutomationId="DirectionPicker" />
+
+                <Label Grid.Row="2" Grid.Column="0" Text="Indicator" VerticalOptions="Center" />
+                <Picker Grid.Row="2" Grid.Column="1"
+                        ItemsSource="{Binding IndicatorModes}"
+                        SelectedItem="{Binding IndicatorMode}"
+                        AutomationId="IndicatorModePicker" />
+
+                <Label Grid.Row="3" Grid.Column="0" Text="Indicator side" VerticalOptions="Center" />
+                <Picker Grid.Row="3" Grid.Column="1"
+                        ItemsSource="{Binding IndicatorPositions}"
+                        SelectedItem="{Binding IndicatorPosition}"
+                        AutomationId="IndicatorPositionPicker" />
+
+                <Label Grid.Row="4" Grid.Column="0" Text="Duration" VerticalOptions="Center" />
+                <Slider Grid.Row="4" Grid.Column="1"
+                        Minimum="0" Maximum="1200"
+                        Value="{Binding Duration}"
+                        AutomationId="DurationSlider" />
+            </Grid>
+
+            <shiny:Expander HeaderText="Try the settings above"
+                            HeaderDetail="{Binding DurationMs, StringFormat='{0}ms'}"
+                            Animation="{Binding Animation}"
+                            SlideFrom="{Binding SlideFrom}"
+                            ExpandDirection="{Binding Direction}"
+                            IndicatorMode="{Binding IndicatorMode}"
+                            IndicatorPosition="{Binding IndicatorPosition}"
+                            AnimationDuration="{Binding DurationMs}"
+                            AutomationId="PlaygroundExpander">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="Collapse and expand this to see the combination you picked." />
+                    <BoxView HeightRequest="60" Color="#60A5FA" />
+                    <Label Text="Slide direction only matters while the Slide flag is on." />
+                </VerticalStackLayout>
+            </shiny:Expander>
+
+
+            <!-- ============================================================ -->
+            <!-- Chrome -->
+            <!-- ============================================================ -->
+            <Label Text="Border, colour and chrome" FontSize="18" FontAttributes="Bold" />
+            <Label Text="Outline, radius, fills, elevation and the separator are all yours; anything you leave alone follows the theme." />
+
+            <shiny:Expander HeaderText="Coloured border"
+                            BorderColor="#7C3AED"
+                            BorderThickness="2"
+                            CornerRadius="18"
+                            HeaderBackgroundColor="#EDE9FE"
+                            HeaderTextColor="#4C1D95"
+                            AutomationId="ColouredExpander">
+                <Label Text="A two point stroke, an eighteen point radius and a tinted header." />
+            </shiny:Expander>
+
+            <shiny:Expander HeaderText="No border, elevated instead"
+                            BorderThickness="0"
+                            HasShadow="True"
+                            ShowSeparator="False"
+                            IndicatorPosition="Start"
+                            IndicatorMode="Swap"
+                            CollapsedIcon="＋"
+                            ExpandedIcon="－"
+                            AutomationId="ElevatedExpander">
+                <Label Text="Indicator on the leading edge, swapping glyphs instead of rotating, and a drop shadow standing in for the outline." />
+            </shiny:Expander>
+
+            <shiny:Expander HeaderText="Opens upwards"
+                            ExpandDirection="Up"
+                            SlideFrom="Bottom"
+                            Animation="Height,Slide,Fade"
+                            AutomationId="UpwardExpander">
+                <Label Text="Content sits above the header — what a panel pinned to the bottom of a page wants." />
+            </shiny:Expander>
+
+            <shiny:Expander AutomationId="CustomHeaderExpander">
+                <shiny:Expander.Header>
+                    <HorizontalStackLayout Spacing="10" VerticalOptions="Center">
+                        <shiny:PillView Text="LIVE" Type="Critical" />
+                        <Label Text="Custom header view" FontAttributes="Bold" VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                </shiny:Expander.Header>
+                <Label Text="Anything can be the header — the indicator and the tap target are still handled for you." />
+            </shiny:Expander>
+
+
+            <!-- ============================================================ -->
+            <!-- Accordion -->
+            <!-- ============================================================ -->
+            <Label Text="Accordion" FontSize="18" FontAttributes="Bold" />
+            <Label Text="Drop expanders into an Accordion and they agree on how many may be open. The accordion's motion and chrome are defaults — an item that sets its own keeps it." />
+
+            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="12" RowSpacing="8">
+                <Label Grid.Row="0" Grid.Column="0" Text="Mode" VerticalOptions="Center" />
+                <Picker Grid.Row="0" Grid.Column="1"
+                        ItemsSource="{Binding SelectionModes}"
+                        SelectedItem="{Binding SelectionMode}"
+                        AutomationId="SelectionModePicker" />
+
+                <Label Grid.Row="1" Grid.Column="0" Text="Allow all closed" VerticalOptions="Center" />
+                <Switch Grid.Row="1" Grid.Column="1"
+                        IsToggled="{Binding AllowCollapseAll}"
+                        HorizontalOptions="Start"
+                        AutomationId="AllowCollapseAllSwitch" />
+            </Grid>
+
+            <shiny:Accordion SelectionMode="{Binding SelectionMode}"
+                             AllowCollapseAll="{Binding AllowCollapseAll}"
+                             ExpandedIndex="{Binding ExpandedIndex}"
+                             CornerRadius="14"
+                             AutomationId="StaticAccordion">
+                <shiny:Expander HeaderText="Account" HeaderDetail="Name, email, password" AutomationId="AccountExpander">
+                    <Label Text="Everything about who you are." />
+                </shiny:Expander>
+                <shiny:Expander HeaderText="Billing" HeaderDetail="Cards and invoices" AutomationId="BillingExpander">
+                    <Label Text="Everything about who pays." />
+                </shiny:Expander>
+                <shiny:Expander HeaderText="Notifications" HeaderDetail="Push, email, SMS" AutomationId="NotificationsExpander">
+                    <Label Text="Everything about when we bother you." />
+                </shiny:Expander>
+            </shiny:Accordion>
+
+            <Label Text="{Binding ExpandedIndex, StringFormat='ExpandedIndex: {0}'}"
+                   FontSize="12"
+                   AutomationId="ExpandedIndexLabel" />
+
+
+            <!-- ============================================================ -->
+            <!-- Data-driven accordion -->
+            <!-- ============================================================ -->
+            <Label Text="Accordion over data" FontSize="18" FontAttributes="Bold" />
+            <Label Text="Bind ItemsSource and give it a header and content template. Content is built on first open, so a long list stays cheap." />
+
+            <shiny:Accordion ItemsSource="{Binding Faqs}"
+                             SelectionMode="Single"
+                             LoadContentOnDemand="True"
+                             ItemExpandedCommand="{Binding ItemExpandedCommand}"
+                             Animation="Height,Fade"
+                             AutomationId="DataAccordion">
+                <shiny:Accordion.HeaderTemplate>
+                    <DataTemplate x:DataType="local:FaqItem">
+                        <VerticalStackLayout Spacing="2" VerticalOptions="Center">
+                            <Label Text="{Binding Question}" FontAttributes="Bold" />
+                            <Label Text="{Binding Category}" FontSize="11" TextColor="#6B7280" />
+                        </VerticalStackLayout>
+                    </DataTemplate>
+                </shiny:Accordion.HeaderTemplate>
+                <shiny:Accordion.ContentTemplate>
+                    <DataTemplate x:DataType="local:FaqItem">
+                        <Label Text="{Binding Answer}" />
+                    </DataTemplate>
+                </shiny:Accordion.ContentTemplate>
+            </shiny:Accordion>
+
+            <Label Text="{Binding LastEvent, StringFormat='Last event: {0}'}"
+                   FontSize="12"
+                   AutomationId="LastEventLabel" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

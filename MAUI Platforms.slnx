@@ -16,4 +16,6 @@
     <Project Path="src\Platform.Maui.Essentials.Web\Platform.Maui.Essentials.Web.csproj"/>
     <Project Path="src\Platform.Maui.TvOS\Platform.Maui.TvOS.csproj"/>
     <Project Path="src\Platform.Maui.Web\Platform.Maui.Web.csproj"/>
+    <Project Path="src\Shiny.Maui.Controls.Camera.Web\Shiny.Maui.Controls.Camera.Web.csproj"/>
+    <Project Path="src\Shiny.Maui.Controls.MediaElement.Web\Shiny.Maui.Controls.MediaElement.Web.csproj"/>
 </Solution>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:local="clr-namespace:Sample.Features.Avatars"
+             x:Class="Sample.Features.Avatars.AvatarPage"
+             x:DataType="local:AvatarViewModel"
+             Title="Avatar"
+             AutomationId="AvatarPage">
+
+    <ScrollView Padding="16">
+        <VerticalStackLayout Spacing="24">
+
+            <Label Text="Picture, Initials, Silhouette" FontSize="18" FontAttributes="Bold" />
+            <Label Text="A picture when there is one, initials from Name when there is not, a silhouette when there is not even a name. A broken URL falls back to the initials." />
+            <HorizontalStackLayout Spacing="16">
+                <shiny:Avatar Name="Grace Hopper" Uri="https://i.pravatar.cc/150?img=47" Size="56" />
+                <shiny:Avatar Name="Allan Ritchie" Size="56" />
+                <shiny:Avatar Name="Ada Lovelace" Uri="https://example.invalid/missing.png" Size="56" />
+                <shiny:Avatar Size="56" />
+            </HorizontalStackLayout>
+
+            <Label Text="Sizes &amp; Shapes" FontSize="18" FontAttributes="Bold" />
+            <HorizontalStackLayout Spacing="12">
+                <shiny:Avatar Name="Alan Turing" Size="24" />
+                <shiny:Avatar Name="Alan Turing" Size="32" />
+                <shiny:Avatar Name="Alan Turing" Size="40" />
+                <shiny:Avatar Name="Alan Turing" Size="56" Shape="Rounded" />
+                <shiny:Avatar Name="Alan Turing" Size="72" Shape="Square" />
+            </HorizontalStackLayout>
+
+            <Label Text="Colour From Name" FontSize="18" FontAttributes="Bold" />
+            <Label Text="ColorFromName gives every name its own stable hue - the same one on MAUI and Blazor." />
+            <HorizontalStackLayout Spacing="12">
+                <shiny:Avatar Name="Allan Ritchie" ColorFromName="True" />
+                <shiny:Avatar Name="Grace Hopper" ColorFromName="True" />
+                <shiny:Avatar Name="Ada Lovelace" ColorFromName="True" />
+                <shiny:Avatar Name="Alan Turing" ColorFromName="True" />
+                <shiny:Avatar Name="Linus Torvalds" ColorFromName="True" />
+                <shiny:Avatar Name="Margaret Hamilton" ColorFromName="True" />
+            </HorizontalStackLayout>
+
+            <Label Text="Presence" FontSize="18" FontAttributes="Bold" />
+            <Label Text="Tap the avatar to cycle its status." />
+            <HorizontalStackLayout Spacing="16">
+                <shiny:Avatar AutomationId="StatusAvatar"
+                              Name="Allan Ritchie"
+                              Size="56"
+                              Status="{Binding Status}"
+                              Command="{Binding CycleStatusCommand}" />
+                <Label AutomationId="StatusLabel" Text="{Binding Status}" VerticalOptions="Center" />
+            </HorizontalStackLayout>
+            <HorizontalStackLayout Spacing="12">
+                <shiny:Avatar Name="Grace Hopper" Status="Online" />
+                <shiny:Avatar Name="Ada Lovelace" Status="Away" />
+                <shiny:Avatar Name="Alan Turing" Status="Busy" />
+                <shiny:Avatar Name="Linus Torvalds" Status="Offline" />
+            </HorizontalStackLayout>
+
+            <Label Text="Avatar Group" FontSize="18" FontAttributes="Bold" />
+            <Label Text="Overlapping avatars; everyone past Max collapses into a +N chip." />
+            <shiny:AvatarGroup Max="4">
+                <shiny:Avatar Name="Grace Hopper" Uri="https://i.pravatar.cc/150?img=47" />
+                <shiny:Avatar Name="Allan Ritchie" ColorFromName="True" />
+                <shiny:Avatar Name="Ada Lovelace" Uri="https://i.pravatar.cc/150?img=45" />
+                <shiny:Avatar Name="Alan Turing" ColorFromName="True" />
+                <shiny:Avatar Name="Linus Torvalds" />
+                <shiny:Avatar Name="Margaret Hamilton" />
+            </shiny:AvatarGroup>
+
+            <Label Text="Bound, With a Total" FontSize="18" FontAttributes="Bold" />
+            <Label Text="ItemsSource of names; TotalCount makes +N count everyone, not just the sample loaded. Tap +N." />
+            <shiny:AvatarGroup AutomationId="BoundGroup"
+                               ItemsSource="{Binding People}"
+                               TotalCount="{Binding TotalPeople}"
+                               Max="5"
+                               Size="32"
+                               Shape="Rounded"
+                               OverflowCommand="{Binding ShowEveryoneCommand}" />
+            <HorizontalStackLayout Spacing="12">
+                <Button AutomationId="AddPersonButton" Text="Add person" Command="{Binding AddPersonCommand}" />
+                <Button AutomationId="RemovePersonButton" Text="Remove" Command="{Binding RemovePersonCommand}" />
+            </HorizontalStackLayout>
+            <Label AutomationId="AvatarMessage" Text="{Binding Message}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

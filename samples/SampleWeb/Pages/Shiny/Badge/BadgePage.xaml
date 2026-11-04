@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:local="clr-namespace:Sample.Features.Badge"
+             x:Class="Sample.Features.Badge.BadgePage"
+             x:DataType="local:BadgeViewModel"
+             Title="Badge"
+             AutomationId="BadgePage">
+
+    <ScrollView Padding="16">
+        <VerticalStackLayout Spacing="24">
+
+            <!-- Counts at each corner -->
+            <Label Text="Corner Positions" FontSize="18" FontAttributes="Bold" />
+            <Label Text="Place a badge at any of the four corners by setting Position." />
+
+            <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" RowSpacing="20" ColumnSpacing="20">
+
+                <shiny:BadgeView Grid.Row="0" Grid.Column="0"
+                                 Text="9"
+                                 Position="TopLeft"
+                                 HorizontalOptions="Center">
+                    <Border Stroke="#E5E7EB" StrokeThickness="1" Padding="16"
+                            StrokeShape="RoundRectangle 12">
+                        <Label Text="Top Left" />
+                    </Border>
+                </shiny:BadgeView>
+
+                <shiny:BadgeView Grid.Row="0" Grid.Column="1"
+                                 Text="9"
+                                 Position="TopRight"
+                                 HorizontalOptions="Center">
+                    <Border Stroke="#E5E7EB" StrokeThickness="1" Padding="16"
+                            StrokeShape="RoundRectangle 12">
+                        <Label Text="Top Right" />
+                    </Border>
+                </shiny:BadgeView>
+
+                <shiny:BadgeView Grid.Row="1" Grid.Column="0"
+                                 Text="9"
+                                 Position="BottomLeft"
+                                 HorizontalOptions="Center">
+                    <Border Stroke="#E5E7EB" StrokeThickness="1" Padding="16"
+                            StrokeShape="RoundRectangle 12">
+                        <Label Text="Bottom Left" />
+                    </Border>
+                </shiny:BadgeView>
+
+                <shiny:BadgeView Grid.Row="1" Grid.Column="1"
+                                 Text="9"
+                                 Position="BottomRight"
+                                 HorizontalOptions="Center">
+                    <Border Stroke="#E5E7EB" StrokeThickness="1" Padding="16"
+                            StrokeShape="RoundRectangle 12">
+                        <Label Text="Bottom Right" />
+                    </Border>
+                </shiny:BadgeView>
+            </Grid>
+
+            <!-- Dynamic count + empty hides -->
+            <Label Text="Dynamic Count" FontSize="18" FontAttributes="Bold" />
+            <Label Text="Setting Text to an empty string hides the badge. Increment to see scale-in animation." />
+
+            <HorizontalStackLayout Spacing="12">
+                <shiny:BadgeView AutomationId="MailBadge" Text="{Binding MailCount}" MaxCount="99">
+                    <Border Stroke="#7C3AED" StrokeThickness="2" Padding="14,10"
+                            StrokeShape="RoundRectangle 10"
+                            BackgroundColor="#F5F3FF">
+                        <Label Text="📬 Inbox" FontSize="16" />
+                    </Border>
+                </shiny:BadgeView>
+
+                <Button AutomationId="IncrementMailButton" Text="+" Command="{Binding IncrementCommand}" WidthRequest="44" />
+                <Button AutomationId="ClearMailButton" Text="Clear" Command="{Binding ClearCommand}" />
+            </HorizontalStackLayout>
+
+            <!-- MaxCount overflow -->
+            <Label Text="MaxCount Overflow" FontSize="18" FontAttributes="Bold" />
+            <Label Text="Numeric values above MaxCount are displayed as '{MaxCount}+'." />
+
+            <shiny:BadgeView AutomationId="CartBadge" Text="{Binding CartCount}" MaxCount="99"
+                             BadgeColor="#059669"
+                             HorizontalOptions="Start">
+                <Border Stroke="#E5E7EB" StrokeThickness="1" Padding="14,10"
+                        StrokeShape="RoundRectangle 10">
+                    <Label Text="🛒 Cart" FontSize="16" />
+                </Border>
+            </shiny:BadgeView>
+
+            <!-- Dot mode -->
+            <Label Text="Dot Indicator" FontSize="18" FontAttributes="Bold" />
+            <Label Text="A simple notification dot — set IsDot to true. Useful for 'has unread' states." />
+
+            <HorizontalStackLayout Spacing="20">
+                <shiny:BadgeView AutomationId="DotBadge" IsDot="{Binding HasNew}"
+                                 BadgeColor="#3B82F6"
+                                 OffsetX="2" OffsetY="2">
+                    <Border Stroke="#E5E7EB" StrokeThickness="1" Padding="12"
+                            StrokeShape="RoundRectangle 28"
+                            WidthRequest="56" HeightRequest="56">
+                        <Label Text="👤" FontSize="22"
+                               HorizontalTextAlignment="Center"
+                               VerticalTextAlignment="Center" />
+                    </Border>
+                </shiny:BadgeView>
+
+                <Button AutomationId="ToggleDotButton" Text="Toggle dot" Command="{Binding ToggleDotCommand}" />
+            </HorizontalStackLayout>
+
+            <!-- Pulsing -->
+            <Label Text="Pulse Animation" FontSize="18" FontAttributes="Bold" />
+            <Label Text="Set IsPulsing to gently call attention to the badge." />
+
+            <HorizontalStackLayout Spacing="20">
+                <shiny:BadgeView AutomationId="PulseBadge" Text="NEW"
+                                 IsPulsing="{Binding IsPulsing}"
+                                 BadgeColor="#F59E0B"
+                                 FontSize="9"
+                                 BadgePadding="6,2">
+                    <Border Stroke="#E5E7EB" StrokeThickness="1" Padding="14,10"
+                            StrokeShape="RoundRectangle 10">
+                        <Label Text="✨ Features" FontSize="16" />
+                    </Border>
+                </shiny:BadgeView>
+
+                <Button AutomationId="TogglePulseButton" Text="Toggle pulse" Command="{Binding TogglePulseCommand}" />
+            </HorizontalStackLayout>
+
+            <!-- Custom colors -->
+            <Label Text="Custom Colors" FontSize="18" FontAttributes="Bold" />
+            <Label Text="BadgeColor, BadgeTextColor, BadgeBorderColor, BadgeBorderThickness are all configurable." />
+
+            <HorizontalStackLayout Spacing="16">
+                <shiny:BadgeView Text="PRO"
+                                 BadgeColor="#1E1B4B"
+                                 BadgeTextColor="#FBBF24"
+                                 BadgeBorderColor="#FBBF24"
+                                 BadgeBorderThickness="2"
+                                 FontSize="9"
+                                 BadgePadding="6,2">
+                    <Border Stroke="#E5E7EB" StrokeThickness="1" Padding="14,10"
+                            StrokeShape="RoundRectangle 10">
+                        <Label Text="Subscription" FontSize="16" />
+                    </Border>
+                </shiny:BadgeView>
+
+                <shiny:BadgeView Text="!"
+                                 BadgeColor="#FEE2E2"
+                                 BadgeTextColor="#991B1B"
+                                 BadgeBorderColor="#FCA5A5"
+                                 BadgeBorderThickness="1">
+                    <Border Stroke="#E5E7EB" StrokeThickness="1" Padding="14,10"
+                            StrokeShape="RoundRectangle 10">
+                        <Label Text="Warning" FontSize="16" />
+                    </Border>
+                </shiny:BadgeView>
+            </HorizontalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

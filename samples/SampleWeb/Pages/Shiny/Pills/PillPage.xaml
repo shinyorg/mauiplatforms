@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Sample.Features.Pills"
+             xmlns:sc="clr-namespace:Shiny.Maui.Controls;assembly=Shiny.Maui.Controls"
+             x:Class="Sample.Features.Pills.PillPage"
+             x:DataType="local:PillViewModel"
+             Title="Pills"
+             AutomationId="PillPage">
+    <ScrollView Padding="20">
+        <VerticalStackLayout Spacing="20">
+
+            <Label Text="Pill Presets"
+                   FontSize="24"
+                   FontAttributes="Bold" />
+
+            <FlexLayout Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
+                <sc:PillView Text="None" Type="None" Margin="4" />
+                <sc:PillView Text="Success" Type="Success" Margin="4" />
+                <sc:PillView Text="Info" Type="Info" Margin="4" />
+                <sc:PillView Text="Warning" Type="Warning" Margin="4" />
+                <sc:PillView Text="Caution" Type="Caution" Margin="4" />
+                <sc:PillView Text="Critical" Type="Critical" Margin="4" />
+            </FlexLayout>
+
+            <BoxView HeightRequest="1" Color="LightGray" />
+
+            <Label Text="Custom Colors"
+                   FontSize="24"
+                   FontAttributes="Bold" />
+
+            <FlexLayout Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
+                <sc:PillView AutomationId="PurplePill" Text="Purple" PillColor="#7C3AED" Margin="4" />
+                <sc:PillView Text="Teal" PillColor="#0D9488" Margin="4" />
+                <sc:PillView Text="Pink" PillColor="#EC4899" Margin="4" />
+                <sc:PillView Text="Dark" PillColor="#1F2937" Margin="4" />
+            </FlexLayout>
+
+            <BoxView HeightRequest="1" Color="LightGray" />
+
+            <Label Text="Override Text &amp; Border Color"
+                   FontSize="24"
+                   FontAttributes="Bold" />
+
+            <FlexLayout Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
+                <sc:PillView Text="Custom text color"
+                             Type="Info"
+                             PillTextColor="DeepPink"
+                             Margin="4" />
+                <sc:PillView Text="Custom border"
+                             Type="Success"
+                             PillBorderColor="DarkGreen"
+                             Margin="4" />
+                <sc:PillView Text="All custom"
+                             PillColor="#FDF2F8"
+                             PillTextColor="#9D174D"
+                             PillBorderColor="#F472B6"
+                             Margin="4" />
+            </FlexLayout>
+
+            <BoxView HeightRequest="1" Color="LightGray" />
+
+            <Label Text="Bindable Text"
+                   FontSize="24"
+                   FontAttributes="Bold" />
+
+            <Entry AutomationId="PillTextEntry"
+                   Placeholder="Type pill text..."
+                   Text="{Binding CustomPillText}" />
+
+            <sc:PillView AutomationId="BoundPill"
+                         Text="{Binding CustomPillText}"
+                         Type="Info"
+                         FontSize="14" />
+
+            <BoxView HeightRequest="1" Color="LightGray" />
+
+            <Label Text="Sizes"
+                   FontSize="24"
+                   FontAttributes="Bold" />
+
+            <FlexLayout Wrap="Wrap" JustifyContent="Start" AlignItems="Center">
+                <sc:PillView Text="Small" Type="Success" FontSize="10" CornerRadius="8" Margin="4" />
+                <sc:PillView Text="Medium" Type="Info" FontSize="14" CornerRadius="12" Margin="4" />
+                <sc:PillView Text="Large" Type="Warning" FontSize="18" CornerRadius="16" Margin="4" />
+                <sc:PillView Text="Bold" Type="Critical" FontAttributes="Bold" FontSize="14" Margin="4" />
+            </FlexLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

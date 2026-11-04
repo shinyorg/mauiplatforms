@@ -4,6 +4,8 @@
 [![NuGet](https://img.shields.io/nuget/v/Platform.Maui.Essentials.TvOS.svg?label=Platform.Maui.Essentials.TvOS)](https://www.nuget.org/packages/Platform.Maui.Essentials.TvOS/)
 [![NuGet](https://img.shields.io/nuget/v/Platform.Maui.Web.svg?label=Platform.Maui.Web)](https://www.nuget.org/packages/Platform.Maui.Web/)
 [![NuGet](https://img.shields.io/nuget/v/Platform.Maui.Web.Essentials.svg?label=Platform.Maui.Web.Essentials)](https://www.nuget.org/packages/Platform.Maui.Web.Essentials/)
+[![NuGet](https://img.shields.io/nuget/v/Shiny.Maui.Controls.Camera.Web.svg?label=Shiny.Maui.Controls.Camera.Web)](https://www.nuget.org/packages/Shiny.Maui.Controls.Camera.Web/)
+[![NuGet](https://img.shields.io/nuget/v/Shiny.Maui.Controls.MediaElement.Web.svg?label=Shiny.Maui.Controls.MediaElement.Web)](https://www.nuget.org/packages/Shiny.Maui.Controls.MediaElement.Web/)
 
 Custom .NET MAUI backends for platforms MAUI doesn't officially support: **Apple TV** (tvOS via UIKit) and
 the **web** (WebAssembly, rendering real DOM elements, without Blazor).
@@ -264,10 +266,12 @@ src/
   Platform.Maui.Essentials.TvOS/    # tvOS Essentials library
   Platform.Maui.Web/                # Web backend library (net10.0, browser/WebAssembly)
   Platform.Maui.Essentials.Web/     # Web Essentials library
+  Shiny.Maui.Controls.Camera.Web/   # Web handler for the Shiny CameraView (getUserMedia)
+  Shiny.Maui.Controls.MediaElement.Web/ # Web backend for the Shiny MediaElement and VideoText (<video>)
 samples/
   Sample/                           # Shared sample code (Pages, Platforms/)
   SampleTv/                         # tvOS sample app (a streaming-style catalog driven by the Siri Remote)
-  SampleWeb/                        # Web gallery app
+  SampleWeb/                        # Web gallery app (MAUI and Shiny Controls tabs)
 tests/
   Platform.Maui.Web.Tests/          # Web unit tests (xUnit)
   browser/                          # Web end-to-end smoke test (headless Chrome)
@@ -383,6 +387,37 @@ features fall short: the `ImageEditor` canvas stays blank and `SignaturePad` exp
 (both rely on platform image APIs plain `net10.0` lacks), the indeterminate `ProgressBar` doesn't
 animate (it starts in `Loaded`, which fires before layout on `net10.0`), and DataGrid inline row
 editing doesn't appear.
+
+#### Shiny CameraView and MediaElement
+
+`Shiny.Maui.Controls.Camera` and `Shiny.Maui.Controls.MediaElement` ship native handlers only, so this
+repo provides their web backends as separate packages. Reference them next to `Platform.Maui.Web` and
+call the web registration **instead of** `UseShinyCamera()` / `UseShinyMediaElement()`:
+
+```csharp
+builder
+    .UseMauiAppWeb<App>()
+    .UseShinyControls()
+    .UseShinyCameraWeb()          // Shiny.Maui.Controls.Camera.Web
+    .UseShinyMediaElementWeb();   // Shiny.Maui.Controls.MediaElement.Web (MediaElement + VideoText)
+```
+
+Their JavaScript ships as static web assets and loads on first use, so nothing goes in `index.html`.
+
+- **CameraView** streams `getUserMedia` into a `<video>`. It supports picking the camera (`Facing`, `CameraId`),
+  `IsActive`, zoom and torch where the browser exposes them, `ScaleMode`, `ShowPreview`, the built-in filters
+  (as CSS filters, baked into stills), JPEG photos, and `MediaRecorder` video written to the wasm file
+  system. Frame analyzers, flash, focus and drawn effects aren't supported, nor is the modal
+  `IMediaService` flow. Browsers only allow the camera over HTTPS or on localhost.
+- **MediaElement** plays through one `<video>` element that moves between the inline and fullscreen
+  surfaces without re-buffering. It covers the transport bar, seeking, volume, speed, looping, aspect,
+  buffering progress, picture-in-picture, a screen wake lock (`KeepScreenOn`) and Media Session metadata
+  and controls. `Uri`, `Resource` (MauiAssets) and `File` sources work; what plays depends on the
+  browser's codecs.
+- **VideoText** gets its own web handler (`net10.0` VideoText otherwise falls back to a plain label):
+  a looping, muted video shown through the letters, with the overlay, marquee, auto-fit and fonts
+  drawn from the same SVG as Shiny's Blazor VideoText. Without an overlay the text is a CSS mask
+  image, which browsers draw with system fonts only.
 
 ## Lifecycle Events
 

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:local="clr-namespace:Sample.Features.Skeleton"
+             x:Class="Sample.Features.Skeleton.SkeletonPage"
+             x:DataType="local:SkeletonViewModel"
+             Title="Skeleton"
+             AutomationId="SkeletonPage">
+
+    <ScrollView Padding="16">
+        <VerticalStackLayout Spacing="24">
+
+            <!-- Default skeleton wrapping a text block -->
+            <Label Text="Default Skeleton" FontSize="18" FontAttributes="Bold" />
+            <Label Text="Wraps a content area and shows shimmer placeholder lines while IsBusy is true." />
+            <Button AutomationId="ReloadButton" Text="Reload" Command="{Binding ReloadCommand}" />
+
+            <Border Stroke="#E5E7EB" StrokeThickness="1" Padding="16"
+                    StrokeShape="RoundRectangle 12">
+                <shiny:SkeletonView AutomationId="ArticleSkeleton" IsBusy="{Binding IsBusy}" ItemCount="4">
+                    <shiny:SkeletonView.Content>
+                        <VerticalStackLayout Spacing="8">
+                            <Label Text="Loaded Article" FontSize="16" FontAttributes="Bold" />
+                            <Label Text="This paragraph of real content appears once the data finishes loading. While loading, the shimmer skeleton lines stand in for it so the layout does not jump." />
+                            <Label Text="Tap Reload to see the skeleton again." TextColor="#6B7280" />
+                        </VerticalStackLayout>
+                    </shiny:SkeletonView.Content>
+                </shiny:SkeletonView>
+            </Border>
+
+            <!-- Custom skeleton template: avatar + lines, like a user card -->
+            <Label Text="Custom Skeleton (Card)" FontSize="18" FontAttributes="Bold" />
+            <Label Text="Use SkeletonTemplate to match the shape of the content being loaded." />
+            <Button AutomationId="ReloadCardButton" Text="Reload Card" Command="{Binding ReloadCardCommand}" />
+
+            <Border Stroke="#E5E7EB" StrokeThickness="1" Padding="16"
+                    StrokeShape="RoundRectangle 12">
+                <!-- BaseColor feeds the shimmer highlight, so template shapes should use the same
+                     fill (and follow the theme) or the sweep will not match them. -->
+                <shiny:SkeletonView AutomationId="CardSkeleton" IsBusy="{Binding IsCardBusy}"
+                                    BaseColor="{AppThemeBinding Light=#E1E1E6, Dark=#242B32}">
+                    <shiny:SkeletonView.SkeletonTemplate>
+                        <DataTemplate>
+                            <HorizontalStackLayout Spacing="12">
+                                <BoxView WidthRequest="56" HeightRequest="56" CornerRadius="28"
+                                         Color="{AppThemeBinding Light=#E1E1E6, Dark=#242B32}" />
+                                <VerticalStackLayout Spacing="10" VerticalOptions="Center" WidthRequest="200">
+                                    <BoxView HeightRequest="14" CornerRadius="6"
+                                             Color="{AppThemeBinding Light=#E1E1E6, Dark=#242B32}"
+                                             HorizontalOptions="Fill" />
+                                    <BoxView HeightRequest="14" CornerRadius="6"
+                                             Color="{AppThemeBinding Light=#E1E1E6, Dark=#242B32}"
+                                             WidthRequest="120" HorizontalOptions="Start" />
+                                </VerticalStackLayout>
+                            </HorizontalStackLayout>
+                        </DataTemplate>
+                    </shiny:SkeletonView.SkeletonTemplate>
+                    <shiny:SkeletonView.Content>
+                        <HorizontalStackLayout Spacing="12">
+                            <BoxView WidthRequest="56" HeightRequest="56" CornerRadius="28"
+                                     Color="#7C3AED" />
+                            <VerticalStackLayout Spacing="4" VerticalOptions="Center">
+                                <Label Text="Allan Ritchie" FontSize="16" FontAttributes="Bold" />
+                                <Label Text="Shiny Controls maintainer" TextColor="#6B7280" />
+                            </VerticalStackLayout>
+                        </HorizontalStackLayout>
+                    </shiny:SkeletonView.Content>
+                </shiny:SkeletonView>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

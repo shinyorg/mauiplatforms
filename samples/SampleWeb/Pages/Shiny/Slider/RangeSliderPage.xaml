@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shiny="http://shiny.net/maui/controls"
+    xmlns:local="clr-namespace:Sample.Features.Slider"
+    xmlns:sys="clr-namespace:System;assembly=netstandard"
+    x:Class="Sample.Features.Slider.RangeSliderPage"
+    x:DataType="local:RangeSliderViewModel"
+    Title="Range Slider"
+    AutomationId="RangeSliderPage">
+
+    <ScrollView Padding="16">
+        <VerticalStackLayout Spacing="24">
+
+            <!-- Price range -->
+            <Label Text="Price Range" FontSize="18" FontAttributes="Bold" />
+            <shiny:RangeSlider AutomationId="PriceRange"
+                               LowerValue="{Binding PriceLower}"
+                               UpperValue="{Binding PriceUpper}"
+                               Minimum="0"
+                               Maximum="1000"
+                               Step="10"
+                               ValueFormat="C0" />
+            <Label AutomationId="PriceLabel"
+                   Text="{Binding PriceLower, StringFormat='{0:C0} — '}" />
+            <Label AutomationId="PriceUpperLabel" Text="{Binding PriceUpper, StringFormat='… {0:C0}'}" />
+
+            <!-- DragCompletedCommand: search once, when a thumb is let go -->
+            <Label Text="Search on Release (DragCompleted)" FontSize="18" FontAttributes="Bold" />
+            <shiny:RangeSlider AutomationId="SearchRange"
+                               LowerValue="{Binding SearchLower}"
+                               UpperValue="{Binding SearchUpper}"
+                               Minimum="0"
+                               Maximum="1000"
+                               Step="10"
+                               ValueFormat="C0"
+                               DragCompletedCommand="{Binding SearchCommand}" />
+            <Label AutomationId="SearchCommitted" Text="{Binding CommittedSearch}" />
+
+            <!-- Comfort band with min & max gap -->
+            <Label Text="Comfort Band (min 2°, max 8° apart)" FontSize="18" FontAttributes="Bold" />
+            <shiny:RangeSlider LowerValue="{Binding TempLower}"
+                               UpperValue="{Binding TempUpper}"
+                               Minimum="10"
+                               Maximum="30"
+                               Step="0.5"
+                               MinimumRange="2"
+                               MaximumRange="8"
+                               ColdColor="#3B82F6"
+                               HotColor="#EF4444"
+                               ValueFormat="0.#°" />
+            <Label Text="{Binding TempLower, StringFormat='{0:0.#}° to'}" />
+            <Label Text="{Binding TempUpper, StringFormat='{0:0.#}°'}" />
+
+            <!-- Custom colors + large thumbs -->
+            <Label Text="Stay Length (nights)" FontSize="18" FontAttributes="Bold" />
+            <shiny:RangeSlider LowerValue="{Binding BookingLower}"
+                               UpperValue="{Binding BookingUpper}"
+                               Minimum="1"
+                               Maximum="14"
+                               Step="1"
+                               MinimumRange="1"
+                               TrackHeight="12"
+                               ThumbSize="32"
+                               ColdColor="#10B981"
+                               HotColor="#6366F1"
+                               ValueFormat="0" />
+            <Label Text="{Binding BookingLower, StringFormat='{0:0} –'}" />
+            <Label Text="{Binding BookingUpper, StringFormat='{0:0} nights'}" />
+
+            <!-- Custom thumbs, one template per end -->
+            <Label Text="Custom Thumbs (one template per end)" FontSize="18" FontAttributes="Bold" />
+            <shiny:RangeSlider AutomationId="ShiftRange"
+                               LowerValue="{Binding ShiftStart}"
+                               UpperValue="{Binding ShiftEnd}"
+                               Minimum="0"
+                               Maximum="24"
+                               Step="1"
+                               MinimumRange="1"
+                               ShowTooltip="False"
+                               ThumbWidth="46"
+                               ThumbHeight="26"
+                               ColdColor="#10B981"
+                               HotColor="#6366F1">
+                <!-- The templates' binding context is that thumb's own value, so they are typed as doubles. -->
+                <shiny:RangeSlider.LowerThumbTemplate>
+                    <DataTemplate x:DataType="sys:Double">
+                        <Label Text="{Binding ., StringFormat='{0:00}:00'}"
+                               FontSize="10"
+                               FontAttributes="Bold"
+                               HorizontalTextAlignment="Center"
+                               VerticalTextAlignment="Center" />
+                    </DataTemplate>
+                </shiny:RangeSlider.LowerThumbTemplate>
+                <shiny:RangeSlider.UpperThumbTemplate>
+                    <DataTemplate x:DataType="sys:Double">
+                        <Label Text="{Binding ., StringFormat='{0:00}:00'}"
+                               FontSize="10"
+                               FontAttributes="Bold"
+                               HorizontalTextAlignment="Center"
+                               VerticalTextAlignment="Center" />
+                    </DataTemplate>
+                </shiny:RangeSlider.UpperThumbTemplate>
+            </shiny:RangeSlider>
+            <Label AutomationId="ShiftStartLabel" Text="{Binding ShiftStart, StringFormat='Shift: {0:00}:00 –'}" />
+            <Label AutomationId="ShiftEndLabel" Text="{Binding ShiftEnd, StringFormat='{0:00}:00'}" />
+
+            <!-- No tooltip -->
+            <Label Text="Age Range (no tooltip)" FontSize="18" FontAttributes="Bold" />
+            <shiny:RangeSlider LowerValue="{Binding AgeLower}"
+                               UpperValue="{Binding AgeUpper}"
+                               Minimum="0"
+                               Maximum="100"
+                               Step="1"
+                               ShowTooltip="False"
+                               ColdColor="#06B6D4"
+                               HotColor="#F97316"
+                               ValueFormat="0" />
+            <Label Text="{Binding AgeLower, StringFormat='{0:0} –'}" />
+            <Label Text="{Binding AgeUpper, StringFormat='{0:0} yrs'}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

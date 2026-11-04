@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:local="clr-namespace:Sample.Features.Chips"
+             x:Class="Sample.Features.Chips.ChipGroupPage"
+             x:DataType="local:ChipGroupViewModel"
+             Title="ChipGroup"
+             AutomationId="ChipGroupPage">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="18">
+
+            <Label Text="ChipGroup"
+                   FontSize="22"
+                   FontAttributes="Bold" />
+
+            <Label Text="{Binding StatusMessage}" FontSize="14" AutomationId="ChipStatus" />
+
+            <BoxView HeightRequest="1" Color="LightGray" />
+
+            <!-- ============================================================ -->
+            <Label Text="Single (the default)" FontAttributes="Bold" />
+            <Label Text="One chip at a time, and SelectedItem is the item itself rather than an index — bind the object the view model already has."
+                   FontSize="12" />
+
+            <shiny:ChipGroup ItemsSource="{Binding Ranges}"
+                             SelectedItem="{Binding Range}"
+                             AutomationId="RangeChips" />
+
+            <!-- ============================================================ -->
+            <Label Text="Multiple" FontAttributes="Bold" />
+            <Label Text="SelectedItems is written into in place, so an ObservableCollection on the view model stays the same instance and whatever watches it goes on working."
+                   FontSize="12" />
+
+            <shiny:ChipGroup ItemsSource="{Binding Filters}"
+                             SelectionMode="Multiple"
+                             SelectedItems="{Binding SelectedFilters}"
+                             AutomationId="FilterChips" />
+
+            <Label Text="{Binding FilterSummary}" FontSize="12" AutomationId="FilterSummary" />
+
+            <!-- ============================================================ -->
+            <Label Text="Capped" FontAttributes="Bold" />
+            <Label Text="At MaxSelectionCount a tap on an unselected chip does nothing — the oldest pick is not silently dropped."
+                   FontSize="12" />
+
+            <shiny:ChipGroup ItemsSource="{Binding Toppings}"
+                             SelectionMode="Multiple"
+                             SelectedItems="{Binding SelectedToppings}"
+                             MaxSelectionCount="3"
+                             AutomationId="ToppingChips" />
+
+            <!-- ============================================================ -->
+            <Label Text="Deselectable" FontAttributes="Bold" />
+            <Label Text="AllowDeselect lets a second tap clear a single-selection group. Off by default — a picker that can be emptied by tapping its own answer usually is not what was wanted."
+                   FontSize="12" />
+
+            <shiny:ChipGroup ItemsSource="{Binding Ranges}"
+                             AllowDeselect="True"
+                             AutomationId="DeselectChips" />
+
+            <!-- ============================================================ -->
+            <Label Text="Actions" FontAttributes="Bold" />
+            <Label Text="SelectionMode=None carries no state: every chip reports its tap and nothing is ever painted as picked."
+                   FontSize="12" />
+
+            <shiny:ChipGroup ItemsSource="{Binding Actions}"
+                             SelectionMode="None"
+                             ChipTapped="OnActionTapped"
+                             AutomationId="ActionChips" />
+
+            <!-- ============================================================ -->
+            <Label Text="Objects" FontAttributes="Bold" />
+            <Label Text="DisplayMemberPath names the part of an item a chip shows; ItemDisplayBinding takes a whole binding when a converter or a format is wanted."
+                   FontSize="12" />
+
+            <shiny:ChipGroup ItemsSource="{Binding Teams}"
+                             SelectedItem="{Binding Team}"
+                             DisplayMemberPath="Name"
+                             AutomationId="TeamChips" />
+
+            <!-- ============================================================ -->
+            <Label Text="Templated" FontAttributes="Bold" />
+            <Label Text="ItemTemplate replaces the label. The check and the ✕ are never part of it: every chip keeps the same state and the same way out, however it is drawn."
+                   FontSize="12" />
+
+            <shiny:ChipGroup ItemsSource="{Binding Teams}"
+                             SelectionMode="Multiple"
+                             AutomationId="TemplatedChips">
+                <shiny:ChipGroup.ItemTemplate>
+                    <DataTemplate x:DataType="local:Team">
+                        <HorizontalStackLayout Spacing="6">
+                            <Label Text="{Binding Name}" FontSize="14" VerticalTextAlignment="Center" />
+                            <shiny:PillView Text="{Binding Members}" Type="Info" FontSize="10" />
+                        </HorizontalStackLayout>
+                    </DataTemplate>
+                </shiny:ChipGroup.ItemTemplate>
+            </shiny:ChipGroup>
+
+            <!-- ============================================================ -->
+            <Label Text="Removable" FontAttributes="Bold" />
+            <Label Text="AllowRemove puts a ✕ on every chip. The item comes out of the bound collection, unless ChipRemoving is cancelled first."
+                   FontSize="12" />
+
+            <shiny:ChipGroup ItemsSource="{Binding Recipients}"
+                             SelectionMode="Multiple"
+                             AllowRemove="True"
+                             ChipRemoving="OnChipRemoving"
+                             AutomationId="RecipientChips" />
+
+            <Button Text="Reset recipients"
+                    Clicked="OnResetRecipients"
+                    AutomationId="ResetRecipients" />
+
+            <!-- ============================================================ -->
+            <Label Text="No wrapping" FontAttributes="Bold" />
+            <Label Text="Wrap=False keeps every chip on one line. MAUI has no scrolling of its own here, so put the group in a horizontal ScrollView."
+                   FontSize="12" />
+
+            <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                <shiny:ChipGroup ItemsSource="{Binding Languages}"
+                                 SelectionMode="Multiple"
+                                 Wrap="False"
+                                 AutomationId="LanguageChips" />
+            </ScrollView>
+
+            <!-- ============================================================ -->
+            <Label Text="Colours" FontAttributes="Bold" />
+            <Label Text="Leave the colours unset and the theme carries through. Set a fill and the chip's ink is computed from it by luminance, so a brand colour stays readable."
+                   FontSize="12" />
+
+            <shiny:ChipGroup ItemsSource="{Binding Filters}"
+                             SelectionMode="Multiple"
+                             SelectedChipBackgroundColor="#7C3AED"
+                             ChipBorderColor="#7C3AED"
+                             ChipCornerRadius="16"
+                             AutomationId="ColouredChips" />
+
+            <!-- ============================================================ -->
+            <Label Text="Read-only and disabled" FontAttributes="Bold" />
+            <Label Text="Read-only keeps the chips crisp and the selection visible but blocks changing it; disabled dims the lot. Read-only is &quot;these are the values&quot;, disabled is &quot;not right now&quot;."
+                   FontSize="12" />
+
+            <shiny:ChipGroup ItemsSource="{Binding Frozen}"
+                             SelectionMode="Multiple"
+                             AllowRemove="True"
+                             IsReadOnly="True"
+                             AutomationId="FrozenChips" />
+
+            <shiny:ChipGroup ItemsSource="{Binding Frozen}"
+                             IsEnabled="False"
+                             AutomationId="DisabledChips" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

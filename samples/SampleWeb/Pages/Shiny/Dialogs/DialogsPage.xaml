@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Sample.Features.Dialogs"
+             x:Class="Sample.Features.Dialogs.DialogsPage"
+             x:DataType="local:DialogsViewModel"
+             Title="Dialogs"
+             AutomationId="DialogsPage">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="12">
+
+            <Label Text="Dialog Service"
+                   FontSize="22"
+                   FontAttributes="Bold" />
+
+            <Label Text="Owned (non-native) alert / confirm / prompt with cross-platform animations."
+                   FontSize="13"
+                   TextColor="Gray" />
+
+            <Label Text="{Binding StatusMessage}" AutomationId="DialogStatus"
+                   FontSize="13"
+                   TextColor="Gray" />
+
+            <BoxView HeightRequest="1" Color="LightGray" />
+
+            <Label Text="Animation" FontAttributes="Bold" FontSize="16" />
+            <Picker ItemsSource="{Binding Animations}" AutomationId="DialogAnimationPicker"
+                    SelectedItem="{Binding SelectedAnimation}" />
+
+            <BoxView HeightRequest="1" Color="LightGray" />
+
+            <Button Text="Alert" AutomationId="AlertButton" Command="{Binding AlertCommand}" />
+            <Button Text="Confirm" AutomationId="ConfirmButton" Command="{Binding ConfirmCommand}" />
+            <Button Text="Prompt" AutomationId="PromptButton" Command="{Binding PromptCommand}" />
+            <Button Text="Action Sheet" AutomationId="ActionSheetButton" Command="{Binding ActionSheetCommand}" />
+            <Button Text="Custom Styled" AutomationId="StyledDialogButton" Command="{Binding StyledCommand}" />
+            <Button Text="Styled Action Sheet" AutomationId="StyledActionSheetButton" Command="{Binding StyledActionSheetCommand}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

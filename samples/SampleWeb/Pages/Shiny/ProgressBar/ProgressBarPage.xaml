@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shiny="http://shiny.net/maui/controls"
+    xmlns:local="clr-namespace:Sample.Features.ProgressBar"
+    x:Class="Sample.Features.ProgressBar.ProgressBarPage"
+    x:DataType="local:ProgressBarViewModel"
+    Title="Progress Bar"
+    AutomationId="ProgressBarPage">
+
+    <ScrollView Padding="16">
+        <VerticalStackLayout Spacing="24">
+
+            <!-- Basic -->
+            <Label Text="Basic" FontSize="18" FontAttributes="Bold" />
+            <shiny:ProgressBar AutomationId="BasicProgressBar" Value="{Binding BasicValue}"
+                               TrackHeight="10"
+                               CornerRadius="5" />
+
+            <!-- With Text -->
+            <Label Text="With Text" FontSize="18" FontAttributes="Bold" />
+            <shiny:ProgressBar AutomationId="TextProgressBar"
+                               Value="{Binding BasicValue}"
+                               TrackHeight="20"
+                               CornerRadius="10"
+                               ShowText="True"
+                               FontSize="11" />
+
+            <!-- Gradient Fill -->
+            <Label Text="Gradient Fill" FontSize="18" FontAttributes="Bold" />
+            <shiny:ProgressBar Value="{Binding BasicValue}"
+                               TrackHeight="12"
+                               CornerRadius="6"
+                               UseGradient="True"
+                               GradientStartColor="#3B82F6"
+                               GradientEndColor="#8B5CF6" />
+
+            <!-- Gradient with Text -->
+            <Label Text="Gradient + Text" FontSize="18" FontAttributes="Bold" />
+            <shiny:ProgressBar Value="{Binding BasicValue}"
+                               TrackHeight="22"
+                               CornerRadius="11"
+                               UseGradient="True"
+                               GradientStartColor="#10B981"
+                               GradientEndColor="#F59E0B"
+                               ShowText="True" />
+
+            <!-- Segmented -->
+            <Label Text="Segments (steps)" FontSize="18" FontAttributes="Bold" />
+            <shiny:ProgressBar Value="{Binding BasicValue}"
+                               TrackHeight="12"
+                               CornerRadius="6"
+                               Segments="10"
+                               SegmentSpacing="6"
+                               BarColor="#22A33A" />
+
+            <Label Text="Segments + Gradient" FontSize="18" FontAttributes="Bold" />
+            <shiny:ProgressBar Value="{Binding BasicValue}"
+                               TrackHeight="8"
+                               CornerRadius="4"
+                               Segments="5"
+                               UseGradient="True"
+                               GradientStartColor="#3B82F6"
+                               GradientEndColor="#8B5CF6" />
+
+            <!-- Pulse on Value Change -->
+            <Label Text="Pulse on Value Change (Vista shimmer)" FontSize="18" FontAttributes="Bold" />
+            <shiny:ProgressBar Value="{Binding PulseValue}"
+                               TrackHeight="12"
+                               CornerRadius="6"
+                               UseGradient="True"
+                               GradientStartColor="#EC4899"
+                               GradientEndColor="#F97316"
+                               PulseEnabled="True"
+                               PulseOnValueChange="True"
+                               PulseLength="0.4"
+                               PulseSpeed="800" />
+
+            <!-- Pulse on Interval -->
+            <Label Text="Pulse on Interval (2s, wide sheen)" FontSize="18" FontAttributes="Bold" />
+            <shiny:ProgressBar Value="{Binding BasicValue}"
+                               TrackHeight="12"
+                               CornerRadius="6"
+                               UseGradient="True"
+                               GradientStartColor="#6366F1"
+                               GradientEndColor="#EC4899"
+                               PulseEnabled="True"
+                               PulseOnValueChange="False"
+                               PulseInterval="0:00:02"
+                               PulseLength="0.6"
+                               PulseSpeed="1200" />
+
+            <!-- Fast narrow pulse -->
+            <Label Text="Fast Narrow Pulse (every 1s)" FontSize="18" FontAttributes="Bold" />
+            <shiny:ProgressBar Value="{Binding BasicValue}"
+                               TrackHeight="10"
+                               CornerRadius="5"
+                               BarColor="#10B981"
+                               PulseEnabled="True"
+                               PulseOnValueChange="False"
+                               PulseInterval="0:00:01"
+                               PulseLength="0.2"
+                               PulseSpeed="500" />
+
+            <!-- Indeterminate -->
+            <Label Text="Indeterminate" FontSize="18" FontAttributes="Bold" />
+            <shiny:ProgressBar AutomationId="IndeterminateProgressBar"
+                               IsIndeterminate="True"
+                               TrackHeight="8"
+                               CornerRadius="4"
+                               UseGradient="True"
+                               GradientStartColor="#14B8A6"
+                               GradientEndColor="#3B82F6" />
+
+            <!-- Controls -->
+            <Label Text="Controls" FontSize="18" FontAttributes="Bold" />
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                <Button AutomationId="DecrementButton" Text="- 10" Command="{Binding DecrementCommand}" />
+                <Button AutomationId="IncrementButton" Text="+ 10" Command="{Binding IncrementCommand}" Grid.Column="1" />
+            </Grid>
+
+            <Label AutomationId="ProgressValueLabel" Text="{Binding BasicValue, StringFormat='Value: {0:0}'}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:local="clr-namespace:Sample.Features.ButtonGroups"
+             x:Class="Sample.Features.ButtonGroups.ButtonGroupPage"
+             x:DataType="local:ButtonGroupViewModel"
+             Title="ButtonGroup"
+             AutomationId="ButtonGroupPage">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="18">
+
+            <Label Text="ButtonGroup"
+                   FontSize="22"
+                   FontAttributes="Bold" />
+
+            <Label Text="{Binding StatusMessage}" FontSize="14" AutomationId="ButtonGroupStatus" />
+
+            <BoxView HeightRequest="1" Color="LightGray" />
+
+            <!-- ============================================================ -->
+            <Label Text="Actions" FontAttributes="Bold" />
+            <Label Text="The default: three related actions joined into one control. Each segment keeps its own command."
+                   FontSize="12" />
+
+            <shiny:ButtonGroup AutomationId="ActionGroup">
+                <shiny:ShinyButton AutomationId="ArchiveButton" Text="Archive" Appearance="Outlined"
+                                   Command="{Binding NoteCommand}" CommandParameter="Archive" />
+                <shiny:ShinyButton AutomationId="ReportButton" Text="Report" Appearance="Outlined"
+                                   Command="{Binding NoteCommand}" CommandParameter="Report" />
+                <shiny:ShinyButton Text="Snooze" Appearance="Outlined"
+                                   Command="{Binding NoteCommand}" CommandParameter="Snooze" />
+            </shiny:ButtonGroup>
+
+            <!-- ============================================================ -->
+            <Label Text="Single selection" FontAttributes="Bold" />
+            <Label Text="SelectionMode=&quot;Single&quot; turns the same markup into a segmented picker. SelectedIndex is two-way."
+                   FontSize="12" />
+
+            <shiny:ButtonGroup SelectionMode="Single"
+                               SelectedIndex="{Binding RangeIndex}"
+                               AutomationId="RangeGroup">
+                <shiny:ShinyButton AutomationId="RangeDay" Text="Day" />
+                <shiny:ShinyButton AutomationId="RangeWeek" Text="Week" />
+                <shiny:ShinyButton AutomationId="RangeMonth" Text="Month" />
+            </shiny:ButtonGroup>
+
+            <Label Text="{Binding RangeSummary}" FontSize="12" AutomationId="RangeSummary" />
+
+            <!-- ============================================================ -->
+            <Label Text="Multiple selection" FontAttributes="Bold" />
+            <Label Text="Any number of segments at once — a formatting toolbar rather than a picker."
+                   FontSize="12" />
+
+            <shiny:ButtonGroup SelectionMode="Multiple"
+                               SelectionChanged="OnFormatSelectionChanged"
+                               AutomationId="FormatGroup">
+                <shiny:ShinyButton AutomationId="FormatBold" Text="B" FontAttributes="Bold" />
+                <shiny:ShinyButton AutomationId="FormatItalic" Text="I" FontAttributes="Italic" />
+                <shiny:ShinyButton AutomationId="FormatUnderline" Text="U" />
+            </shiny:ButtonGroup>
+
+            <Label Text="{Binding FormatSummary}" FontSize="12" AutomationId="FormatSummary" />
+
+            <!-- ============================================================ -->
+            <Label Text="Split button" FontAttributes="Bold" />
+            <Label Text="A primary action plus its alternatives, divided by a ButtonGroupSeparator — for two segments of the same filled appearance."
+                   FontSize="12" />
+
+            <shiny:ButtonGroup>
+                <shiny:ShinyButton Text="Follow" Type="Secondary"
+                                   Command="{Binding NoteCommand}" CommandParameter="Followed" />
+                <shiny:ButtonGroupSeparator />
+                <shiny:ShinyButton RightMotionIcon="chevron-down" Type="Secondary"
+                                   SemanticProperties.Description="More follow options"
+                                   Command="{Binding NoteCommand}" CommandParameter="More follow options" />
+            </shiny:ButtonGroup>
+
+            <!-- ============================================================ -->
+            <Label Text="Text segment" FontAttributes="Bold" />
+            <Label Text="ButtonGroupText is a static label, unit or prefix sitting flush with the buttons."
+                   FontSize="12" />
+
+            <shiny:ButtonGroup>
+                <shiny:ButtonGroupText Text="USD" />
+                <shiny:ShinyButton AutomationId="AmountDecrease" Text="−" Appearance="Outlined"
+                                   SemanticProperties.Description="Decrease"
+                                   Command="{Binding AdjustCommand}" CommandParameter="-1" />
+                <shiny:ShinyButton AutomationId="AmountIncrease" Text="+" Appearance="Outlined"
+                                   SemanticProperties.Description="Increase"
+                                   Command="{Binding AdjustCommand}" CommandParameter="1" />
+            </shiny:ButtonGroup>
+
+            <Label Text="{Binding AmountSummary}" FontSize="12" AutomationId="AmountSummary" />
+
+            <!-- ============================================================ -->
+            <Label Text="Vertical" FontAttributes="Bold" />
+            <Label Text="Orientation=&quot;Vertical&quot; stacks the segments — a zoom rail." FontSize="12" />
+
+            <shiny:ButtonGroup Orientation="Vertical" HorizontalOptions="Start">
+                <shiny:ShinyButton LeftMotionIcon="zoom-in" Appearance="Outlined"
+                                   SemanticProperties.Description="Zoom in"
+                                   Command="{Binding NoteCommand}" CommandParameter="Zoom in" />
+                <shiny:ShinyButton LeftMotionIcon="zoom-out" Appearance="Outlined"
+                                   SemanticProperties.Description="Zoom out"
+                                   Command="{Binding NoteCommand}" CommandParameter="Zoom out" />
+                <shiny:ShinyButton LeftMotionIcon="expand" Appearance="Outlined"
+                                   SemanticProperties.Description="Reset zoom"
+                                   Command="{Binding NoteCommand}" CommandParameter="Reset zoom" />
+            </shiny:ButtonGroup>
+
+            <!-- ============================================================ -->
+            <Label Text="Nested groups" FontAttributes="Bold" />
+            <Label Text="A group of groups is a cluster: each inner group keeps its own merged edges and the two are spaced apart."
+                   FontSize="12" />
+
+            <shiny:ButtonGroup>
+                <shiny:ButtonGroup>
+                    <shiny:ShinyButton Text="Undo" Appearance="Outlined"
+                                       Command="{Binding NoteCommand}" CommandParameter="Undo" />
+                    <shiny:ShinyButton Text="Redo" Appearance="Outlined"
+                                       Command="{Binding NoteCommand}" CommandParameter="Redo" />
+                </shiny:ButtonGroup>
+                <shiny:ButtonGroup>
+                    <shiny:ShinyButton Text="Cut" Appearance="Outlined"
+                                       Command="{Binding NoteCommand}" CommandParameter="Cut" />
+                    <shiny:ShinyButton Text="Copy" Appearance="Outlined"
+                                       Command="{Binding NoteCommand}" CommandParameter="Copy" />
+                    <shiny:ShinyButton Text="Paste" Appearance="Outlined"
+                                       Command="{Binding NoteCommand}" CommandParameter="Paste" />
+                </shiny:ButtonGroup>
+            </shiny:ButtonGroup>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

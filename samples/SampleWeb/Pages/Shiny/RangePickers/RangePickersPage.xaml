@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shiny="http://shiny.net/maui/controls"
+    x:Class="Sample.Features.RangePickers.RangePickersPage"
+    Title="Range Pickers"
+    AutomationId="RangePickersPage">
+
+    <ScrollView Padding="16">
+        <VerticalStackLayout Spacing="20">
+
+            <Label Text="Inline calendar" FontSize="18" FontAttributes="Bold" />
+            <Label Text="Tap the first day, then the last. A third tap starts over." FontSize="13" />
+            <shiny:DateRangeCalendar x:Name="InlineCalendar"
+                                     AutomationId="InlineCalendar"
+                                     RangeSelected="OnInlineRange" />
+            <Label x:Name="InlineStatus" AutomationId="InlineStatus" FontSize="13" />
+
+            <BoxView HeightRequest="1" Color="#33888888" />
+
+            <Label Text="Date range picker" FontSize="18" FontAttributes="Bold" />
+            <Label Text="With reporting presets. Edits are a draft until Apply." FontSize="13" />
+            <shiny:DateRangePicker x:Name="ReportPicker"
+                                   AutomationId="ReportPicker"
+                                   Title="Report period" />
+
+            <Label Text="Booking: from today, 2–14 nights, booked dates blocked" FontSize="13" />
+            <shiny:DateRangePicker x:Name="BookingPicker"
+                                   AutomationId="BookingPicker"
+                                   Placeholder="Check-in – check-out"
+                                   MinDays="2"
+                                   MaxDays="14"
+                                   AllowSingleDay="False"
+                                   AutoApply="True" />
+
+            <BoxView HeightRequest="1" Color="#33888888" />
+
+            <Label Text="Time range picker" FontSize="18" FontAttributes="Bold" />
+            <shiny:TimeRangePicker AutomationId="MeetingPicker"
+                                   Placeholder="Meeting time"
+                                   Interval="0:30:00"
+                                   MinTime="7:00:00"
+                                   MaxTime="20:00:00"
+                                   MaxDuration="4:00:00" />
+
+            <Label Text="Overnight shift (end can wrap past midnight)" FontSize="13" />
+            <shiny:TimeRangePicker AutomationId="ShiftPicker"
+                                   Placeholder="Shift"
+                                   Interval="1:00:00"
+                                   AllowOvernight="True"
+                                   MinDuration="4:00:00"
+                                   MaxDuration="12:00:00" />
+
+            <BoxView HeightRequest="1" Color="#33888888" />
+
+            <Label Text="Date &amp; time range picker" FontSize="18" FontAttributes="Bold" />
+            <shiny:DateTimeRangePicker x:Name="EventPicker"
+                                       AutomationId="EventPicker"
+                                       Placeholder="Event start – end"
+                                       MinDuration="0:30:00" />
+            <Label x:Name="EventStatus" AutomationId="EventStatus" FontSize="13" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

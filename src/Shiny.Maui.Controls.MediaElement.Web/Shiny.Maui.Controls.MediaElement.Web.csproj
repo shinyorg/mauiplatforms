@@ -1,0 +1,38 @@
+<!-- The Razor SDK is used only for its static web asset pipeline, which ships wwwroot/shiny-mediaelement-web.js
+     to consumers under _content/Shiny.Maui.Controls.MediaElement.Web/. No Razor components or Blazor are involved. -->
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>$(BaseTargetFramework)</TargetFramework>
+        <RootNamespace>Shiny.Maui.Controls.Media.Web</RootNamespace>
+        <PackageId>Shiny.Maui.Controls.MediaElement.Web</PackageId>
+        <PackageVersion>$(WebPackageVersion)</PackageVersion>
+        <Description>Browser backend for the Shiny .NET MAUI MediaElement on Platform.Maui.Web, built on the HTML video element. Pairs with Shiny.Maui.Controls.MediaElement.</Description>
+        <PackageTags>$(PackageTags) web wasm webassembly browser mediaelement video audio player</PackageTags>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <IsTrimmable>true</IsTrimmable>
+        <AddRazorSupportForMvc>false</AddRazorSupportForMvc>
+        <NoWarn>$(NoWarn);CS1591</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <SupportedPlatform Include="browser" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+        <PackageReference Include="Shiny.Maui.Controls.MediaElement" Version="$(ShinyControlsVersion)" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Platform.Maui.Web\Platform.Maui.Web.csproj" />
+    </ItemGroup>
+
+    <!-- Same as Platform.Maui.Web: keep this library's dev-server manifests out of referencing apps. -->
+    <Target Name="_MauiWebKeepDevManifestsOutOfReferencers" AfterTargets="AddStaticWebAssetEndpointsBuildManifest">
+        <ItemGroup>
+            <ContentWithTargetPath Remove="$(StaticWebAssetDevelopmentManifestPath);$(StaticWebAssetEndpointsBuildManifestPath)" />
+        </ItemGroup>
+    </Target>
+
+</Project>

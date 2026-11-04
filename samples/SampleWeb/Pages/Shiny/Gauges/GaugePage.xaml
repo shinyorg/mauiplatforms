@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shiny="http://shiny.net/maui/controls"
+    xmlns:local="clr-namespace:Sample.Features.Gauges"
+    x:Class="Sample.Features.Gauges.GaugePage"
+    x:DataType="local:GaugeViewModel"
+    Title="Gauge"
+    AutomationId="GaugePage">
+
+    <!-- The page scrolls; the gauges never do. Each one has a fixed size and simply draws into it. -->
+    <ScrollView Padding="16">
+        <VerticalStackLayout Spacing="20">
+
+            <!-- Dashboard: a feed of ten readings a second, smoothed into one sweep by the springs -->
+            <Label Text="Dashboard" FontSize="18" FontAttributes="Bold" />
+            <Label FontSize="13"
+                   Text="The car below reports ten readings a second, like a real vehicle feed. The needles' springs carry their momentum between readings, so the tachometer climbs, drops on each gear change and climbs again instead of stepping." />
+
+            <Border Padding="12" StrokeThickness="0" BackgroundColor="#0F172A">
+                <Border.StrokeShape>
+                    <RoundRectangle CornerRadius="16" />
+                </Border.StrokeShape>
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="8" RowDefinitions="Auto,Auto">
+
+                    <shiny:Gauge AutomationId="Speedometer"
+                                 Value="{Binding Speed}"
+                                 Maximum="240"
+                                 MajorTickInterval="20"
+                                 MinorTicksPerMajor="1"
+                                 Units="km/h"
+                                 SweepOnLoad="True"
+                                 ShowPeak="True"
+                                 ShowValueArc="False"
+                                 TrackThickness="3"
+                                 TrackColor="#475569"
+                                 TickColor="#CBD5E1"
+                                 TextColor="White"
+                                 NeedleColor="#F97316"
+                                 HubColor="#1E293B"
+                                 PeakColor="#38BDF8"
+                                 WidthRequest="170" HeightRequest="170" />
+
+                    <shiny:Gauge Grid.Column="1"
+                                 AutomationId="Tachometer"
+                                 Value="{Binding Rpm}"
+                                 Maximum="8"
+                                 MajorTickInterval="1"
+                                 Title="RPM"
+                                 Units="x1000 r/min"
+                                 ReadoutDecimals="1"
+                                 SweepOnLoad="True"
+                                 SpringDamping="0.55"
+                                 TrackThickness="6"
+                                 TrackColor="#334155"
+                                 ValueArcColor="#38BDF8"
+                                 TickColor="#CBD5E1"
+                                 TextColor="White"
+                                 NeedleColor="#F97316"
+                                 HubColor="#1E293B"
+                                 WidthRequest="170" HeightRequest="170">
+                        <shiny:Gauge.Ranges>
+                            <shiny:GaugeRange Start="5.5" End="6.5" Color="#F59E0B" />
+                            <shiny:GaugeRange Start="6.5" End="8" Color="#EF4444" />
+                        </shiny:Gauge.Ranges>
+                    </shiny:Gauge>
+
+                    <HorizontalStackLayout Grid.Row="1" Grid.ColumnSpan="2" HorizontalOptions="Center" Spacing="12">
+                        <Label Text="GEAR" TextColor="#94A3B8" VerticalOptions="Center" />
+                        <Label AutomationId="GearLabel" Text="{Binding GearText}" TextColor="White" FontSize="22" FontAttributes="Bold" />
+                    </HorizontalStackLayout>
+                </Grid>
+            </Border>
+
+            <HorizontalStackLayout Spacing="12">
+                <Button AutomationId="DriveButton" Text="Start / stop driving" Command="{Binding ToggleDriveCommand}" />
+                <Button AutomationId="ThrottleButton" Text="Hold to floor it" Pressed="OnThrottlePressed" Released="OnThrottleReleased" />
+            </HorizontalStackLayout>
+
+            <BoxView HeightRequest="1" Color="#33888888" />
+
+            <!-- Semicircles -->
+            <Label Text="Semicircle gauges" FontSize="18" FontAttributes="Bold" />
+            <Label FontSize="13" Text="StartAngle -90 with SweepAngle 180. The dial fits the box it is given, so a half disc fills a wide, short space." />
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12">
+                <shiny:Gauge AutomationId="FuelGauge"
+                             Value="{Binding Fuel}"
+                             StartAngle="-90" SweepAngle="180"
+                             Title="FUEL" Units="%"
+                             MajorTickInterval="25" MinorTicksPerMajor="1"
+                             ColorValueArcByRange="True"
+                             WidthRequest="170" HeightRequest="120">
+                    <shiny:Gauge.Ranges>
+                        <shiny:GaugeRange Start="0" End="15" Color="#EF4444" />
+                    </shiny:Gauge.Ranges>
+                </shiny:Gauge>
+
+                <shiny:Gauge Grid.Column="1"
+                             AutomationId="TemperatureGauge"
+                             Value="{Binding Temperature}"
+                             Minimum="60" Maximum="130"
+                             StartAngle="-90" SweepAngle="180"
+                             Title="TEMP" Units="°C"
+                             MajorTickInterval="10" MinorTicksPerMajor="1"
+                             Animation="Ease"
+                             WidthRequest="170" HeightRequest="120">
+                    <shiny:Gauge.Ranges>
+                        <shiny:GaugeRange Start="60" End="75" Color="#38BDF8" />
+                        <shiny:GaugeRange Start="75" End="105" Color="#22C55E" />
+                        <shiny:GaugeRange Start="105" End="130" Color="#EF4444" />
+                    </shiny:Gauge.Ranges>
+                </shiny:Gauge>
+            </Grid>
+
+            <BoxView HeightRequest="1" Color="#33888888" />
+
+            <!-- Ring -->
+            <Label Text="Ring gauge (no needle)" FontSize="18" FontAttributes="Bold" />
+            <Label FontSize="13" Text="NeedleStyle None with the ticks off. Ranges with RangeThickness 0 draw no bands but still colour the arc as the value crosses them." />
+            <shiny:Gauge AutomationId="CpuGauge"
+                         Value="{Binding Cpu}"
+                         StartAngle="-150" SweepAngle="300"
+                         NeedleStyle="None"
+                         ShowTicks="False" ShowTickLabels="False"
+                         TrackThickness="16"
+                         RangeThickness="0"
+                         Title="CPU" Units="%"
+                         Animation="Ease"
+                         HorizontalOptions="Start"
+                         WidthRequest="160" HeightRequest="160">
+                <shiny:Gauge.Ranges>
+                    <shiny:GaugeRange Start="0" End="60" Color="#22C55E" />
+                    <shiny:GaugeRange Start="60" End="85" Color="#F59E0B" />
+                    <shiny:GaugeRange Start="85" End="100" Color="#EF4444" />
+                </shiny:Gauge.Ranges>
+            </shiny:Gauge>
+
+            <BoxView HeightRequest="1" Color="#33888888" />
+
+            <!-- Playground -->
+            <Label Text="Playground" FontSize="18" FontAttributes="Bold" />
+            <shiny:Gauge x:Name="PlayGauge"
+                         AutomationId="PlayGauge"
+                         Value="{Binding PlayValue}"
+                         Animation="{Binding Animation}"
+                         AnimationDuration="{Binding Duration}"
+                         SpringDamping="{Binding Damping}"
+                         NeedleStyle="{Binding NeedleStyle}"
+                         ShowPeak="True"
+                         FaceColor="#14888888"
+                         HorizontalOptions="Start"
+                         WidthRequest="220" HeightRequest="220" />
+
+            <Label Text="{Binding PlayValue, StringFormat='Value: {0:0}'}" FontSize="13" />
+            <Slider AutomationId="PlaySlider" Minimum="0" Maximum="100" Value="{Binding PlayValue}" />
+
+            <Label Text="{Binding Damping, StringFormat='Spring damping: {0:0.00}  (1 = no overshoot)'}" FontSize="13" />
+            <Slider Minimum="0.1" Maximum="1.5" Value="{Binding Damping}" />
+
+            <Label Text="{Binding DurationMs, StringFormat='Duration / period: {0:0} ms'}" FontSize="13" />
+            <Slider Minimum="0" Maximum="2500" Value="{Binding DurationMs}" />
+
+            <FlexLayout Wrap="Wrap" JustifyContent="Start">
+                <Button Text="Spring" Margin="0,0,8,8" Command="{Binding SetAnimationCommand}" CommandParameter="Spring" />
+                <Button Text="Ease" Margin="0,0,8,8" Command="{Binding SetAnimationCommand}" CommandParameter="Ease" />
+                <Button Text="None" Margin="0,0,8,8" Command="{Binding SetAnimationCommand}" CommandParameter="None" />
+                <Button Text="Tapered" Margin="0,0,8,8" Command="{Binding SetNeedleCommand}" CommandParameter="Tapered" />
+                <Button Text="Line" Margin="0,0,8,8" Command="{Binding SetNeedleCommand}" CommandParameter="Line" />
+                <Button Text="No needle" Margin="0,0,8,8" Command="{Binding SetNeedleCommand}" CommandParameter="None" />
+                <Button Text="Random" AutomationId="RandomButton" Margin="0,0,8,8" Command="{Binding RandomCommand}" />
+                <Button Text="Sweep" AutomationId="SweepButton" Margin="0,0,8,8" Clicked="OnSweep" />
+                <Button Text="Reset peak" Margin="0,0,8,8" Clicked="OnResetPeak" />
+            </FlexLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

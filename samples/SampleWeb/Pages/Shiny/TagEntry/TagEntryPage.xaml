@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:local="clr-namespace:Sample.Features.Tags"
+             x:Class="Sample.Features.Tags.TagEntryPage"
+             x:DataType="local:TagEntryViewModel"
+             Title="TagEntry"
+             AutomationId="TagEntryPage">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="18">
+
+            <Label Text="TagEntry"
+                   FontSize="22"
+                   FontAttributes="Bold" />
+
+            <Label Text="{Binding StatusMessage}" FontSize="14" AutomationId="TagStatus" />
+
+            <BoxView HeightRequest="1" Color="LightGray" />
+
+            <!-- ============================================================ -->
+            <Label Text="Default" FontAttributes="Bold" />
+            <Label Text="Type a value and press Enter or comma to commit it. Tap a chip's ✕ — or press Backspace on empty text — to remove the newest."
+                   FontSize="12" />
+
+            <shiny:TagEntry Tags="{Binding Teams}"
+                            Placeholder="Add a team..."
+                            AutomationId="TeamTags" />
+
+            <Label Text="{Binding TeamSummary}" FontSize="12" AutomationId="TeamSummary" />
+
+            <!-- ============================================================ -->
+            <Label Text="Delimiters" FontAttributes="Bold" />
+            <Label Text="Delimiters sets what commits besides Enter, and what a pasted value splits on. An empty list is Enter only, so commas survive inside a tag."
+                   FontSize="12" />
+
+            <shiny:TagEntry Tags="{Binding Recipients}"
+                            Delimiters="{Binding CommaOrSemicolon}"
+                            Placeholder="Comma or semicolon commits..."
+                            AutomationId="RecipientTags" />
+
+            <shiny:TagEntry Tags="{Binding Phrases}"
+                            Delimiters="{Binding NoDelimiters}"
+                            Placeholder="Only Enter commits..."
+                            AutomationId="PhraseTags" />
+
+            <!-- ============================================================ -->
+            <Label Text="Limits" FontAttributes="Bold" />
+            <Label Text="MaxTags caps the count — further commits are ignored and the typed text stays put. Duplicates are dropped quietly unless AllowDuplicates is set."
+                   FontSize="12" />
+
+            <shiny:TagEntry Tags="{Binding Limited}"
+                            MaxTags="3"
+                            Placeholder="At most three..."
+                            AutomationId="LimitedTags" />
+
+            <shiny:TagEntry Tags="{Binding Duplicates}"
+                            AllowDuplicates="True"
+                            Placeholder="Duplicates welcome..."
+                            AutomationId="DuplicateTags" />
+
+            <!-- ============================================================ -->
+            <Label Text="Validation" FontAttributes="Bold" />
+            <Label Text="TagAdding is cancellable — here anything shorter than three characters is refused, and the typed text is left to be corrected."
+                   FontSize="12" />
+
+            <shiny:TagEntry Tags="{Binding Validated}"
+                            TagAdding="OnTagAdding"
+                            Placeholder="Three characters or more..."
+                            AutomationId="ValidatedTags" />
+
+            <!-- ============================================================ -->
+            <Label Text="Chip template" FontAttributes="Bold" />
+            <Label Text="ChipTemplate replaces the chip's label — the tag string is the binding context. The remove button is never part of the template."
+                   FontSize="12" />
+
+            <shiny:TagEntry Tags="{Binding Labels}"
+                            Placeholder="Add a label..."
+                            AutomationId="LabelTags">
+                <shiny:TagEntry.ChipTemplate>
+                    <DataTemplate x:DataType="x:String">
+                        <HorizontalStackLayout Spacing="4" VerticalOptions="Center">
+                            <shiny:MotionIconView Icon="tag" WidthRequest="12" HeightRequest="12"
+                                                  Trigger="Manual" InputTransparent="True" />
+                            <Label Text="{Binding .}" FontSize="14" VerticalTextAlignment="Center" />
+                        </HorizontalStackLayout>
+                    </DataTemplate>
+                </shiny:TagEntry.ChipTemplate>
+            </shiny:TagEntry>
+
+            <!-- ============================================================ -->
+            <Label Text="Read-only and disabled" FontAttributes="Bold" />
+            <Label Text="Read-only keeps the chips crisp but blocks adding and removing; disabled dims the whole field."
+                   FontSize="12" />
+
+            <shiny:TagEntry Tags="{Binding Frozen}"
+                            IsReadOnly="True"
+                            Placeholder="Read-only..."
+                            AutomationId="ReadOnlyTags" />
+
+            <shiny:TagEntry Tags="{Binding Frozen}"
+                            IsEnabled="False"
+                            Placeholder="Disabled..."
+                            AutomationId="DisabledTags" />
+
+            <!-- ============================================================ -->
+            <Label Text="Programmatic focus" FontAttributes="Bold" />
+            <Label Text="Clearing the tags hands the keyboard straight back to the typing area, ready for the replacement list."
+                   FontSize="12" />
+
+            <shiny:TagEntry x:Name="TopicField"
+                            Tags="{Binding Topics}"
+                            Placeholder="Add a topic..."
+                            AutomationId="TopicTags" />
+
+            <shiny:ShinyButton Text="Clear and start over"
+                               Appearance="Outlined"
+                               Clicked="OnClearTopics"
+                               AutomationId="ClearTopics" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

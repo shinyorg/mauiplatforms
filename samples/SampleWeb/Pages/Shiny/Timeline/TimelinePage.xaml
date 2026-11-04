@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="clr-namespace:Shiny.Maui.Controls;assembly=Shiny.Maui.Controls"
+             x:Class="Sample.Features.Timeline.TimelinePage"
+             Title="Timeline">
+
+    <Grid RowDefinitions="Auto,Auto,*" Padding="12" RowSpacing="8">
+
+        <HorizontalStackLayout Grid.Row="0" Spacing="8">
+            <Button Text="◀ Back" Clicked="OnBack" AutomationId="TimelineBack" />
+            <Button Text="Forward ▶" Clicked="OnForward" AutomationId="TimelineForward" />
+            <Button Text="All active" Clicked="OnToggleAllActive" AutomationId="TimelineAllActive" />
+            <Button Text="Side" Clicked="OnToggleSide" AutomationId="TimelineSide" />
+        </HorizontalStackLayout>
+
+        <Label x:Name="StatusLabel" AutomationId="TimelineStatus" Grid.Row="1" FontSize="12" Opacity="0.7" />
+
+        <shiny:TimelineView x:Name="Timeline"
+                            AutomationId="Timeline"
+                            Grid.Row="2"
+                            ActiveIndex="2"
+                            NodeTapped="OnNodeTapped">
+            <shiny:TimelineView.OppositeTemplate>
+                <DataTemplate>
+                    <Label Text="{Binding At}" FontSize="12" Opacity="0.6" VerticalOptions="Start" />
+                </DataTemplate>
+            </shiny:TimelineView.OppositeTemplate>
+
+            <shiny:TimelineView.ItemTemplate>
+                <DataTemplate>
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="{Binding Title}" FontAttributes="Bold" />
+                        <Label Text="{Binding Detail}" FontSize="13" Opacity="0.75" />
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </shiny:TimelineView.ItemTemplate>
+        </shiny:TimelineView>
+    </Grid>
+</ContentPage>

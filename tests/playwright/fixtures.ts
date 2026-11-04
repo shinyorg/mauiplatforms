@@ -109,3 +109,11 @@ export const galleryPages = [
   'Location, Sensors & Speech', 'WebView', 'Navigation', 'TabbedPage', 'FlyoutPage', 'Shell Navigation',
   'ControlTemplate', 'Modal Pages', 'Theme',
 ];
+
+/** Every page in the flyout's Shiny Controls tab, in menu order. */
+export const shinyPages = [
+  'CameraView', 'MediaElement', 'VideoText', 'Pills', 'Badge', 'Avatar', 'Chips', 'ShinyButton', 'ButtonGroup', 'FAB & FabMenu',
+  'Gauge', 'Progress Bar', 'Slider', 'Range Slider', 'Range Pickers', 'Expander', 'Timeline', 'Text Entry',
+  'TagEntry', 'Password Strength', 'Skeleton', 'Marquee', 'Confetti', 'Animated Backgrounds', 'Border Animations',
+  'Toast', 'Dialogs',
+];

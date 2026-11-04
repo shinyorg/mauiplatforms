@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shiny="http://shiny.net/maui/controls"
+    x:Class="Sample.Features.AnimatedBackgrounds.AnimatedBackgroundsPage"
+    Title="Animated Backgrounds"
+    AutomationId="AnimatedBackgroundsPage">
+
+    <ContentPage.Resources>
+        <Style x:Key="CardTitle" TargetType="Label">
+            <Setter Property="TextColor" Value="White" />
+            <Setter Property="FontSize" Value="15" />
+            <Setter Property="FontAttributes" Value="Bold" />
+            <Setter Property="VerticalOptions" Value="End" />
+        </Style>
+        <Style TargetType="shiny:AnimatedBackground" x:Key="Card">
+            <Setter Property="HeightRequest" Value="140" />
+            <Setter Property="CornerRadius" Value="16" />
+            <Setter Property="Padding" Value="14" />
+            <Setter Property="Background" Value="#0B1020" />
+        </Style>
+    </ContentPage.Resources>
+
+    <ScrollView Padding="16">
+        <VerticalStackLayout Spacing="16">
+
+            <!-- The playground: one background whose effect and settings are changed live. -->
+            <shiny:AnimatedBackground x:Name="Hero"
+                                      AutomationId="HeroBackground"
+                                      HeightRequest="260"
+                                      CornerRadius="20"
+                                      Padding="24"
+                                      Background="#0B1020">
+                <VerticalStackLayout VerticalOptions="Center" Spacing="6">
+                    <Label x:Name="HeroTitle" AutomationId="HeroTitle" Text="Aurora" TextColor="White" FontSize="30" FontAttributes="Bold" HorizontalTextAlignment="Center" />
+                    <Label Text="Content sits on top - taps go straight through to it."
+                           TextColor="White" Opacity="0.75" FontSize="13" HorizontalTextAlignment="Center" />
+                    <Button x:Name="HeroButton" Text="A real button (0)" HorizontalOptions="Center" Margin="0,10,0,0" AutomationId="HeroButton" Clicked="OnHeroButton" />
+                </VerticalStackLayout>
+            </shiny:AnimatedBackground>
+
+            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto" ColumnSpacing="12" RowSpacing="10">
+                <Label Text="Effect" VerticalOptions="Center" />
+                <Picker x:Name="EffectPicker" Grid.Column="1" AutomationId="EffectPicker" SelectedIndexChanged="OnEffectChanged" />
+
+                <Label Grid.Row="1" Text="Speed" VerticalOptions="Center" />
+                <Slider x:Name="SpeedSlider" Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="3" Value="1" AutomationId="SpeedSlider" ValueChanged="OnSpeedChanged" />
+
+                <Label Grid.Row="2" Text="Palette" VerticalOptions="Center" />
+                <HorizontalStackLayout Grid.Row="2" Grid.Column="1" Spacing="8">
+                    <Button Text="Default" Clicked="OnPalette" CommandParameter="" AutomationId="PaletteDefault" />
+                    <Button Text="Sunset" Clicked="OnPalette" CommandParameter="#F97316,#EC4899,#FACC15" AutomationId="PaletteSunset" />
+                    <Button Text="Mint" Clicked="OnPalette" CommandParameter="#34D399,#22D3EE,#A3E635" AutomationId="PaletteMint" />
+                </HorizontalStackLayout>
+
+                <Label Grid.Row="3" Text="Running" VerticalOptions="Center" />
+                <Switch Grid.Row="3" Grid.Column="1" IsToggled="{Binding IsRunning, Source={x:Reference Hero}, Mode=TwoWay}" AutomationId="RunningSwitch" />
+            </Grid>
+
+            <Label Text="Gallery" FontSize="18" FontAttributes="Bold" Margin="0,8,0,0" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12" RowSpacing="12"
+                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+
+                <shiny:AnimatedBackground Style="{StaticResource Card}" AutomationId="AuroraCard">
+                    <shiny:AnimatedBackground.Effect>
+                        <shiny:AuroraEffect />
+                    </shiny:AnimatedBackground.Effect>
+                    <Label Text="Aurora" Style="{StaticResource CardTitle}" />
+                </shiny:AnimatedBackground>
+
+                <shiny:AnimatedBackground Grid.Column="1" Style="{StaticResource Card}" AutomationId="ParticlesCard">
+                    <shiny:AnimatedBackground.Effect>
+                        <shiny:ParticlesEffect LinkDistance="70" />
+                    </shiny:AnimatedBackground.Effect>
+                    <Label Text="Particles" Style="{StaticResource CardTitle}" />
+                </shiny:AnimatedBackground>
+
+                <shiny:AnimatedBackground Grid.Row="1" Style="{StaticResource Card}" AutomationId="SnowCard">
+                    <shiny:AnimatedBackground.Effect>
+                        <shiny:SnowEffect Wind="0.4" />
+                    </shiny:AnimatedBackground.Effect>
+                    <Label Text="Snow" Style="{StaticResource CardTitle}" />
+                </shiny:AnimatedBackground>
+
+                <shiny:AnimatedBackground Grid.Row="1" Grid.Column="1" Style="{StaticResource Card}" Background="#0F172A" AutomationId="RainCard">
+                    <shiny:AnimatedBackground.Effect>
+                        <shiny:RainEffect />
+                    </shiny:AnimatedBackground.Effect>
+                    <Label Text="Rain" Style="{StaticResource CardTitle}" />
+                </shiny:AnimatedBackground>
+
+                <shiny:AnimatedBackground Grid.Row="2" Style="{StaticResource Card}" Background="#020617" AutomationId="MeteorsCard">
+                    <shiny:AnimatedBackground.Effect>
+                        <shiny:MeteorsEffect Density="1.5" MaxDelay="0:0:1.5" Length="60" />
+                    </shiny:AnimatedBackground.Effect>
+                    <Label Text="Meteors" Style="{StaticResource CardTitle}" />
+                </shiny:AnimatedBackground>
+
+                <shiny:AnimatedBackground Grid.Row="2" Grid.Column="1" Style="{StaticResource Card}" Background="#09090B" AutomationId="DotsCard">
+                    <shiny:AnimatedBackground.Effect>
+                        <shiny:DotPatternEffect Spacing="14" SpotlightColor="#A78BFA" SpotlightRadius="70" Glow="0.25" />
+                    </shiny:AnimatedBackground.Effect>
+                    <Label Text="Dot spotlight" Style="{StaticResource CardTitle}" />
+                </shiny:AnimatedBackground>
+
+                <shiny:AnimatedBackground Grid.Row="3" Style="{StaticResource Card}" AutomationId="NoiseCard">
+                    <shiny:AnimatedBackground.Background>
+                        <LinearGradientBrush EndPoint="1,1">
+                            <GradientStop Color="#4F46E5" Offset="0" />
+                            <GradientStop Color="#DB2777" Offset="1" />
+                        </LinearGradientBrush>
+                    </shiny:AnimatedBackground.Background>
+                    <shiny:AnimatedBackground.Effect>
+                        <shiny:NoiseEffect Intensity="0.25" />
+                    </shiny:AnimatedBackground.Effect>
+                    <Label Text="Noise over a gradient" Style="{StaticResource CardTitle}" />
+                </shiny:AnimatedBackground>
+
+                <shiny:AnimatedBackground Grid.Row="3" Grid.Column="1" Style="{StaticResource Card}" Background="#000000" AutomationId="WarpCard">
+                    <shiny:AnimatedBackground.Effect>
+                        <shiny:StarfieldEffect Warp="True" Density="12" />
+                    </shiny:AnimatedBackground.Effect>
+                    <Label Text="Starfield (warp)" Style="{StaticResource CardTitle}" />
+                </shiny:AnimatedBackground>
+
+                <shiny:AnimatedBackground Grid.Row="4" Style="{StaticResource Card}" Background="#052e16" AutomationId="FirefliesCard">
+                    <shiny:AnimatedBackground.Effect>
+                        <shiny:FirefliesEffect Density="1.2" />
+                    </shiny:AnimatedBackground.Effect>
+                    <Label Text="Fireflies" Style="{StaticResource CardTitle}" />
+                </shiny:AnimatedBackground>
+
+                <shiny:AnimatedBackground Grid.Row="4" Grid.Column="1" Style="{StaticResource Card}" Background="#082F49" AutomationId="BubblesCard">
+                    <shiny:AnimatedBackground.Effect>
+                        <shiny:BubblesEffect Density="1.5" MaxSize="12" />
+                    </shiny:AnimatedBackground.Effect>
+                    <Label Text="Bubbles" Style="{StaticResource CardTitle}" />
+                </shiny:AnimatedBackground>
+
+                <shiny:AnimatedBackground Grid.Row="5" Style="{StaticResource Card}" Background="#0C1222" AutomationId="WavesCard">
+                    <shiny:AnimatedBackground.Effect>
+                        <shiny:WavesEffect Level="0.45" Amplitude="10" Wavelength="160" />
+                    </shiny:AnimatedBackground.Effect>
+                    <Label Text="Waves" Style="{StaticResource CardTitle}" VerticalOptions="Start" />
+                </shiny:AnimatedBackground>
+
+                <shiny:AnimatedBackground Grid.Row="5" Grid.Column="1" Style="{StaticResource Card}" Background="#000000" AutomationId="MatrixCard">
+                    <shiny:AnimatedBackground.Effect>
+                        <shiny:MatrixEffect FontSize="12" />
+                    </shiny:AnimatedBackground.Effect>
+                    <Label Text="Matrix" Style="{StaticResource CardTitle}" />
+                </shiny:AnimatedBackground>
+            </Grid>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

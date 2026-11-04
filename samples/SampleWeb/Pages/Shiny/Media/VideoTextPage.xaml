@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<shiny:ShinyContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:media="http://shiny.net/maui/media"
+             x:Class="Sample.Features.Media.VideoTextPage"
+             Title="Video Text">
+
+    <shiny:ShinyContentPage.PageContent>
+        <ScrollView>
+            <VerticalStackLayout Padding="16" Spacing="14">
+
+                <Label Text="VideoText"
+                       FontSize="22"
+                       FontAttributes="Bold" />
+                <Label Text="A looping video that plays at full strength inside the letters, under a black overlay everywhere else. There is no transport bar, and sound is off unless you turn it on. Use the options below to change the overlay, font and marquee."
+                       FontSize="13"
+                       TextColor="Gray" />
+
+                <media:VideoText x:Name="Video"
+                                 AutomationId="VideoText"
+                                 Source="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+                                 Text="BLOOM"
+                                 HeightRequest="220"
+                                 FallbackTextColor="White" />
+
+                <Label Text="Marquee over a see-through overlay" FontAttributes="Bold" />
+                <media:VideoText AutomationId="MarqueeVideoText"
+                                 Source="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+                                 Text="SHINY CONTROLS"
+                                 OverlayColor="#0F172A"
+                                 OverlayOpacity="0.7"
+                                 Marquee="Left"
+                                 MarqueeDuration="0:0:6"
+                                 HeightRequest="120"
+                                 FallbackTextColor="White" />
+
+                <Label Text="No overlay: transparent around the letters" FontAttributes="Bold" />
+                <!-- a gradient backdrop proves the space between the letters is really transparent -->
+                <Border StrokeThickness="0" StrokeShape="RoundRectangle 12" HeightRequest="200">
+                    <Border.Background>
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                            <GradientStop Color="#0F172A" Offset="0" />
+                            <GradientStop Color="#1E1B4B" Offset="1" />
+                        </LinearGradientBrush>
+                    </Border.Background>
+
+                    <media:VideoText AutomationId="PlainVideoText"
+                                     Source="https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
+                                     Text="IN&#10;BLOOM"
+                                     FontSize="72"
+                                     OverlayColor="{x:Null}"
+                                     FallbackTextColor="White" />
+                </Border>
+
+                <!-- ── options ─────────────────────────────────────────────────────────── -->
+                <Label Text="Text" FontAttributes="Bold" />
+                <Entry Text="{Binding Source={x:Reference Video}, Path=Text}" AutomationId="VideoTextEntry" />
+
+                <Label Text="{Binding Source={x:Reference SizeSlider}, Path=Value, StringFormat='Font size: {0:0} (0 = auto-fit)'}" />
+                <Slider x:Name="SizeSlider"
+                        AutomationId="VideoTextSize"
+                        Minimum="0"
+                        Maximum="160"
+                        Value="{Binding Source={x:Reference Video}, Path=FontSize}" />
+
+                <Label Text="Font" FontAttributes="Bold" />
+                <Picker x:Name="FontPicker" SelectedIndexChanged="OnFontChanged" AutomationId="VideoTextFont">
+                    <Picker.Items>
+                        <x:String>System</x:String>
+                        <x:String>Bricolage</x:String>
+                        <x:String>OpenSansRegular</x:String>
+                    </Picker.Items>
+                </Picker>
+
+                <Label Text="Overlay colour" FontAttributes="Bold" />
+                <Picker x:Name="OverlayPicker" SelectedIndexChanged="OnOverlayChanged" AutomationId="VideoTextOverlay">
+                    <Picker.Items>
+                        <x:String>Black</x:String>
+                        <x:String>White</x:String>
+                        <x:String>Indigo</x:String>
+                        <x:String>None (transparent)</x:String>
+                    </Picker.Items>
+                </Picker>
+
+                <Label Text="{Binding Source={x:Reference Video}, Path=OverlayOpacity, StringFormat='Overlay opacity: {0:0.00}'}" />
+                <Slider Minimum="0"
+                        Maximum="1"
+                        Value="{Binding Source={x:Reference Video}, Path=OverlayOpacity}"
+                        AutomationId="VideoTextOpacity" />
+
+                <Label Text="Marquee" FontAttributes="Bold" />
+                <Picker x:Name="MarqueePicker" SelectedIndexChanged="OnMarqueeChanged" AutomationId="VideoTextMarquee">
+                    <Picker.Items>
+                        <x:String>None</x:String>
+                        <x:String>Left</x:String>
+                        <x:String>Right</x:String>
+                        <x:String>Up</x:String>
+                        <x:String>Down</x:String>
+                    </Picker.Items>
+                </Picker>
+
+                <HorizontalStackLayout Spacing="8">
+                    <Switch IsToggled="{Binding Source={x:Reference Video}, Path=IsMuted}" AutomationId="VideoTextMuted" />
+                    <Label Text="Muted" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+
+                <HorizontalStackLayout Spacing="8">
+                    <Switch x:Name="ItalicSwitch" AutomationId="VideoTextItalic" Toggled="OnItalicToggled" />
+                    <Label Text="Italic" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+    </shiny:ShinyContentPage.PageContent>
+</shiny:ShinyContentPage>

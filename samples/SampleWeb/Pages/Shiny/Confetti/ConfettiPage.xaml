@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shiny="http://shiny.net/maui/controls"
+    x:Class="Sample.Features.Confetti.ConfettiPage"
+    Title="Confetti"
+    AutomationId="ConfettiPage">
+
+    <ContentPage.Resources>
+        <shiny:ConfettiOptions x:Key="Unicorns"
+                               ParticleCount="30"
+                               Spread="80"
+                               Scalar="2">
+            <shiny:ConfettiOptions.Emoji>
+                <x:Array Type="{x:Type x:String}">
+                    <x:String>🦄</x:String>
+                    <x:String>🎉</x:String>
+                </x:Array>
+            </shiny:ConfettiOptions.Emoji>
+        </shiny:ConfettiOptions>
+    </ContentPage.Resources>
+
+    <ScrollView Padding="16">
+        <VerticalStackLayout Spacing="20">
+
+            <!-- Attached: no code at all -->
+            <Label Text="Attach it to any tap" FontSize="18" FontAttributes="Bold" />
+            <Label Text="shiny:Confetti.Trigger on any view. Buttons burst from their centre; everything else bursts from your finger."
+                   FontSize="13" />
+
+            <Button Text="Burst"
+                    AutomationId="BurstButton"
+                    shiny:Confetti.Trigger="Tap" />
+
+            <shiny:ShinyButton Text="Stars (ShinyButton)"
+                               AutomationId="StarsButton"
+                               shiny:Confetti.Trigger="Tap"
+                               shiny:Confetti.Preset="Stars" />
+
+            <Button Text="Random direction"
+                    AutomationId="RandomButton"
+                    shiny:Confetti.Trigger="Tap"
+                    shiny:Confetti.Preset="Random" />
+
+            <Button Text="Emoji (custom options)"
+                    AutomationId="EmojiButton"
+                    shiny:Confetti.Trigger="Tap"
+                    shiny:Confetti.Options="{StaticResource Unicorns}" />
+
+            <Border AutomationId="TapSurface"
+                    HeightRequest="140"
+                    StrokeShape="RoundRectangle 12"
+                    Stroke="#33888888"
+                    BackgroundColor="#11888888"
+                    shiny:Confetti.Trigger="Tap">
+                <Label Text="Tap anywhere in here"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center" />
+            </Border>
+
+            <Border AutomationId="DoubleTapSurface"
+                    HeightRequest="80"
+                    StrokeShape="RoundRectangle 12"
+                    Stroke="#33888888"
+                    shiny:Confetti.Trigger="DoubleTap"
+                    shiny:Confetti.Preset="Stars">
+                <Label Text="Double tap in here"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center" />
+            </Border>
+
+            <BoxView HeightRequest="1" Color="#33888888" />
+
+            <!-- Service -->
+            <Label Text="From code" FontSize="18" FontAttributes="Bold" />
+            <Label Text="IConfettiService - for a view model celebrating something that wasn't a tap."
+                   FontSize="13" />
+
+            <Button Text="Fireworks" AutomationId="FireworksButton" Clicked="OnFireworks" />
+            <Button Text="Side cannons" AutomationId="SideCannonsButton" Clicked="OnSideCannons" />
+            <Button x:Name="FromElementButton" Text="Burst from this button, then report" AutomationId="FromElementButton" Clicked="OnFromElement" />
+            <Button Text="Clear" AutomationId="ClearButton" Clicked="OnClear" />
+            <Label x:Name="StatusLabel" AutomationId="ConfettiStatus" FontSize="13" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

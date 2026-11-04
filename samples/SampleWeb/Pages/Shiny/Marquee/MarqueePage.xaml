@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shiny="http://shiny.net/maui/controls"
+    xmlns:local="clr-namespace:Sample.Features.Marquee"
+    x:Class="Sample.Features.Marquee.MarqueePage"
+    x:DataType="local:MarqueePage"
+    Title="Marquee"
+    AutomationId="MarqueePage">
+
+    <ContentPage.Resources>
+        <DataTemplate x:Key="ReviewCard" x:DataType="local:Review">
+            <Border WidthRequest="220"
+                    Padding="12"
+                    StrokeShape="RoundRectangle 12"
+                    Stroke="#33888888"
+                    BackgroundColor="#0D888888">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="14" />
+                    <Label Text="{Binding Handle}" FontSize="12" Opacity="0.6" />
+                    <Label Text="{Binding Body}" FontSize="13" MaxLines="3" LineBreakMode="TailTruncation" />
+                </VerticalStackLayout>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="Chip" x:DataType="x:String">
+            <Border Padding="14,6" StrokeShape="RoundRectangle 16" Stroke="#558888FF" BackgroundColor="#1A8888FF">
+                <Label Text="{Binding .}" FontSize="14" FontAttributes="Bold" />
+            </Border>
+        </DataTemplate>
+    </ContentPage.Resources>
+
+    <ScrollView Padding="16">
+        <VerticalStackLayout Spacing="20">
+
+            <Label Text="Reviews, both directions" FontSize="18" FontAttributes="Bold" />
+            <Label Text="Two rows of the same cards running opposite ways, with faded edges. Hover (or press) to pause."
+                   FontSize="13" />
+
+            <shiny:Marquee AutomationId="ReviewsMarquee"
+                           ItemsSource="{Binding Reviews}"
+                           ItemTemplate="{StaticResource ReviewCard}"
+                           Duration="0:0:30"
+                           FadeEdges="True"
+                           PauseOnHover="True"
+                           PauseOnPress="True" />
+
+            <shiny:Marquee AutomationId="ReviewsReversedMarquee"
+                           ItemsSource="{Binding Reviews}"
+                           ItemTemplate="{StaticResource ReviewCard}"
+                           Duration="0:0:30"
+                           Reverse="True"
+                           FadeEdges="True"
+                           PauseOnHover="True"
+                           PauseOnPress="True" />
+
+            <BoxView HeightRequest="1" Color="#33888888" />
+
+            <Label Text="Vertical" FontSize="18" FontAttributes="Bold" />
+            <Label Text="Angle=&quot;90&quot; rises; two columns side by side, the second reversed." FontSize="13" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12" HeightRequest="300">
+                <shiny:Marquee AutomationId="VerticalMarquee"
+                               Angle="90"
+                               ItemsSource="{Binding Tags}"
+                               ItemTemplate="{StaticResource Chip}"
+                               Gap="10"
+                               Speed="30"
+                               FadeEdges="True" />
+                <shiny:Marquee Grid.Column="1"
+                               Angle="90"
+                               Reverse="True"
+                               ItemsSource="{Binding Tags}"
+                               ItemTemplate="{StaticResource Chip}"
+                               Gap="10"
+                               Speed="30"
+                               FadeEdges="True" />
+            </Grid>
+
+            <BoxView HeightRequest="1" Color="#33888888" />
+
+            <Label Text="Any angle" FontSize="18" FontAttributes="Bold" />
+            <Label Text="Angle=&quot;-15&quot;. Items stay upright by default; switch it off to tilt them with the track like a ribbon."
+                   FontSize="13" />
+
+            <HorizontalStackLayout Spacing="8">
+                <Label Text="Keep content upright" VerticalOptions="Center" />
+                <Switch x:Name="UprightSwitch" IsToggled="True" AutomationId="UprightSwitch" />
+            </HorizontalStackLayout>
+
+            <shiny:Marquee AutomationId="AngledMarquee"
+                           Angle="-15"
+                           HeightRequest="200"
+                           ItemsSource="{Binding Tags}"
+                           ItemTemplate="{StaticResource Chip}"
+                           Speed="40"
+                           KeepContentUpright="{Binding IsToggled, Source={x:Reference UprightSwitch}, x:DataType=Switch}" />
+
+            <BoxView HeightRequest="1" Color="#33888888" />
+
+            <Label Text="Bound to a switch" FontSize="18" FontAttributes="Bold" />
+            <HorizontalStackLayout Spacing="8">
+                <Label Text="Running" VerticalOptions="Center" />
+                <Switch x:Name="RunningSwitch" IsToggled="True" AutomationId="RunningSwitch" />
+            </HorizontalStackLayout>
+
+            <shiny:Marquee AutomationId="TickerMarquee"
+                           ItemsSource="{Binding Tags}"
+                           ItemTemplate="{StaticResource Chip}"
+                           Speed="60"
+                           Gap="8"
+                           IsRunning="{Binding IsToggled, Source={x:Reference RunningSwitch}, x:DataType=Switch}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Sample.Features.Toast"
+             x:Class="Sample.Features.Toast.ToastPage"
+             x:DataType="local:ToastViewModel"
+             Title="Toast"
+             AutomationId="ToastPage">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="12">
+
+            <Label Text="Toast Service"
+                   FontSize="22"
+                   FontAttributes="Bold" />
+
+            <Label Text="{Binding StatusMessage}" AutomationId="ToastStatus"
+                   FontSize="13"
+                   TextColor="Gray" />
+
+            <!-- ============================================================ -->
+            <!--  CONFIGURATION -->
+            <!-- ============================================================ -->
+            <BoxView HeightRequest="1" Color="LightGray" />
+            <Label Text="Configuration" FontAttributes="Bold" FontSize="16" />
+
+            <Entry Text="{Binding ToastText}" AutomationId="ToastTextEntry"
+                   Placeholder="Toast message text" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12" RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="8">
+
+                <!-- Position -->
+                <Label Text="Position" VerticalOptions="Center" />
+                <Picker Grid.Column="1" AutomationId="ToastPositionPicker"
+                        ItemsSource="{Binding Positions}"
+                        SelectedItem="{Binding SelectedPosition}" />
+
+                <!-- Display Mode -->
+                <Label Grid.Row="1" Text="Display Mode" VerticalOptions="Center" />
+                <Picker Grid.Row="1" Grid.Column="1"
+                        ItemsSource="{Binding DisplayModes}"
+                        SelectedItem="{Binding SelectedDisplayMode}" />
+
+                <!-- Queue Mode -->
+                <Label Grid.Row="2" Text="Queue Mode" VerticalOptions="Center" />
+                <Picker Grid.Row="2" Grid.Column="1"
+                        ItemsSource="{Binding QueueModes}"
+                        SelectedItem="{Binding SelectedQueueMode}" />
+
+                <!-- Spinner -->
+                <Label Grid.Row="3" Text="Spinner" VerticalOptions="Center" />
+                <Picker Grid.Row="3" Grid.Column="1"
+                        ItemsSource="{Binding SpinnerPositions}"
+                        SelectedItem="{Binding SelectedSpinner}" />
+
+                <!-- Text Overflow -->
+                <Label Grid.Row="4" Text="Text Overflow" VerticalOptions="Center" />
+                <Picker Grid.Row="4" Grid.Column="1"
+                        ItemsSource="{Binding TextOverflows}"
+                        SelectedItem="{Binding SelectedTextOverflow}" />
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="12" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="8">
+                <Label Text="Duration (seconds)" VerticalOptions="Center" />
+                <HorizontalStackLayout Grid.Column="1" Spacing="8">
+                    <Stepper Minimum="0" Maximum="30" Increment="1" AutomationId="ToastDurationStepper"
+                             Value="{Binding DurationSeconds}" />
+                    <Label Text="{Binding DurationSeconds, StringFormat='{0}s'}"
+                           VerticalOptions="Center" FontSize="13" />
+                </HorizontalStackLayout>
+
+                <Label Grid.Row="1" Text="Corner Radius" VerticalOptions="Center" />
+                <HorizontalStackLayout Grid.Row="1" Grid.Column="1" Spacing="8">
+                    <Stepper Minimum="0" Maximum="40" Increment="2"
+                             Value="{Binding CornerRadius}" />
+                    <Label Text="{Binding CornerRadius, StringFormat='{0}'}"
+                           VerticalOptions="Center" FontSize="13" />
+                </HorizontalStackLayout>
+
+                <Label Grid.Row="2" Text="Marquee Speed (px/s)" VerticalOptions="Center" />
+                <HorizontalStackLayout Grid.Row="2" Grid.Column="1" Spacing="8">
+                    <Stepper Minimum="10" Maximum="200" Increment="10"
+                             Value="{Binding MarqueeSpeed}" />
+                    <Label Text="{Binding MarqueeSpeed, StringFormat='{0}'}"
+                           VerticalOptions="Center" FontSize="13" />
+                </HorizontalStackLayout>
+
+                <Label Grid.Row="3" Text="Marquee Loops (0=use duration)" VerticalOptions="Center" />
+                <HorizontalStackLayout Grid.Row="3" Grid.Column="1" Spacing="8">
+                    <Stepper Minimum="0" Maximum="5" Increment="1"
+                             Value="{Binding MarqueeLoops}" />
+                    <Label Text="{Binding MarqueeLoops, StringFormat='{0}'}"
+                           VerticalOptions="Center" FontSize="13" />
+                </HorizontalStackLayout>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="4">
+                <Label Text="Dismiss on Tap" VerticalOptions="Center" />
+                <Switch Grid.Column="1" IsToggled="{Binding DismissOnTap}" AutomationId="ToastDismissOnTapSwitch" />
+
+                <Label Grid.Row="1" Text="Show Progress Bar" VerticalOptions="Center" />
+                <Switch Grid.Row="1" Grid.Column="1" IsToggled="{Binding ShowProgressBar}" />
+
+                <Label Grid.Row="2" Text="Use Feedback" VerticalOptions="Center" />
+                <Switch Grid.Row="2" Grid.Column="1" IsToggled="{Binding UseFeedback}" />
+
+                <Label Grid.Row="3" Text="Announce to Screen Reader" VerticalOptions="Center" />
+                <Switch Grid.Row="3" Grid.Column="1" IsToggled="{Binding AnnounceToScreenReader}" />
+            </Grid>
+
+            <Button AutomationId="ShowToastButton" Text="Show Toast"
+                    Command="{Binding ShowConfiguredToastCommand}"
+                    BackgroundColor="#7C3AED"
+                    TextColor="White" />
+
+            <!-- ============================================================ -->
+            <!--  MANUAL DISMISS -->
+            <!-- ============================================================ -->
+            <BoxView HeightRequest="1" Color="LightGray" />
+            <Label Text="Manual Dismiss" FontAttributes="Bold" FontSize="16" />
+            <HorizontalStackLayout Spacing="12">
+                <Button Text="Show Persistent Toast" AutomationId="PersistentToastButton"
+                        Command="{Binding SpinnerToastCommand}" />
+                <Button Text="Dismiss" AutomationId="DismissToastButton"
+                        Command="{Binding DismissManualCommand}"
+                        BackgroundColor="#DC2626"
+                        TextColor="White" />
+            </HorizontalStackLayout>
+
+            <!-- ============================================================ -->
+            <!--  SNACKBARS -->
+            <!-- ============================================================ -->
+            <BoxView HeightRequest="1" Color="LightGray" />
+            <Label Text="Snackbars" FontAttributes="Bold" FontSize="16" />
+            <Label Text="Rectangular, multi-line, one at a time. The action button and the body are separate targets, and the call returns why it closed."
+                   FontSize="13"
+                   TextColor="Gray" />
+            <FlexLayout Wrap="Wrap" JustifyContent="Start" Direction="Row">
+                <Button Text="Undo" AutomationId="UndoSnackbarButton"
+                        Command="{Binding UndoSnackbarCommand}" Margin="0,0,8,8" />
+                <Button Text="Multi-line" AutomationId="MultilineSnackbarButton"
+                        Command="{Binding MultilineSnackbarCommand}" Margin="0,0,8,8" />
+                <Button Text="Body + Action" AutomationId="BodyActionSnackbarButton"
+                        Command="{Binding BodyActionSnackbarCommand}" Margin="0,0,8,8" />
+                <Button Text="Marquee" AutomationId="MarqueeSnackbarButton"
+                        Command="{Binding MarqueeSnackbarCommand}" Margin="0,0,8,8" />
+                <Button Text="Countdown" AutomationId="CountdownSnackbarButton"
+                        Command="{Binding CountdownSnackbarCommand}" Margin="0,0,8,8" />
+                <Button Text="Loading" AutomationId="LoadingSnackbarButton"
+                        Command="{Binding LoadingSnackbarCommand}" Margin="0,0,8,8" />
+            </FlexLayout>
+
+            <!-- ============================================================ -->
+            <!--  THEMED TYPES -->
+            <!-- ============================================================ -->
+            <BoxView HeightRequest="1" Color="LightGray" />
+            <Label Text="Themed Types" FontAttributes="Bold" FontSize="16" />
+            <FlexLayout Wrap="Wrap" JustifyContent="Start" Direction="Row">
+                <Button AutomationId="InfoToastButton" Text="Info"
+                        Command="{Binding InfoToastCommand}"
+                        BackgroundColor="#1E40AF"
+                        TextColor="White"
+                        Margin="0,0,8,8" />
+                <Button AutomationId="SuccessToastButton" Text="Success"
+                        Command="{Binding SuccessToastCommand}"
+                        BackgroundColor="#166534"
+                        TextColor="White"
+                        Margin="0,0,8,8" />
+                <Button Text="Warning" AutomationId="WarningToastButton"
+                        Command="{Binding WarningToastCommand}"
+                        BackgroundColor="#854D0E"
+                        TextColor="White"
+                        Margin="0,0,8,8" />
+                <Button Text="Danger" AutomationId="DangerToastButton"
+                        Command="{Binding DangerToastCommand}"
+                        BackgroundColor="#9A3412"
+                        TextColor="White"
+                        Margin="0,0,8,8" />
+                <Button Text="Critical" AutomationId="CriticalToastButton"
+                        Command="{Binding CriticalToastCommand}"
+                        BackgroundColor="#991B1B"
+                        TextColor="White"
+                        Margin="0,0,8,8" />
+            </FlexLayout>
+
+            <!-- ============================================================ -->
+            <!--  CUSTOM STYLING -->
+            <!-- ============================================================ -->
+            <BoxView HeightRequest="1" Color="LightGray" />
+            <Label Text="Custom Styling" FontAttributes="Bold" FontSize="16" />
+            <Button Text="Custom Colors &amp; Border" AutomationId="StyledToastButton"
+                    Command="{Binding StyledToastCommand}" />
+
+            <!-- Bottom padding for safe area -->
+            <BoxView HeightRequest="40" Color="Transparent" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>

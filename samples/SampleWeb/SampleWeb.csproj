@@ -31,6 +31,16 @@
     <ItemGroup>
         <ProjectReference Include="..\..\src\Platform.Maui.Web\Platform.Maui.Web.csproj" />
         <ProjectReference Include="..\..\src\Platform.Maui.Essentials.Web\Platform.Maui.Essentials.Web.csproj" />
+        <!-- Shiny Controls tab: web backends for CameraView and MediaElement (they bring in the Shiny
+             Camera and MediaElement packages), plus the core Shiny controls package. -->
+        <ProjectReference Include="..\..\src\Shiny.Maui.Controls.Camera.Web\Shiny.Maui.Controls.Camera.Web.csproj" />
+        <ProjectReference Include="..\..\src\Shiny.Maui.Controls.MediaElement.Web\Shiny.Maui.Controls.MediaElement.Web.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Shiny.Maui.Controls" Version="$(ShinyControlsVersion)" />
+        <!-- The Shiny pages are copied from the controls sample, whose view models use the MVVM toolkit. -->
+        <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     </ItemGroup>
 
     <!-- Package consumers get this from the package's build/ folder; a project reference must import it. -->
