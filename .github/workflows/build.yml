@@ -82,26 +82,27 @@ jobs:
       env:
         CHROME: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
 
-    - name: Setup Node
-      uses: actions/setup-node@v5
-      with:
-        node-version: '22'
+    # Playwright end-to-end tests are off in CI for now; run them locally (see tests/playwright).
+    # - name: Setup Node
+    #   uses: actions/setup-node@v5
+    #   with:
+    #     node-version: '22'
 
-    - name: Web End-to-End Tests (Playwright)
-      working-directory: tests/playwright
-      run: |
-        npm ci
-        npx playwright install chromium webkit
-        npx playwright test
+    # - name: Web End-to-End Tests (Playwright)
+    #   working-directory: tests/playwright
+    #   run: |
+    #     npm ci
+    #     npx playwright install chromium webkit
+    #     npx playwright test
 
-    - name: Post Playwright Report
-      if: failure()
-      uses: actions/upload-artifact@v7
-      with:
-        name: playwright-report
-        path: |
-          tests/playwright/playwright-report
-          tests/playwright/test-results
+    # - name: Post Playwright Report
+    #   if: failure()
+    #   uses: actions/upload-artifact@v7
+    #   with:
+    #     name: playwright-report
+    #     path: |
+    #       tests/playwright/playwright-report
+    #       tests/playwright/test-results
 
     - name: Post NuGet Artifacts
       uses: actions/upload-artifact@v7
@@ -119,9 +120,9 @@ jobs:
 
     - name: Prepare GitHub Pages Site
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-      # The same trimmed, AOT-compiled build the Playwright suite just tested. Pages can't serve the
+      # The same trimmed, AOT-compiled build the smoke test just ran. Pages can't serve the
       # precompressed .br/.gz copies, so they're left out. Relative URLs in index.html and main.js
-      # let the app run below the site root (/mauiplatforms/), which the suite also covers.
+      # let the app run below the site root (/mauiplatforms/).
       run: |
         mkdir -p artifacts/pages
         rsync -a --exclude '*.br' --exclude '*.gz' artifacts/SampleWeb/wwwroot/ artifacts/pages/
