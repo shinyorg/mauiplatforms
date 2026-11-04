@@ -8,6 +8,9 @@
 Custom .NET MAUI backends for platforms MAUI doesn't officially support: **Apple TV** (tvOS via UIKit) and
 the **web** (WebAssembly, rendering real DOM elements, without Blazor).
 
+**▶ Try the web sample live: [shinyorg.github.io/mauiplatforms](https://shinyorg.github.io/mauiplatforms/)**: the MAUI
+gallery plus a Shiny Controls tab, running entirely in your browser.
+
 Both backends use the platform-agnostic MAUI NuGet packages (`net10.0` fallback assemblies) and provide custom
 handler implementations that bridge MAUI's layout/rendering system to the native UI of each platform.
 
