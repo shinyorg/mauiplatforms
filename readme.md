@@ -327,8 +327,8 @@ archive/
 
 | Control | tvOS | Web |
 |---------|------|-----|
-| CollectionView | ✅ Virtualized UICollectionView: focusable items, selection, list/grid/horizontal layouts, EmptyView | ✅ Templates, grouping, selection, EmptyView, Header/Footer (not virtualized) |
-| CarouselView | ✅ Horizontal paging | ✅ CSS scroll snapping |
+| CollectionView | ✅ Virtualized UICollectionView: focusable items, selection, list/grid/horizontal layouts, EmptyView | ✅ Virtualized with view recycling: templates, grouping, selection, EmptyView, Header/Footer, list/grid layouts |
+| CarouselView | ✅ Horizontal paging | ✅ Virtualized, CSS scroll snapping, `Loop` |
 | ListView | — | — (placeholder; use CollectionView) |
 | TableView | — | — (placeholder) |
 | IndicatorView | — | ✅ |
@@ -596,13 +596,11 @@ the [handler tables](#handlers-implemented) above is also unsupported.
 ### Web
 
 **Not working yet**
-* **CollectionView isn't virtualized.** Every item is realized, so very large sources (thousands of
-  templated rows) exhaust the browser tab. Page large lists with `RemainingItemsThreshold`.
 * **Gestures:** pull-to-refresh, swipe-item reveal, `PinchGestureRecognizer` and drag and drop.
   RefreshView shows its spinner and SwipeView its content only.
 * **Not rendered:** ListView and TableView (obsolete; placeholders), HybridWebView (placeholder),
   BlazorWebView, MenuBar and context menus (`ContextFlyout`).
-* **CarouselView `Loop`**, **`Application.OpenWindow`** (multi-window) and **browser history
+* **`Application.OpenWindow`** (multi-window) and **browser history
   integration** (the Back button and deep links don't drive MAUI navigation).
 * **WebView:** script evaluation and history only work for same-origin content.
 * **Threads:** only the default single-threaded WebAssembly runtime is supported.

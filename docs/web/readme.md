@@ -237,12 +237,13 @@ for its `Microsoft.Maui.Controls` reference, so the app doesn't see a package do
 
 ## Known limitations
 
-- **CollectionView is not virtualized** — every item is realized. Page large sources with
-  `RemainingItemsThreshold`.
+- **CollectionView and CarouselView virtualize**: only rows near the viewport are in the DOM, so
+  the browser's find-in-page doesn't see the rest. Rows that haven't been scrolled to have an
+  estimated height until they are measured.
 - **ListView and TableView** (obsolete) and **HybridWebView** render a placeholder; MenuBar and
   context menus aren't rendered.
 - **Not yet:** pull-to-refresh and swipe-item gestures, PinchGestureRecognizer, drag & drop,
-  MenuBar/ContextFlyout, CarouselView `Loop`, BlazorWebView, `Application.OpenWindow`, browser
+  MenuBar/ContextFlyout, BlazorWebView, `Application.OpenWindow`, browser
   history integration for navigation.
 - **GraphicsView images** draw (the browser decodes them), but MAUI's `net10.0` `PlatformImage`
   can't decode, so its `Width`/`Height` are wrong; code that sizes drawing from them misplaces it.

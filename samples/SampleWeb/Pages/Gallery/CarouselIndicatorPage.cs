@@ -79,12 +79,6 @@ public class CarouselIndicatorPage : ContentPage
 			Count = items.Count,
 		};
 
-		// Sync carousel position to indicator
-		carousel.PositionChanged += (s, e) =>
-		{
-			indicator.Position = e.CurrentPosition;
-		};
-
 		// Manual position controls
 		var prevBtn = new Button { Text = "◀ Prev" };
 		var nextBtn = new Button { Text = "Next ▶" };
@@ -95,23 +89,36 @@ public class CarouselIndicatorPage : ContentPage
 			VerticalOptions = LayoutOptions.Center,
 		};
 
+		// Sync carousel position (from swipes or the buttons) to the indicator and label
+		carousel.PositionChanged += (s, e) =>
+		{
+			indicator.Position = e.CurrentPosition;
+			posLabel.Text = $"Position: {e.CurrentPosition}";
+		};
+
+		// With Loop on, the buttons wrap around like a swipe past either end does.
 		prevBtn.Clicked += (s, e) =>
 		{
 			if (carousel.Position > 0)
-			{
 				carousel.Position--;
-				indicator.Position = carousel.Position;
-				posLabel.Text = $"Position: {carousel.Position}";
-			}
+			else if (carousel.Loop)
+				carousel.Position = items.Count - 1;
 		};
 		nextBtn.Clicked += (s, e) =>
 		{
 			if (carousel.Position < items.Count - 1)
-			{
 				carousel.Position++;
-				indicator.Position = carousel.Position;
-				posLabel.Text = $"Position: {carousel.Position}";
-			}
+			else if (carousel.Loop)
+				carousel.Position = 0;
+		};
+
+		var loopSwitch = new Switch { IsToggled = carousel.Loop, VerticalOptions = LayoutOptions.Center };
+		loopSwitch.Toggled += (s, e) => carousel.Loop = e.Value;
+		var loopRow = new HorizontalStackLayout
+		{
+			HorizontalOptions = LayoutOptions.Center,
+			Spacing = 8,
+			Children = { new Label { Text = "Loop", VerticalOptions = LayoutOptions.Center }, loopSwitch },
 		};
 
 		var controls = new HorizontalStackLayout
@@ -159,6 +166,7 @@ public class CarouselIndicatorPage : ContentPage
 					squareIndicator,
 					new BoxView { HeightRequest = 8 },
 					controls,
+					loopRow,
 				}
 			}
 		};

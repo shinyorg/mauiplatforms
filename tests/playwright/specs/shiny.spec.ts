@@ -10,17 +10,20 @@ async function openShiny(app: App, title: string) {
 test.describe('Shiny Controls tab', () => {
   test('switches the menu between the MAUI and Shiny galleries', async ({ app, page }) => {
     await app.open();
-    const items = page.locator('.maui-flyout-pane .maui-collection-item');
-    await expect(items).toHaveCount(32);
+    // The menu is a virtualized CollectionView: rows carry the size of the whole list.
+    const first = page.locator('.maui-flyout-pane .maui-collection-item[aria-posinset="1"]:not(.maui-recycled)');
+    await expect(first).toHaveAttribute('aria-setsize', '32');
 
     await page.locator('.maui-flyout-pane').getByText('Shiny Controls', { exact: true }).click();
-    await expect(items).toHaveCount(shinyPages.length);
+    await expect(first).toHaveAttribute('aria-setsize', String(shinyPages.length));
+    await expect(first).toContainText(shinyPages[0]);
     await expect(page.locator('.maui-flyout-pane').getByText(`${shinyPages.length} demos`, { exact: true })).toBeVisible();
 
     // Switching tabs leaves the open page alone.
     await expect(app.title).toHaveText('Overview');
     await page.locator('.maui-flyout-pane').getByText('MAUI', { exact: true }).click();
-    await expect(items).toHaveCount(32);
+    await expect(first).toHaveAttribute('aria-setsize', '32');
+    await expect(first).toContainText('Home');
   });
 
   for (const path of ['_content/Shiny.Maui.Controls.Camera.Web/shiny-camera-web.js', '_content/Shiny.Maui.Controls.MediaElement.Web/shiny-mediaelement-web.js']) {

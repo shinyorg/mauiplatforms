@@ -291,7 +291,12 @@ html, body {
 @keyframes maui-modal-in { from { transform: translateY(32px); opacity: 0; } }
 
 /* Collections */
-.maui-collection { overflow: auto; overscroll-behavior: contain; }
+/* Rows are absolutely positioned and the handler keeps the visible ones in place itself. */
+.maui-collection { overflow: auto; overscroll-behavior: contain; overflow-anchor: none; }
+/* Gives the scroll area the full length of the (mostly unrealized) content. */
+.maui-collection-spacer { position: absolute; left: 0; top: 0; visibility: hidden; pointer-events: none; }
+/* A recycled row waiting to be reused. */
+.maui-collection > .maui-recycled { display: none !important; }
 .maui-collection-item { cursor: default; }
 .maui-collection.selectable .maui-collection-item { cursor: pointer; }
 
