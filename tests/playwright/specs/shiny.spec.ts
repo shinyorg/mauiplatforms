@@ -1,4 +1,4 @@
-import { test, expect, shinyPages, type App } from '../fixtures';
+import { test, expect, galleryPages, shinyPages, type App } from '../fixtures';
 
 /** Switches the flyout menu to the Shiny Controls tab and opens one of its pages. */
 async function openShiny(app: App, title: string) {
@@ -12,7 +12,7 @@ test.describe('Shiny Controls tab', () => {
     await app.open();
     // The menu is a virtualized CollectionView: rows carry the size of the whole list.
     const first = page.locator('.maui-flyout-pane .maui-collection-item[aria-posinset="1"]:not(.maui-recycled)');
-    await expect(first).toHaveAttribute('aria-setsize', '32');
+    await expect(first).toHaveAttribute('aria-setsize', String(galleryPages.length));
 
     await page.locator('.maui-flyout-pane').getByText('Shiny Controls', { exact: true }).click();
     await expect(first).toHaveAttribute('aria-setsize', String(shinyPages.length));
@@ -22,7 +22,7 @@ test.describe('Shiny Controls tab', () => {
     // Switching tabs leaves the open page alone.
     await expect(app.title).toHaveText('Overview');
     await page.locator('.maui-flyout-pane').getByText('MAUI', { exact: true }).click();
-    await expect(first).toHaveAttribute('aria-setsize', '32');
+    await expect(first).toHaveAttribute('aria-setsize', String(galleryPages.length));
     await expect(first).toContainText('Home');
   });
 

@@ -42,7 +42,7 @@ public class CheckBoxHandler : WebElementHandler<ICheckBox, WebElement>
 }
 
 /// <summary>Switch as a styled checkbox with role="switch" for assistive technology.</summary>
-public class SwitchHandler : WebElementHandler<ISwitch, WebElement>
+public class SwitchHandler : WebElementHandler<ISwitch, WebElement>, IWebSemanticTarget
 {
 	public static IPropertyMapper<ISwitch, SwitchHandler> Mapper =
 		new PropertyMapper<ISwitch, SwitchHandler>(WebElementHandler.ViewMapper)
@@ -58,6 +58,8 @@ public class SwitchHandler : WebElementHandler<ISwitch, WebElement>
 	}
 
 	WebElement _input = null!;
+
+	WebElement IWebSemanticTarget.SemanticElement => _input;
 
 	protected override WebElement CreatePlatformView()
 	{
@@ -103,7 +105,7 @@ public class SwitchHandler : WebElementHandler<ISwitch, WebElement>
 /// RadioButton as a native radio input with text. When MAUI applies a ControlTemplate (view content
 /// or an explicit template), the presented template content is rendered instead.
 /// </summary>
-public class RadioButtonHandler : WebElementHandler<IRadioButton, WebElement>
+public class RadioButtonHandler : WebElementHandler<IRadioButton, WebElement>, IWebSemanticTarget
 {
 	public static IPropertyMapper<IRadioButton, RadioButtonHandler> Mapper =
 		new PropertyMapper<IRadioButton, RadioButtonHandler>(WebElementHandler.ViewMapper)
@@ -123,6 +125,8 @@ public class RadioButtonHandler : WebElementHandler<IRadioButton, WebElement>
 
 	WebElement _input = null!;
 	WebElement _text = null!;
+
+	WebElement IWebSemanticTarget.SemanticElement => _input;
 	WebElement? _templated;
 
 	IContentView? Templated => VirtualView is IContentView { PresentedContent: not null } content ? content : null;

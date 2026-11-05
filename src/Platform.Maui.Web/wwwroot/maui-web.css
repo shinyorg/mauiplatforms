@@ -52,7 +52,7 @@ html, body {
     inset: 0;
     overflow: hidden;
     font-family: var(--maui-font);
-    font-size: 14px;
+    font-size: 0.875rem; /* 14px at the browser's default text size, and scales with it */
     line-height: normal;
     background: var(--maui-bg);
     color: var(--maui-fg);
@@ -75,7 +75,7 @@ html, body {
     visibility: hidden;
     pointer-events: none;
     font-family: var(--maui-font);
-    font-size: 14px;
+    font-size: 0.875rem;
 }
 
 .maui-hidden { visibility: hidden !important; }

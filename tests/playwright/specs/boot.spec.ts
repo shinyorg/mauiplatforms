@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures';
+import { test, expect, galleryPages } from '../fixtures';
 
 test.describe('startup', () => {
   test('boots into the home page and removes the loading screen', async ({ app, page }) => {
@@ -10,7 +10,7 @@ test.describe('startup', () => {
 
   test('lists every gallery page in the flyout menu', async ({ app, page }) => {
     await app.open();
-    await expect(page.locator('.maui-flyout-pane .maui-collection-item')).toHaveCount(32);
+    await expect(page.locator('.maui-flyout-pane .maui-collection-item')).toHaveCount(galleryPages.length);
   });
 
   test('loads registered fonts, including variable weights', async ({ app, page }) => {

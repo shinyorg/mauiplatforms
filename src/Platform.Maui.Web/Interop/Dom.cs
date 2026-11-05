@@ -33,6 +33,9 @@ internal static partial class Dom
 	[JSImport("setAttribute", Module)]
 	public static partial void SetAttribute(JSObject el, string name, string? value);
 
+	[JSImport("getAttribute", Module)]
+	public static partial string? GetAttribute(JSObject el, string name);
+
 	[JSImport("setPropString", Module)]
 	public static partial void SetPropString(JSObject el, string name, string? value);
 

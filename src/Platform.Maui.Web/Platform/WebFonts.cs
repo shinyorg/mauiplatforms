@@ -89,7 +89,7 @@ public class WebFontManager(IFontRegistrar registrar) : IFontManager
 	public void Apply(WebElement element, Font font)
 	{
 		element.SetStyle("font-family", GetFontFamily(font.Family));
-		element.SetStyle("font-size", font.Size > 0 && double.IsFinite(font.Size) ? WebCss.Px(font.Size) : null);
+		element.SetStyle("font-size", font.Size > 0 && double.IsFinite(font.Size) ? WebCss.FontSize(font.Size, font.AutoScalingEnabled) : null);
 		element.SetStyle("font-weight", font.Weight == FontWeight.Regular ? null : WebCss.FontWeight(font.Weight));
 		element.SetStyle("font-style", font.Slant == FontSlant.Default ? null : "italic");
 	}

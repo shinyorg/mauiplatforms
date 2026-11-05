@@ -25,6 +25,7 @@ public class LabelHandler : WebElementHandler<ILabel, WebElement>
 			[nameof(IPadding.Padding)] = MapPadding,
 			[nameof(Label.LineBreakMode)] = MapLineBreakMode,
 			[nameof(Label.MaxLines)] = MapLineBreakMode,
+			[nameof(IView.Semantics)] = MapSemantics,
 		};
 
 	public LabelHandler() : base(Mapper)
@@ -37,12 +38,40 @@ public class LabelHandler : WebElementHandler<ILabel, WebElement>
 
 	public WebElement TextElement { get; private set; } = null!;
 
+	WebElement? _description;
+
 	protected override WebElement CreatePlatformView()
 	{
 		var label = new WebElement("div", "maui-label");
 		TextElement = new WebElement("span");
 		label.Append(TextElement);
 		return label;
+	}
+
+	/// <summary>
+	/// aria-label is ignored on plain text, so a described label hides its visible text from assistive
+	/// technology and carries the description as visually hidden text instead.
+	/// </summary>
+	public static void MapSemantics(LabelHandler handler, ILabel label)
+	{
+		WebElementHandler.MapSemantics(handler, label);
+		var name = WebSemantics.GetName(label);
+		if (name is null && handler._description is null)
+			return;
+		handler.PlatformView.SetAttribute("aria-label", null);
+		handler.TextElement.SetAttribute("aria-hidden", name is null ? null : "true");
+		if (name is null)
+		{
+			handler._description?.Detach();
+			handler._description = null;
+			return;
+		}
+		if (handler._description is null)
+		{
+			handler._description = new WebElement("span", "maui-sr-only");
+			handler.PlatformView.Append(handler._description);
+		}
+		handler._description.SetText(name);
 	}
 
 	WebFontManager? FontManager => MauiContext?.Services.GetService(typeof(IFontManager)) as WebFontManager;
@@ -78,7 +107,7 @@ public class LabelHandler : WebElementHandler<ILabel, WebElement>
 		el.SetStyle("color", WebCss.Color(span.TextColor));
 		el.SetStyle("background-color", WebCss.Color(span.BackgroundColor));
 		if (span.FontSize > 0)
-			el.SetStyle("font-size", WebCss.Px(span.FontSize));
+			el.SetStyle("font-size", WebCss.FontSize(span.FontSize, span.FontAutoScalingEnabled));
 		if (!string.IsNullOrEmpty(span.FontFamily))
 			el.SetStyle("font-family", handler.FontManager?.GetFontFamily(span.FontFamily));
 		if (span.FontAttributes.HasFlag(FontAttributes.Bold))

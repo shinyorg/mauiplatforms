@@ -100,4 +100,11 @@ public class WebCssTests
 		var shadow = new Microsoft.Maui.Controls.Shadow { Brush = Colors.Black, Opacity = 0.5f, Radius = 8, Offset = new Point(0, 2) };
 		Assert.Equal("0px 2px 8px rgba(0,0,0,0.5)", WebCss.Shadow(shadow));
 	}
+
+	[Theory]
+	[InlineData(16, true, "1rem")]
+	[InlineData(14, true, "0.875rem")]
+	[InlineData(16, false, "16px")]
+	public void FontSizeScalesWithBrowserTextSizeUnlessDisabled(double size, bool autoScale, string expected)
+		=> Assert.Equal(expected, WebCss.FontSize(size, autoScale));
 }

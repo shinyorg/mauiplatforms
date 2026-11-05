@@ -34,6 +34,12 @@ public static class WebElementHandler
 		[nameof(IView.Visibility)] = MapVisibility,
 		[nameof(IView.IsEnabled)] = MapIsEnabled,
 		[nameof(IView.Semantics)] = MapSemantics,
+		// Controls replaces these with empty mappings on platforms it doesn't know; they all feed ARIA here.
+		[Controls.AutomationProperties.IsInAccessibleTreeProperty.PropertyName] = WebSemantics.MapAutomationProperty,
+		[Controls.AutomationProperties.ExcludedWithChildrenProperty.PropertyName] = WebSemantics.MapAutomationProperty,
+		["Name"] = WebSemantics.MapAutomationProperty,
+		["HelpText"] = WebSemantics.MapAutomationProperty,
+		["LabeledBy"] = WebSemantics.MapAutomationProperty,
 		[nameof(IView.AutomationId)] = MapAutomationId,
 		[nameof(IView.Shadow)] = MapShadow,
 		[nameof(IView.InputTransparent)] = MapInputTransparent,
@@ -101,16 +107,8 @@ public static class WebElementHandler
 
 	public static void MapSemantics(IViewHandler handler, IView view)
 	{
-		if (El(handler) is not { } el)
-			return;
-		var semantics = view.Semantics;
-		el.SetAttribute("aria-label", string.IsNullOrEmpty(semantics?.Description) ? null : semantics.Description);
-		el.SetAttribute("aria-description", string.IsNullOrEmpty(semantics?.Hint) ? null : semantics.Hint);
-		if (semantics is { HeadingLevel: not SemanticHeadingLevel.None })
-		{
-			el.SetAttribute("role", "heading");
-			el.SetAttribute("aria-level", ((int)semantics.HeadingLevel).ToString());
-		}
+		if (El(handler) is { } el)
+			WebSemantics.Apply(handler, el, view);
 	}
 
 	public static void MapAutomationId(IViewHandler handler, IView view)

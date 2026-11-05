@@ -11,6 +11,13 @@ public static class WebCss
 
 	public static string Px(double value) => Num(value) + "px";
 
+	/// <summary>
+	/// A font size in device-independent units. When auto-scaling is on it is expressed in rem, so it
+	/// follows the text size the user chose in their browser (16px by default) the way native text
+	/// follows the OS text size setting.
+	/// </summary>
+	public static string FontSize(double size, bool autoScale) => autoScale ? Num(size / 16) + "rem" : Px(size);
+
 	public static string Num(double value) => Math.Round(value, 3).ToString(Invariant);
 
 	public static string? Color(Color? color)

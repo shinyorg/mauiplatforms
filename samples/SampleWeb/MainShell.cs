@@ -51,6 +51,7 @@ public class MainShell : FlyoutPage
 		new("🧬", "ControlTemplate", () => new ControlTemplatePage()),
 		new("🪟", "Modal Pages", () => new ModalDemoPage()),
 		new("🌗", "Theme", () => new ThemePage()),
+		new("♿", "Accessibility", () => new AccessibilityPage()),
 	];
 
 	/// <summary>The menu's tabs: the MAUI gallery and the Shiny Controls gallery.</summary>

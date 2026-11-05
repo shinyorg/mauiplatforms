@@ -44,6 +44,8 @@ export function setAttribute(el, name, value) {
     else el.setAttribute(name, value);
 }
 
+export function getAttribute(el, name) { return el.getAttribute(name); }
+
 export function setPropString(el, name, value) { if (el[name] !== value) el[name] = value ?? ''; }
 export function setPropBool(el, name, value) { el[name] = value; }
 export function setPropNumber(el, name, value) { el[name] = value; }

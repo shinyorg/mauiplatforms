@@ -107,7 +107,7 @@ export const galleryPages = [
   'Text Input Styling', 'Refresh & Swipe', 'Carousel & Indicators', 'Graphics (Canvas)', 'Graphics Features',
   'Device & App Info', 'Battery & Network', 'Clipboard & Storage', 'Communication', 'Launch & Share',
   'Location, Sensors & Speech', 'WebView', 'Navigation', 'TabbedPage', 'FlyoutPage', 'Shell Navigation',
-  'ControlTemplate', 'Modal Pages', 'Theme',
+  'ControlTemplate', 'Modal Pages', 'Theme', 'Accessibility',
 ];
 
 /** Every page in the flyout's Shiny Controls tab, in menu order. */

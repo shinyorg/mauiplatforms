@@ -28,6 +28,8 @@ public class WebElement
 
 	public void SetAttribute(string name, string? value) => Dom.SetAttribute(Js, name, value);
 
+	public string? GetAttribute(string name) => Dom.GetAttribute(Js, name);
+
 	public void SetProperty(string name, string? value) => Dom.SetPropString(Js, name, value);
 
 	public void SetProperty(string name, bool value) => Dom.SetPropBool(Js, name, value);

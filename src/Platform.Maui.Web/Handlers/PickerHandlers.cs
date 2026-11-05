@@ -41,7 +41,7 @@ public class PickerHandler : FormControlHandler<IPicker>
 			[nameof(IPicker.Items)] = MapItems,
 			[nameof(Microsoft.Maui.Controls.Picker.ItemsSource)] = MapItems,
 			[nameof(Microsoft.Maui.Controls.Picker.ItemDisplayBinding)] = MapItems,
-			[nameof(IPicker.Title)] = MapItems,
+			[nameof(IPicker.Title)] = MapTitle,
 			[nameof(IPicker.SelectedIndex)] = MapSelectedIndex,
 			[nameof(ITextAlignment.HorizontalTextAlignment)] = MapHorizontalTextAlignment,
 		};
@@ -71,6 +71,13 @@ public class PickerHandler : FormControlHandler<IPicker>
 			items[i] = picker.GetItem(i) ?? string.Empty;
 		Dom.SetSelectOptions(handler.PlatformView.Js, items, picker.Title);
 		MapSelectedIndex(handler, picker);
+	}
+
+	// The title doubles as the accessible name when there's no description.
+	public static void MapTitle(PickerHandler handler, IPicker picker)
+	{
+		MapItems(handler, picker);
+		WebElementHandler.MapSemantics(handler, picker);
 	}
 
 	public static void MapSelectedIndex(PickerHandler handler, IPicker picker)
