@@ -71,7 +71,9 @@ public static class WebFilePickerFileTypes
 /// <summary>
 /// File picking through a hidden &lt;input type="file"&gt;. Call from a user gesture (e.g. a
 /// Clicked handler) or the browser blocks the dialog. Picked files are copied into the in-memory
-/// file system because MAUI's FileResult can only open files by path.
+/// file system. Read them with <c>File.OpenRead(result.FullPath)</c>: MAUI's platform-neutral
+/// <c>FileResult.OpenReadAsync()</c> throws NotImplementedInReferenceAssemblyException and cannot be
+/// overridden by a backend.
 /// </summary>
 public class WebFilePicker : IFilePicker
 {
@@ -119,7 +121,8 @@ public class WebFilePicker : IFilePicker
 				var bytes = EssentialsJs.TakeBuffer(await EssentialsJs.BatchFileRead(batch, i));
 				var path = Path.Combine(folder, name);
 				await File.WriteAllBytesAsync(path, bytes);
-				results.Add(string.IsNullOrEmpty(type) ? new FileResult(path) : new FileResult(path, type));
+				// Always pass a content type: without one, FileResult.ContentType throws on this platform.
+				results.Add(new FileResult(path, string.IsNullOrEmpty(type) ? WebContentTypes.FromFileName(name) : type));
 			}
 		}
 		finally

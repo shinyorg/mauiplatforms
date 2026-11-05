@@ -201,6 +201,32 @@ html, body {
 .maui-activity-indicator:not(.running) { visibility: hidden; }
 @keyframes maui-spin { to { transform: rotate(360deg); } }
 
+/* Always clipped (not via .maui-clip, which IsClippedToBounds toggles): the content slides inside them. */
+.maui-swipe-view, .maui-refresh-view { overflow: hidden; }
+
+/* RefreshView: the spinner rests in the gap the lowered content leaves, and is shown while pulling. */
+.maui-refresh-spinner { position: absolute; left: calc(50% - 16px); top: 12px; z-index: 5; pointer-events: none; }
+.maui-refresh-spinner.pulling { visibility: visible; }
+.maui-refresh-spinner.pulling > div { animation: none; }
+
+/* SwipeView: the tray grows from the edge being revealed; the content (a later sibling) paints over it. */
+.maui-swipe-tray { position: absolute; overflow: hidden; width: 0; }
+.maui-swipe-items { position: absolute; display: flex; }
+.maui-swipe-items.vertical > * { flex: 1 1 0; }
+.maui-swipe-items.execute { inset: 0; width: auto !important; height: auto !important; }
+.maui-swipe-items.execute > * { flex: 1 1 auto; }
+.maui-swipe-item {
+    flex: 0 0 80px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    border: 0; margin: 0; padding: 0 8px;
+    color: #ffffff; font: inherit; font-size: 0.8125rem; font-weight: 600;
+    cursor: pointer; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+}
+.maui-swipe-item:focus-visible { outline: 2px solid var(--maui-accent); outline-offset: -4px; }
+.maui-swipe-item-icon { width: 24px; height: 24px; object-fit: contain; }
+.maui-swipe-item-slot { position: relative; flex: 0 0 auto; }
+.maui-swipe-items.vertical > .maui-swipe-item-slot { flex: 1 1 0; }
+
 /* Images & shapes */
 .maui-image { object-fit: contain; display: block; user-select: none; -webkit-user-drag: none; }
 .maui-shape, .maui-shape > svg { overflow: visible; }

@@ -174,6 +174,101 @@ export function listenPointer(el, type, callback, capture) {
     });
 }
 
+// Drag tracking for SwipeView and RefreshView. axes: 'h' | 'v' | 'hv' | 'down' (a pull that only
+// starts when every scrollable ancestor of the target, up to el, is at the top).
+// callback(phase, dx, dy): 0 = started (after an axis-locked slop), 1 = moved, 2 = released, 3 = cancelled.
+// Mouse and pen use pointer events with capture; touch uses touch events so the pull can
+// preventDefault native scrolling. The click that ends a drag is swallowed.
+export function listenDrag(el, axes, callback) {
+    const slop = 6;
+    let start = null;   // { x, y, touch }
+    let engaged = false;
+
+    const atTop = target => {
+        for (let n = target; n && n !== el; n = n.parentElement)
+            if (n.scrollTop > 0) return false;
+        return true;
+    };
+    const begin = (x, y, target, touch) => {
+        if (axes === 'down' && !atTop(target)) return;
+        start = { x, y, touch };
+        engaged = false;
+    };
+    // Returns true when the event should be prevented (the drag owns it).
+    const move = (x, y) => {
+        if (!start) return false;
+        const dx = x - start.x, dy = y - start.y;
+        if (!engaged) {
+            if (Math.abs(dx) < slop && Math.abs(dy) < slop) return false;
+            const horizontal = Math.abs(dx) > Math.abs(dy);
+            const ok = axes === 'hv'
+                || (axes === 'h' && horizontal)
+                || (axes === 'v' && !horizontal)
+                || (axes === 'down' && !horizontal && dy > 0);
+            if (!ok) { start = null; return false; }
+            engaged = true;
+            // A mouse drag over text starts a selection on pointerdown; drop it once this is a drag.
+            if (!start.touch) window.getSelection()?.removeAllRanges();
+            callback(0, dx, dy);
+        }
+        callback(1, dx, dy);
+        return true;
+    };
+    const finish = (x, y, cancelled) => {
+        if (!start) return;
+        const wasEngaged = engaged;
+        const dx = x - start.x, dy = y - start.y;
+        start = null;
+        engaged = false;
+        if (!wasEngaged) return;
+        callback(cancelled ? 3 : 2, dx, dy);
+        if (!cancelled) {
+            const swallow = e => { e.stopPropagation(); e.preventDefault(); };
+            window.addEventListener('click', swallow, { capture: true, once: true });
+            setTimeout(() => window.removeEventListener('click', swallow, { capture: true }), 0);
+        }
+    };
+
+    const ids = [
+        addListener(el, 'pointerdown', e => {
+            if (e.pointerType === 'touch' || e.button !== 0) return;
+            begin(e.clientX, e.clientY, e.target, false);
+        }),
+        addListener(el, 'pointermove', e => {
+            if (e.pointerType === 'touch' || !start) return;
+            const wasEngaged = engaged;
+            if (move(e.clientX, e.clientY) && !wasEngaged) {
+                try { el.setPointerCapture(e.pointerId); } catch { /* not capturable */ }
+            }
+        }),
+        addListener(el, 'pointerup', e => { if (e.pointerType !== 'touch') finish(e.clientX, e.clientY, false); }),
+        addListener(el, 'pointercancel', e => { if (e.pointerType !== 'touch') finish(e.clientX, e.clientY, true); }),
+        addListener(el, 'touchstart', e => {
+            if (e.touches.length !== 1) { start = null; return; }
+            const t = e.touches[0];
+            begin(t.clientX, t.clientY, e.target, true);
+        }, { passive: true }),
+        addListener(el, 'touchmove', e => {
+            const t = e.touches[0];
+            if (t && move(t.clientX, t.clientY) && e.cancelable) e.preventDefault();
+        }, { passive: false }),
+        addListener(el, 'touchend', e => {
+            const t = e.changedTouches[0];
+            if (t) finish(t.clientX, t.clientY, false);
+        }),
+        addListener(el, 'touchcancel', e => {
+            const t = e.changedTouches[0];
+            finish(t ? t.clientX : 0, t ? t.clientY : 0, true);
+        }),
+    ];
+    // One id releases the whole group (see unlistenGroup).
+    const id = nextListenerId++;
+    groups.set(id, ids);
+    return id;
+}
+
+const groups = new Map();
+
 export function listenScroll(el, callback) {
     return addListener(el, 'scroll', () => callback(el.scrollLeft, el.scrollTop), { passive: true });
 }
@@ -183,6 +278,12 @@ export function listenWheel(el, callback) {
 }
 
 export function unlisten(id) {
+    const group = groups.get(id);
+    if (group) {
+        groups.delete(id);
+        group.forEach(unlisten);
+        return;
+    }
     const l = listeners.get(id);
     if (!l) return;
     listeners.delete(id);

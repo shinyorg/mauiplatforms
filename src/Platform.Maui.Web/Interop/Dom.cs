@@ -104,6 +104,10 @@ internal static partial class Dom
 	public static partial int ListenPointer(JSObject el, string type,
 		[JSMarshalAs<JSType.Function<JSType.Number, JSType.Number, JSType.Number>>] Action<double, double, int> callback, bool capture);
 
+	[JSImport("listenDrag", Module)]
+	public static partial int ListenDrag(JSObject el, string axes,
+		[JSMarshalAs<JSType.Function<JSType.Number, JSType.Number, JSType.Number>>] Action<int, double, double> callback);
+
 	[JSImport("listenScroll", Module)]
 	public static partial int ListenScroll(JSObject el, [JSMarshalAs<JSType.Function<JSType.Number, JSType.Number>>] Action<double, double> callback);
 

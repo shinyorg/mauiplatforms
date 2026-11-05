@@ -42,7 +42,7 @@ public class MainShell : FlyoutPage
 		new("🗂️", "Clipboard & Storage", () => new ClipboardPrefsPage()),
 		new("📧", "Communication", () => new CommunicationPage()),
 		new("🚀", "Launch & Share", () => new LaunchSharePage()),
-		new("🛰️", "Location, Sensors & Speech", () => new EssentialsPage()),
+		new("🛰️", "Files, Photos & Sensors", () => new EssentialsPage()),
 		new("🌐", "WebView", () => new WebViewPage()),
 		new("🧭", "Navigation", () => new NavigationPage(new NavigationDemoPage())),
 		new("📑", "TabbedPage", () => new TabbedPageDemo()),

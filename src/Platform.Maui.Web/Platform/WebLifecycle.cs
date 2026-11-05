@@ -49,22 +49,50 @@ public static class WebLifecycleExtensions
 }
 
 /// <summary>Maps document visibility to MAUI window Stopped/Resumed and Deactivated/Activated.</summary>
+/// <remarks>
+/// MAUI's Window.Activated throws if the window is already active, so each window's state is tracked
+/// and only real transitions are raised. A tab can open in the background (hidden) and later become
+/// visible without ever having been hidden from MAUI's point of view.
+/// </remarks>
 internal static class WebPageVisibility
 {
+	static readonly HashSet<IWindow> Active = new();
+
+	public static bool IsPageVisible
+		=> Dom.GetPropString(Dom.GetDocument(), "visibilityState") != "hidden";
+
+	/// <summary>Raises the first lifecycle state for a newly created window.</summary>
+	public static void WindowCreated(IWindow window)
+	{
+		window.Created();
+		if (IsPageVisible)
+			Activate(window);
+		else
+			window.Stopped();
+	}
+
+	public static void WindowClosed(IWindow window) => Active.Remove(window);
+
+	static void Activate(IWindow window)
+	{
+		if (Active.Add(window))
+			window.Activated();
+	}
+
 	public static void Start(WebMauiApplication app)
 	{
 		var document = Dom.GetDocument();
 		Dom.Listen(document, "visibilitychange", () =>
 		{
-			var visible = Dom.GetPropString(document, "visibilityState") != "hidden";
+			var visible = IsPageVisible;
 			foreach (var window in app.Windows.ToArray())
 			{
-				if (visible)
+				if (visible && !Active.Contains(window))
 				{
 					window.Resumed();
-					window.Activated();
+					Activate(window);
 				}
-				else
+				else if (!visible && Active.Remove(window))
 				{
 					window.Deactivated();
 					window.Stopped();

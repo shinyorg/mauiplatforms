@@ -20,7 +20,7 @@ public class RefreshSwipePage : ContentPage
 
 		_statusLabel = new Label
 		{
-			Text = "Tap the refresh button to reload items",
+			Text = "Pull the list down to reload items",
 			HorizontalOptions = LayoutOptions.Center,
 			TextColor = Colors.Gray,
 			FontSize = 12,
@@ -277,7 +277,8 @@ public class RefreshSwipePage : ContentPage
 			switch (e.Status)
 			{
 				case GestureStatus.Running:
-					target.Scale = Math.Clamp(e.Scale, 0.3, 3.0);
+					// e.Scale is the change since the last update, so accumulate it.
+					target.Scale = Math.Clamp(target.Scale * e.Scale, 0.3, 3.0);
 					scaleLabel.Text = $"Scale: {target.Scale:F2}x";
 					break;
 				case GestureStatus.Completed:

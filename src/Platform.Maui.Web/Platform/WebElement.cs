@@ -100,6 +100,17 @@ public class WebElement
 	public IDisposable OnPointer(string type, Action<double, double, int> callback, bool capture = false)
 		=> new Subscription(Dom.ListenPointer(Js, type, Guard(type, callback), capture));
 
+	/// <summary>Ctrl+wheel (and trackpad pinch, which browsers report as ctrl+wheel); receives deltaY. Page zoom is suppressed.</summary>
+	public IDisposable OnZoomWheel(Action<double> callback)
+		=> new Subscription(Dom.ListenWheel(Js, Guard("wheel", callback)));
+
+	/// <summary>
+	/// Tracks a drag along <paramref name="axes"/> ("h", "v", "hv", or "down" for a pull that starts only
+	/// when scrolled to the top). Reports offsets from the drag start; the click ending a drag is swallowed.
+	/// </summary>
+	public IDisposable OnDrag(string axes, Action<DragPhase, double, double> callback)
+		=> new Subscription(Dom.ListenDrag(Js, axes, Guard<int, double, double>("drag", (phase, dx, dy) => callback((DragPhase)phase, dx, dy))));
+
 	public IDisposable OnScroll(Action<double, double> callback)
 		=> new Subscription(Dom.ListenScroll(Js, Guard("scroll", callback)));
 
@@ -156,6 +167,14 @@ public class WebElement
 }
 
 /// <summary>Decodes the flags passed to <see cref="WebElement.OnPointer"/>.</summary>
+public enum DragPhase
+{
+	Started,
+	Moved,
+	Released,
+	Cancelled,
+}
+
 public static class PointerFlags
 {
 	public static int Button(int flags) => flags & 0xF;

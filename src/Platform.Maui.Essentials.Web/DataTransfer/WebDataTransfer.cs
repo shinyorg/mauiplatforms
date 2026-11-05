@@ -92,7 +92,7 @@ public class WebShare(IClipboard clipboard) : IShare
 		foreach (var file in list)
 		{
 			var bytes = await File.ReadAllBytesAsync(file.FullPath);
-			EssentialsJs.AddShareFile(new ArraySegment<byte>(bytes), file.FileName, file.ContentType);
+			EssentialsJs.AddShareFile(new ArraySegment<byte>(bytes), file.FileName, WebContentTypes.Of(file));
 		}
 
 		if (EssentialsJs.CanShare(withFiles: true))
@@ -105,7 +105,7 @@ public class WebShare(IClipboard clipboard) : IShare
 		foreach (var file in list)
 		{
 			var bytes = await File.ReadAllBytesAsync(file.FullPath);
-			EssentialsJs.Download(new ArraySegment<byte>(bytes), file.FileName, file.ContentType);
+			EssentialsJs.Download(new ArraySegment<byte>(bytes), file.FileName, WebContentTypes.Of(file));
 		}
 	}
 }

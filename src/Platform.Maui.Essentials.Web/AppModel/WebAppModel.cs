@@ -112,7 +112,7 @@ public class WebLauncher : ILauncher
 		ArgumentNullException.ThrowIfNull(request?.File);
 		await EssentialsJs.EnsureLoadedAsync();
 		var bytes = await File.ReadAllBytesAsync(request.File.FullPath);
-		EssentialsJs.Download(new ArraySegment<byte>(bytes), request.File.FileName, request.File.ContentType);
+		EssentialsJs.Download(new ArraySegment<byte>(bytes), request.File.FileName, WebContentTypes.Of(request.File));
 		return true;
 	}
 

@@ -93,14 +93,14 @@ public abstract class WebMauiApplication : IPlatformApplication
 		_windows[virtualWindow] = platformWindow;
 		InvokeLifecycleEvents<WebLifecycle.OnWindowCreated>(del => del(platformWindow));
 
-		virtualWindow.Created();
-		virtualWindow.Activated();
+		WebPageVisibility.WindowCreated(virtualWindow);
 	}
 
 	internal void CloseWindow(IWindow virtualWindow)
 	{
 		if (!_windows.Remove(virtualWindow, out var platformWindow))
 			return;
+		WebPageVisibility.WindowClosed(virtualWindow);
 		virtualWindow.Destroying();
 		platformWindow.Close();
 	}

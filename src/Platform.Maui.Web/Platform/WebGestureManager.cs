@@ -54,6 +54,9 @@ internal sealed class WebGestureManager : IDisposable
 				case PointerGestureRecognizer pointer:
 					AttachPointer(pointer);
 					break;
+				case PinchGestureRecognizer pinch:
+					AttachPinch(pinch);
+					break;
 			}
 		}
 
@@ -158,6 +161,43 @@ internal sealed class WebGestureManager : IDisposable
 			if (swipe.Direction.HasFlag(direction))
 				swipe.SendSwiped(_view, direction);
 		}));
+	}
+
+	// Wheel events have no begin/end, so a pinch starts on the first ctrl+wheel and ends once they stop.
+	const int PinchIdleMs = 250;
+
+	void AttachPinch(PinchGestureRecognizer pinch)
+	{
+		var controller = (IPinchGestureController)pinch;
+		var origin = new Point(0.5, 0.5);
+		var active = false;
+		var generation = 0;
+
+		_subscriptions.Add(_element.OnZoomWheel(deltaY =>
+		{
+			if (!_view.IsEnabled)
+				return;
+			if (!active)
+			{
+				active = true;
+				controller.SendPinchStarted(_view, origin);
+			}
+
+			// MAUI reports the scale change since the previous update, not a running total.
+			controller.SendPinch(_view, Math.Exp(-deltaY * 0.01), origin);
+
+			_ = EndWhenIdle(++generation);
+		}));
+
+		async Task EndWhenIdle(int current)
+		{
+			await Task.Delay(PinchIdleMs);
+			if (current != generation || !active)
+				return;
+			active = false;
+			try { controller.SendPinchEnded(_view); }
+			catch (Exception ex) { Console.Error.WriteLine($"[maui-web] pinch end handler failed: {ex}"); }
+		}
 	}
 
 	void AttachPointer(PointerGestureRecognizer pointer)

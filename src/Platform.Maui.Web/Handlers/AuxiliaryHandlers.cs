@@ -5,53 +5,6 @@ using Microsoft.Maui.Platform.Web;
 
 namespace Microsoft.Maui.Platform.Web.Handlers;
 
-/// <summary>
-/// RefreshView: hosts its content and shows a spinner while IsRefreshing. Pull-to-refresh
-/// gestures are not implemented; set IsRefreshing (or invoke Command) from your own UI.
-/// </summary>
-public class RefreshViewHandler : ContentViewHandler
-{
-	public static new IPropertyMapper<IContentView, RefreshViewHandler> Mapper =
-		new PropertyMapper<IContentView, RefreshViewHandler>(ContentViewHandler.Mapper)
-		{
-			[nameof(IRefreshView.IsRefreshing)] = MapIsRefreshing,
-			[nameof(IRefreshView.RefreshColor)] = MapRefreshColor,
-		};
-
-	public RefreshViewHandler() : base(Mapper)
-	{
-	}
-
-	WebElement _spinner = null!;
-
-	protected override WebElement CreatePlatformView()
-	{
-		var root = new WebElement("div", "maui-refresh-view maui-clip");
-		_spinner = new WebElement("div", "maui-activity-indicator");
-		_spinner.Append(new WebElement("div"));
-		_spinner.SetStyle("left", "calc(50% - 16px)");
-		_spinner.SetStyle("top", "12px");
-		_spinner.SetStyle("z-index", "5");
-		_spinner.SetStyle("position", "absolute");
-		root.Append(_spinner);
-		return root;
-	}
-
-	public static void MapIsRefreshing(RefreshViewHandler handler, IContentView view)
-		=> handler._spinner.ToggleClass("running", view is IRefreshView { IsRefreshing: true });
-
-	public static void MapRefreshColor(RefreshViewHandler handler, IContentView view)
-		=> handler._spinner.SetStyle("--maui-spinner", WebCss.PaintColor((view as IRefreshView)?.RefreshColor));
-}
-
-/// <summary>SwipeView: hosts its content. Swipe items are not revealed by gestures yet.</summary>
-public class SwipeViewHandler : ContentViewHandler
-{
-	public SwipeViewHandler() : base(Mapper)
-	{
-	}
-}
-
 public class IndicatorViewHandler : WebElementHandler<IIndicatorView, WebElement>
 {
 	public static IPropertyMapper<IIndicatorView, IndicatorViewHandler> Mapper =

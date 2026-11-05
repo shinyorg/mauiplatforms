@@ -9,12 +9,12 @@ test('DeviceInfo and AppInfo describe the browser app', async ({ app }) => {
 
 test('Preferences persist across a reload', async ({ app, page }) => {
   await app.open();
-  await app.navigate('Location, Sensors & Speech');
+  await app.navigate('Files, Photos & Sensors');
   const note = page.getByPlaceholder('Type a note, then reload the page');
   await note.fill('remember me');
   await page.reload();
   await expect(app.title).toHaveText('Overview', { timeout: 30_000 });
-  await app.navigate('Location, Sensors & Speech');
+  await app.navigate('Files, Photos & Sensors');
   await expect(note).toHaveValue('remember me');
 });
 
@@ -46,7 +46,7 @@ test('Geolocation reads the browser location', async ({ app, context }) => {
   await context.grantPermissions(['geolocation']);
   await context.setGeolocation({ latitude: 47.6062, longitude: -122.3321, accuracy: 25 });
   await app.open();
-  await app.navigate('Location, Sensors & Speech');
+  await app.navigate('Files, Photos & Sensors');
   await app.button('Get my location').click();
   await expect(app.label(/^47\.6062, -122\.3321/)).toBeVisible();
 });

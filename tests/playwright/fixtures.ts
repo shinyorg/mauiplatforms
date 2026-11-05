@@ -106,7 +106,7 @@ export const galleryPages = [
   'Flex & Absolute', 'FormattedText', 'Shapes', 'Transforms & Effects', 'Alerts & Dialogs', 'Collection View',
   'Text Input Styling', 'Refresh & Swipe', 'Carousel & Indicators', 'Graphics (Canvas)', 'Graphics Features',
   'Device & App Info', 'Battery & Network', 'Clipboard & Storage', 'Communication', 'Launch & Share',
-  'Location, Sensors & Speech', 'WebView', 'Navigation', 'TabbedPage', 'FlyoutPage', 'Shell Navigation',
+  'Files, Photos & Sensors', 'WebView', 'Navigation', 'TabbedPage', 'FlyoutPage', 'Shell Navigation',
   'ControlTemplate', 'Modal Pages', 'Theme', 'Accessibility',
 ];
 

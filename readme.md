@@ -483,8 +483,8 @@ var model = DeviceInfo.Model;
 | FileSystem | ✅ | ✅ | Web: in-memory directories; app package files fetched from the site |
 | Preferences | ✅ | ✅ | tvOS: NSUserDefaults, Web: localStorage |
 | SecureStorage | ✅ | ❌ | Web throws `PlatformNotSupportedException`: a browser has nowhere safe to keep secrets |
-| FilePicker | — | ✅ | |
-| MediaPicker | — | ✅ | |
+| FilePicker | — | ✅ | Web: picked files are copied to the in-memory file system; read them with `File.OpenRead(result.FullPath)` (MAUI's `FileResult.OpenReadAsync()` throws `NotImplementedInReferenceAssemblyException` outside a platform TFM) |
+| MediaPicker | — | ✅ | Web: same as FilePicker (`File.OpenRead(result.FullPath)`); capture only on touch devices |
 | TextToSpeech | ✅ | ✅ | tvOS: AVSpeechSynthesizer, Web: `speechSynthesis` |
 | Clipboard | ✅ | ✅ | tvOS: in-process, Web: async Clipboard API |
 | Browser | — | ✅ | |

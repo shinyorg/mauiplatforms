@@ -65,14 +65,14 @@ public class EssentialsPage : SpecimenPage
 		Run(browser, actions, async () => { await Browser.Default.OpenAsync("https://dotnet.microsoft.com"); return "Opened in a new tab."; });
 		Run(map, actions, async () => { await Map.Default.OpenAsync(38.7223, -9.1393, new MapLaunchOptions { Name = "Lisbon" }); return "Opened a map."; });
 
-		var files = Specimen("Files", "FilePicker copies the chosen file into the in-memory file system so OpenReadAsync works; app package files are fetched from the site.",
+		var files = Specimen("Files", "FilePicker copies the chosen file into the in-memory file system; read it with File.OpenRead(file.FullPath), since FileResult.OpenReadAsync is not implemented in MAUI's platform-neutral build. App package files are fetched from the site.",
 			ActionRow(out var pick, "Pick a file", out var package, "Read a bundled asset", out var write, "Write app data"), "Choose an action.");
 		Run(pick, files, async () =>
 		{
 			var file = await FilePicker.Default.PickAsync();
 			if (file is null)
 				return "No file chosen.";
-			await using var stream = await file.OpenReadAsync();
+			await using var stream = File.OpenRead(file.FullPath);
 			return $"{file.FileName}, {file.ContentType}, {stream.Length:N0} bytes";
 		});
 		Run(package, files, async () =>
@@ -100,7 +100,9 @@ public class EssentialsPage : SpecimenPage
 			if (photo is null)
 				return "Nothing chosen.";
 			using var memory = new MemoryStream();
-			await using (var stream = await photo.OpenReadAsync())
+			// Picked files live at FullPath. FileResult.OpenReadAsync() throws on the web: MAUI's
+			// platform-neutral Essentials doesn't implement it, and backends can't override it.
+			await using (var stream = File.OpenRead(photo.FullPath))
 				await stream.CopyToAsync(memory);
 			var bytes = memory.ToArray();
 			preview.Source = ImageSource.FromStream(() => new MemoryStream(bytes));
@@ -122,7 +124,7 @@ public class EssentialsPage : SpecimenPage
 			var video = await MediaPicker.Default.PickVideoAsync();
 			if (video is null)
 				return "Nothing chosen.";
-			await using var stream = await video.OpenReadAsync();
+			await using var stream = File.OpenRead(video.FullPath);
 			return $"{video.FileName}, {video.ContentType}, {stream.Length:N0} bytes";
 		});
 
