@@ -87,6 +87,45 @@ public class EssentialsPage : SpecimenPage
 			return $"{path} now reads \"{await File.ReadAllTextAsync(path)}\"";
 		});
 
+		var preview = new Image { HeightRequest = 220, Aspect = Aspect.AspectFit, HorizontalOptions = LayoutOptions.Start, IsVisible = false };
+		var pickPhoto = new Button { Text = "Pick a photo" };
+		var pickPhotos = Secondary("Pick up to 3 photos");
+		var pickVideo = Secondary("Pick a video");
+		var capturePhoto = Secondary("Take a photo");
+		var media = Specimen("Photos & video", "MediaPicker opens the browser's file dialog filtered to images or video. Taking a photo opens the camera on phones and tablets, and throws on desktop browsers.",
+			new VerticalStackLayout { Spacing = 16, Children = { Wrap(12, pickPhoto, pickPhotos, pickVideo, capturePhoto), preview } },
+			MediaPicker.Default.IsCaptureSupported ? "Choose an action." : "Choose an action. Camera capture isn't available on this device.");
+		async Task<string> ShowPhoto(FileResult? photo)
+		{
+			if (photo is null)
+				return "Nothing chosen.";
+			using var memory = new MemoryStream();
+			await using (var stream = await photo.OpenReadAsync())
+				await stream.CopyToAsync(memory);
+			var bytes = memory.ToArray();
+			preview.Source = ImageSource.FromStream(() => new MemoryStream(bytes));
+			preview.IsVisible = true;
+			return $"{photo.FileName}, {photo.ContentType}, {bytes.Length:N0} bytes";
+		}
+		Run(pickPhoto, media, async () => await ShowPhoto(await MediaPicker.Default.PickPhotoAsync()));
+		Run(capturePhoto, media, async () => await ShowPhoto(await MediaPicker.Default.CapturePhotoAsync()));
+		Run(pickPhotos, media, async () =>
+		{
+			var photos = await MediaPicker.Default.PickPhotosAsync(new MediaPickerOptions { SelectionLimit = 3 });
+			if (photos.Count == 0)
+				return "Nothing chosen.";
+			var first = await ShowPhoto(photos[0]);
+			return photos.Count == 1 ? first : $"{photos.Count} photos: {string.Join(", ", photos.Select(p => p.FileName))}. Showing the first.";
+		});
+		Run(pickVideo, media, async () =>
+		{
+			var video = await MediaPicker.Default.PickVideoAsync();
+			if (video is null)
+				return "Nothing chosen.";
+			await using var stream = await video.OpenReadAsync();
+			return $"{video.FileName}, {video.ContentType}, {stream.Length:N0} bytes";
+		});
+
 		var sensors = Specimen("Location & motion", "Geolocation asks for permission the first time. Motion sensors need a phone or tablet.",
 			ActionRow(out var locate, "Get my location", out var motion, "Start accelerometer"), "Choose an action.");
 		Run(locate, sensors, async () =>
