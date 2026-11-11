@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:local="clr-namespace:Sample.Features.DataGrid"
+             x:Class="Sample.Features.DataGrid.DataGridFormattingPage"
+             x:DataType="local:DataGridFormattingViewModel"
+             Title="Formatting"
+             AutomationId="DataGridFormattingPage">
+
+    <Grid RowDefinitions="Auto,*,Auto,*,Auto,*" Padding="16" RowSpacing="8">
+
+        <Label Grid.Row="0"
+               Text="Every column below is a plain DataGridColumn - no CellTemplate anywhere. DisplayAs picks a preset, Decimals tunes it, NullText covers the gaps, and Prefix/Suffix decorate the value."
+               FontSize="13"
+               TextColor="Gray" />
+
+        <shiny:DataGrid Grid.Row="1"
+                        ItemsSource="{Binding People}"
+                        SortMode="Single"
+                        HorizontalScroll="True"
+                        DefaultColumnWidth="130"
+                        Striped="True"
+                        Bordered="True">
+            <shiny:DataGridColumn Title="First" PropertyName="FirstName" Width="110" />
+
+            <!-- Auto alignment sends a currency column right, and the header follows it.
+                 Decimals trims the trailing ".00" the culture would otherwise add. -->
+            <shiny:DataGridColumn Title="Salary" PropertyName="Salary"
+                                  DisplayAs="Currency" Decimals="0" Width="120" />
+
+            <!-- .NET's "P" multiplies by 100, so 0.61 renders as 61%. -->
+            <shiny:DataGridColumn Title="Util." PropertyName="Utilisation"
+                                  DisplayAs="Percent" Decimals="0" Width="90" />
+
+            <shiny:DataGridColumn Title="Mailbox" PropertyName="MailboxBytes"
+                                  DisplayAs="FileSize" Width="110" />
+
+            <!-- Inactive people have no review date; NullText is what stops the cell going blank. -->
+            <shiny:DataGridColumn Title="Reviewed" PropertyName="LastReview"
+                                  DisplayAs="Date" NullText="—" Width="120" />
+
+            <!-- [Description] wins; without one the member name is split on PascalCase. -->
+            <shiny:DataGridColumn Title="State" PropertyName="State"
+                                  DisplayAs="Enum" Width="140" />
+
+            <shiny:DataGridColumn Title="On" PropertyName="Active"
+                                  DisplayAs="Boolean" Alignment="Center" Width="60" />
+
+            <shiny:DataGridColumn Title="Tenure" PropertyName="YearsOfService"
+                                  Suffix=" yrs" Width="90" />
+
+            <!-- TextFormatter takes the raw value and returns text - the escape hatch that is
+                 still not a template. -->
+            <shiny:DataGridColumn Title="Band" PropertyName="Age"
+                                  TextFormatter="{Binding AgeBand}" Width="100" />
+        </shiny:DataGrid>
+
+        <Label Grid.Row="2"
+               Text="CellStyle takes the row and returns colours/weight for that one cell. Wrap plus MaxLines lets one column breathe while the rest stay on a line."
+               FontSize="13"
+               TextColor="Gray" />
+
+        <shiny:DataGrid Grid.Row="3"
+                        ItemsSource="{Binding People}"
+                        SortMode="Single"
+                        RowHeight="56"
+                        Striped="True">
+            <shiny:DataGridColumn Title="First" PropertyName="FirstName" Width="0.8*" />
+            <shiny:DataGridColumn Title="Salary" PropertyName="Salary"
+                                  DisplayAs="Currency" Decimals="0" Width="1*"
+                                  CellStyle="{Binding SalaryStyle}" />
+            <shiny:DataGridColumn Title="Reviewed" PropertyName="LastReview"
+                                  DisplayAs="Date" NullText="Overdue" Width="1*"
+                                  CellStyle="{Binding ReviewStyle}" />
+            <shiny:DataGridColumn Title="Notes" PropertyName="Notes"
+                                  Wrap="True" MaxLines="2" Width="2*" />
+        </shiny:DataGrid>
+
+        <Label Grid.Row="4"
+               Text="Highlights cover a row, a column, one cell, or the whole grid - depending only on which targeting members are set. Fill is a wash behind the text, so striping and selection still read; the border traces the perimeter of the region, not each cell in it."
+               FontSize="13"
+               TextColor="Gray" />
+
+        <shiny:DataGrid Grid.Row="5"
+                        ItemsSource="{Binding People}"
+                        SortMode="Single"
+                        Striped="True"
+                        Highlights="{Binding Highlights}">
+            <shiny:DataGridColumn Title="First" PropertyName="FirstName" Width="1*" />
+            <shiny:DataGridColumn Title="Department" PropertyName="Department" Width="1.4*" />
+            <shiny:DataGridColumn Title="Salary" PropertyName="Salary"
+                                  DisplayAs="Currency" Decimals="0" Width="1.2*" />
+
+            <!-- A whole column highlighted from markup rather than from a rule. Same paint, and the
+                 rules above are laid over it. -->
+            <shiny:DataGridColumn Title="Tenure" PropertyName="YearsOfService" Suffix=" yrs" Width="1*">
+                <shiny:DataGridColumn.Highlight>
+                    <shiny:DataGridCellStyle Fill="LightSkyBlue" FillOpacity="0.35" />
+                </shiny:DataGridColumn.Highlight>
+            </shiny:DataGridColumn>
+        </shiny:DataGrid>
+    </Grid>
+</ContentPage>

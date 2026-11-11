@@ -11,6 +11,7 @@ using Sample.Features.Buttons;
 using Sample.Features.Chat;
 using Sample.Features.Chips;
 using Sample.Features.Confetti;
+using Sample.Features.DataGrid;
 using Sample.Features.Diagram;
 using Sample.Features.Diagrams;
 using Sample.Features.Dialogs;
@@ -39,6 +40,7 @@ using Sample.Features.Tags;
 using Sample.Features.TextEntry;
 using Sample.Features.Timeline;
 using Sample.Features.Toast;
+using Sample.Features.TreeView;
 using Sample.Features.Walkthrough;
 
 namespace SampleWeb.Pages.Shiny;
@@ -103,6 +105,11 @@ public static class ShinyGallery
 		new("➕", "TableView Dynamic", Bound<DynamicSectionsPage, DynamicSectionsViewModel>),
 		new("↕️", "TableView Drag Sort", Bound<DragSortPage, DragSortViewModel>),
 		new("🎨", "TableView Styling", () => new StylingPage()),
+		new("🌳", "Tree View", () => new TreeViewPage()),
+		new("▦", "Data Grid", Bound<DataGridPage, DataGridViewModel>),
+		new("🌲", "Tree Data Grid", Bound<TreeDataGridPage, TreeDataGridViewModel>),
+		new("🧮", "Grid Grouping", Bound<DataGridGroupingPage, DataGridGroupingViewModel>),
+		new("🎨", "Grid Formatting", Bound<DataGridFormattingPage, DataGridFormattingViewModel>),
 		new("🪄", "Overlay", Bound<OverlayPage, OverlayViewModel>),
 		new("🗃️", "Kanban", Bound<KanbanPage, KanbanViewModel>),
 		new("🎞️", "Keyframe Animation", () => new KeyframePage()),

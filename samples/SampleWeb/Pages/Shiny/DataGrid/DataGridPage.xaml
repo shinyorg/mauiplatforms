@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:local="clr-namespace:Sample.Features.DataGrid"
+             x:Class="Sample.Features.DataGrid.DataGridPage"
+             x:DataType="local:DataGridViewModel"
+             Title="DataGrid"
+             AutomationId="DataGridPage">
+
+    <Grid RowDefinitions="Auto,Auto,*" Padding="16" RowSpacing="8">
+        <Label Grid.Row="0" Text="{Binding StatusMessage}" FontSize="13" TextColor="Gray"
+               AutomationId="DataGridStatus" />
+
+        <HorizontalStackLayout Grid.Row="1" Spacing="8" VerticalOptions="Center">
+            <Label Text="Freeze first column" FontSize="13" VerticalOptions="Center" />
+            <Switch IsToggled="{Binding FreezeFirstColumn, Mode=TwoWay}"
+                    AutomationId="FreezeColumnSwitch" />
+        </HorizontalStackLayout>
+
+        <!-- HorizontalScroll puts the header, rows and footer in one sideways scroller, which is
+             what makes freezing meaningful: the pinned columns stay put while the rest slides. -->
+        <shiny:DataGrid Grid.Row="2"
+                        AutomationId="PeopleGrid"
+                        ItemsSource="{Binding People}"
+                        SelectionMode="Single"
+                        SelectedItem="{Binding SelectedItem, Mode=TwoWay}"
+                        SortMode="Multiple"
+                        FilterMode="Menu"
+                        Groupable="True"
+                        PageSize="6"
+                        EditMode="Form"
+                        AllowColumnResize="True"
+                        AllowColumnReorder="False"
+                        DragDropColumnReordering="True"
+                        HorizontalScroll="True"
+                        DefaultColumnWidth="140"
+                        MinColumnWidth="70"
+                        MaxColumnWidth="400"
+                        FrozenColumns="{Binding FrozenCount}"
+                        RowDetailLoader="{Binding LoadActivity}"
+                        Striped="True"
+                        Bordered="True">
+            <!-- The breakdown row. Setting it adds the caret column at the leading edge; the
+                 template's BindingContext is the row's item, so it can host anything. Under
+                 HorizontalScroll it stays pinned to the left while the columns slide underneath. -->
+            <!-- The loader runs once per row on first expand; the caret turns into a spinner while
+                 it does, and RowDetailTemplate is not built until it lands. -->
+            <shiny:DataGrid.RowDetailLoadingTemplate>
+                <DataTemplate x:DataType="local:Person">
+                    <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                        <ActivityIndicator IsRunning="True" WidthRequest="16" HeightRequest="16" />
+                        <Label Text="{Binding FirstName, StringFormat='Fetching activity for {0}…'}"
+                               FontSize="13" VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                </DataTemplate>
+            </shiny:DataGrid.RowDetailLoadingTemplate>
+            <shiny:DataGrid.RowDetailTemplate>
+                <DataTemplate x:DataType="local:Person">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="{Binding FirstName, StringFormat='Breakdown for {0}'}"
+                               FontAttributes="Bold" FontSize="14" />
+                        <Label Text="{Binding Department, StringFormat='Department: {0}'}" FontSize="13" />
+                        <Label Text="{Binding Salary, StringFormat='Salary: {0:C0}'}" FontSize="13" />
+                        <Label Text="{Binding RecentActivity, StringFormat='Recent activity: {0}'}" FontSize="13" />
+                        <shiny:PillView Text="{Binding StatusText}" HorizontalOptions="Start" />
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </shiny:DataGrid.RowDetailTemplate>
+
+            <!-- Widths are explicit (star / absolute) rather than Auto: header, footer and each
+                 row are separate Grids, so an Auto column sizes to its own cell's content and the
+                 columns drift out of alignment. Under HorizontalScroll a star width resolves to
+                 DefaultColumnWidth x its factor. -->
+            <!-- Drag a header's right edge to resize. MinWidth/MaxWidth bound that drag per column;
+                 anything that sets neither falls back to the grid's MinColumnWidth/MaxColumnWidth. -->
+            <shiny:DataGridColumn Title="First" PropertyName="FirstName" Width="1*"
+                                  MinWidth="90" MaxWidth="260" />
+            <shiny:DataGridColumn Title="Last" PropertyName="LastName" Width="1.2*" />
+            <shiny:DataGridColumn Title="Age" PropertyName="Age" Width="0.6*"
+                                  MinWidth="60" MaxWidth="110" />
+            <!-- WidthPercent wins over Width. Under HorizontalScroll it is a percentage of the
+                 scroller's own width, so percentages past 100 are what make the grid scroll. -->
+            <shiny:DataGridColumn Title="Department" PropertyName="Department" WidthPercent="30" />
+            <shiny:DataGridColumn Title="Salary" PropertyName="Salary" StringFormat="{}{0:C0}" Width="1.3*">
+                <shiny:DataGridColumn.Aggregate>
+                    <shiny:DataGridAggregateDefinition Type="Sum" Format="C0" />
+                </shiny:DataGridColumn.Aggregate>
+            </shiny:DataGridColumn>
+            <!-- Resizable="False": no handle at all, even though the grid allows resizing. -->
+            <shiny:DataGridTemplateColumn Title="Status" Width="110" Editable="False"
+                                          Resizable="False" Frozen="End">
+                <shiny:DataGridTemplateColumn.CellTemplate>
+                    <DataTemplate x:DataType="local:Person">
+                        <shiny:PillView Text="{Binding StatusText}"
+                                        Margin="12,8"
+                                        HorizontalOptions="Start"
+                                        VerticalOptions="Center" />
+                    </DataTemplate>
+                </shiny:DataGridTemplateColumn.CellTemplate>
+            </shiny:DataGridTemplateColumn>
+        </shiny:DataGrid>
+    </Grid>
+</ContentPage>

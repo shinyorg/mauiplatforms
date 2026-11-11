@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:local="clr-namespace:Sample.Features.DataGrid"
+             x:Class="Sample.Features.DataGrid.DataGridGroupingPage"
+             x:DataType="local:DataGridGroupingViewModel"
+             Title="Grouping"
+             AutomationId="DataGridGroupingPage">
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto,*" Padding="16" RowSpacing="8">
+
+        <Label Grid.Row="0"
+               Text="GroupBy is a list of columns, outermost first - bind it and the grid re-groups itself. Each group gets the same summary rows the grid does, totalling only its own rows."
+               FontSize="13"
+               TextColor="Gray" />
+
+        <HorizontalStackLayout Grid.Row="1" Spacing="8">
+            <Button Text="Department" AutomationId="GroupByDepartmentButton" Command="{Binding GroupByDepartmentCommand}" FontSize="12" Padding="10,4" />
+            <Button Text="Dept + Region" AutomationId="GroupByDepartmentRegionButton" Command="{Binding GroupByDepartmentAndRegionCommand}" FontSize="12" Padding="10,4" />
+            <Button Text="Ungroup" AutomationId="UngroupButton" Command="{Binding UngroupCommand}" FontSize="12" Padding="10,4" />
+            <Button Text="{Binding Placement, StringFormat='Summaries: {0}'}"
+                    AutomationId="SummaryPlacementButton"
+                    Command="{Binding TogglePlacementCommand}" FontSize="12" Padding="10,4" />
+        </HorizontalStackLayout>
+
+        <shiny:DataGrid Grid.Row="2"
+                        AutomationId="SalesGrid"
+                        ItemsSource="{Binding Sales}"
+                        GroupBy="{Binding GroupColumns}"
+                        GroupSummaryPlacement="{Binding Placement}"
+                        Striped="True"
+                        Bordered="True"
+                        HorizontalScroll="True"
+                        FrozenColumns="1">
+
+            <!-- Five columns do not fit a phone: a header also carries its sort arrow and filter ▾,
+                 so budget each column for that and let the grid scroll sideways instead of
+                 ellipsizing every title. The frozen Department column (and the group labels, which
+                 pin with it) stays put while the numbers scroll. -->
+
+            <!-- One set of definitions serves the grid's footer and every group. Scope narrows a row
+                 to one of the two; the default is both. -->
+            <shiny:DataGrid.SummaryRows>
+                <shiny:DataGridSummaryRow>
+                    <shiny:DataGridSummaryCell Column="Name" Text="Total" Alignment="End" />
+                    <shiny:DataGridSummaryCell Column="Revenue" Aggregate="Sum" />
+                    <shiny:DataGridSummaryCell Column="Deals" Aggregate="Sum" />
+                </shiny:DataGridSummaryRow>
+
+                <shiny:DataGridSummaryRow>
+                    <shiny:DataGridSummaryCell Column="Name" Text="Average" Alignment="End" Bold="False" />
+                    <shiny:DataGridSummaryCell Column="Revenue" Aggregate="Average" Bold="False" />
+                    <shiny:DataGridSummaryCell Column="Deals" Aggregate="Average" StringFormat="N1" Bold="False" />
+                </shiny:DataGridSummaryRow>
+            </shiny:DataGrid.SummaryRows>
+
+            <shiny:DataGridColumn Title="Department" PropertyName="Department" Width="150" />
+            <shiny:DataGridColumn Title="Region" PropertyName="Region" Width="120" />
+            <shiny:DataGridColumn Title="Rep" PropertyName="Name" Width="110" />
+
+            <!-- No format on the summary cell: an aggregate wears its own column's dress, so the
+                 total under a currency column is currency too. -->
+            <shiny:DataGridColumn Title="Revenue" PropertyName="Revenue"
+                                  DisplayAs="Currency" Decimals="0" Width="130" />
+            <shiny:DataGridColumn Title="Deals" PropertyName="Deals" Width="110" />
+        </shiny:DataGrid>
+
+        <Label Grid.Row="3"
+               Text="Groupable adds the ⊞ button to every header - each tap appends a level, and the glyph numbers itself once more than one is in play. GroupBy is declared inline here."
+               FontSize="13"
+               TextColor="Gray" />
+
+        <shiny:DataGrid Grid.Row="4"
+                        AutomationId="RegionGrid"
+                        ItemsSource="{Binding Sales}"
+                        Groupable="True"
+                        GroupsInitiallyExpanded="False"
+                        GroupSummaryPlacement="Header"
+                        Dense="True"
+                        HorizontalScroll="True"
+                        FrozenColumns="1">
+
+            <!-- The collection form, for a grouping the page owns rather than the view model. -->
+            <shiny:DataGrid.GroupBy>
+                <x:String>Region</x:String>
+            </shiny:DataGrid.GroupBy>
+
+            <shiny:DataGrid.SummaryRows>
+                <shiny:DataGridSummaryRow Scope="Group">
+                    <shiny:DataGridSummaryCell Column="Name" Text="Region total" Alignment="End" />
+                    <shiny:DataGridSummaryCell Column="Revenue" Aggregate="Sum" />
+                </shiny:DataGridSummaryRow>
+            </shiny:DataGrid.SummaryRows>
+
+            <!-- Wider than the top grid's columns: the ⊞ joins the ▾ in every header. -->
+            <shiny:DataGridColumn Title="Department" PropertyName="Department" Width="150" />
+            <shiny:DataGridColumn Title="Region" PropertyName="Region" Width="120" />
+            <shiny:DataGridColumn Title="Rep" PropertyName="Name" Width="110" />
+            <shiny:DataGridColumn Title="Revenue" PropertyName="Revenue"
+                                  DisplayAs="Currency" Decimals="0" Width="140" />
+        </shiny:DataGrid>
+    </Grid>
+</ContentPage>

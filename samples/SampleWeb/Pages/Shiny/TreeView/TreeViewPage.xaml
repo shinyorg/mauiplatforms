@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shiny="http://shiny.net/maui/controls"
+    xmlns:local="clr-namespace:Sample.Features.TreeView"
+    x:Class="Sample.Features.TreeView.TreeViewPage"
+    Title="Tree View">
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="0">
+        <!-- Toolbar -->
+        <VerticalStackLayout Grid.Row="0" Padding="12,8" Spacing="6">
+            <Label Text="File browser demo — lazy-loaded 'Cloud' branch, locked items can't be selected, drag a row onto another to reorder."
+                   FontSize="12" TextColor="#666" />
+            <!-- Horizontal scroller: the toolbar is wider than a phone once the
+                 select-all buttons appear. -->
+            <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+            <HorizontalStackLayout Spacing="8">
+                <Button Text="Expand all" Clicked="OnExpandAllClicked" FontSize="12" Padding="10,4" AutomationId="TreeExpandAllButton" />
+                <Button Text="Collapse all" Clicked="OnCollapseAllClicked" FontSize="12" Padding="10,4" AutomationId="TreeCollapseAllButton" />
+                <Button Text="Refresh Cloud" Clicked="OnRefreshCloudClicked" FontSize="12" Padding="10,4" AutomationId="TreeRefreshCloudButton" />
+                <Switch x:Name="MultiSelectSwitch" Toggled="OnMultiSelectToggled" AutomationId="TreeMultiSelectSwitch" />
+                <Label Text="Multi-select" VerticalTextAlignment="Center" FontSize="12" />
+                <Button x:Name="SelectAllButton" Text="Select all" Clicked="OnSelectAllClicked" AutomationId="TreeSelectAllButton"
+                        FontSize="12" Padding="10,4" IsVisible="False" />
+                <Button x:Name="DeselectAllButton" Text="Deselect all" Clicked="OnDeselectAllClicked" AutomationId="TreeDeselectAllButton"
+                        FontSize="12" Padding="10,4" IsVisible="False" />
+            </HorizontalStackLayout>
+            </ScrollView>
+        </VerticalStackLayout>
+
+        <!-- Tree -->
+        <shiny:TreeView Grid.Row="1" x:Name="Tree" AutomationId="FileTree"
+                        IndentSize="22"
+                        ShowGuideLines="True"
+                        EnableDragDrop="True"
+                        ChevronColor="#7C3AED"
+                        SelectedBackgroundColor="#EDE9FE"
+                        ItemSelected="OnItemSelected"
+                        ItemExpanded="OnItemExpanded"
+                        ItemCollapsed="OnItemCollapsed"
+                        ItemDropped="OnItemDropped"
+                        LoadFailed="OnLoadFailed">
+
+            <shiny:TreeView.ItemTemplate>
+                <DataTemplate x:DataType="local:FileNode">
+                    <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                        <Label Text="{Binding Icon}" FontSize="16" VerticalTextAlignment="Center" />
+                        <Label Text="{Binding Name}" VerticalTextAlignment="Center" />
+                    </HorizontalStackLayout>
+                </DataTemplate>
+            </shiny:TreeView.ItemTemplate>
+
+        </shiny:TreeView>
+
+        <!-- Status -->
+        <Label Grid.Row="2" x:Name="StatusLabel" AutomationId="TreeStatusLabel" Padding="12,8" FontSize="11"
+               TextColor="#666" Text="Tap a node, expand the 'Cloud' folder to see lazy loading." />
+    </Grid>
+</ContentPage>

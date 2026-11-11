@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:local="clr-namespace:Sample.Features.DataGrid"
+             x:Class="Sample.Features.DataGrid.TreeDataGridPage"
+             x:DataType="local:TreeDataGridViewModel"
+             Title="Tree Grid"
+             AutomationId="TreeDataGridPage">
+
+    <Grid RowDefinitions="Auto,*" Padding="16" RowSpacing="8">
+        <Label Grid.Row="0" Text="{Binding StatusMessage}" FontSize="13" TextColor="Gray"
+               AutomationId="TreeStatus" />
+
+        <!-- TreeDataGrid is DataGrid with a name that says what it is: hand it a ChildrenSelector
+             (and a ChildrenLoader for levels that need fetching) and the first column grows an
+             indent and a caret. Sorting and filtering apply per level, so children stay put. -->
+        <shiny:TreeDataGrid Grid.Row="1"
+                            AutomationId="AccountsGrid"
+                            ItemsSource="{Binding Accounts}"
+                            ChildrenSelector="{Binding ChildrenSelector}"
+                            ChildrenLoader="{Binding ChildrenLoader}"
+                            HasChildrenSelector="{Binding HasChildrenSelector}"
+                            SelectionMode="Single"
+                            SortMode="Single"
+                            FilterMode="Toolbar"
+                            TreeIndentSize="18"
+                            Striped="True"
+                            Bordered="True">
+            <shiny:DataGridColumn Title="Account" PropertyName="Name" Width="2*" />
+            <shiny:DataGridColumn Title="Kind" PropertyName="Kind" Width="1*" />
+            <shiny:DataGridColumn Title="Budget" PropertyName="Budget" StringFormat="{}{0:C0}" Width="1.2*">
+                <shiny:DataGridColumn.Aggregate>
+                    <shiny:DataGridAggregateDefinition Type="Sum" Format="C0" />
+                </shiny:DataGridColumn.Aggregate>
+            </shiny:DataGridColumn>
+        </shiny:TreeDataGrid>
+    </Grid>
+</ContentPage>

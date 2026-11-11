@@ -142,6 +142,6 @@ export const shinyPages = [
   'Scheduler Calendar', 'Scheduler Agenda', 'Scheduler List', 'Agenda + Calendar Picker', 'Gantt', 'Diagram',
   'Mermaid Flowchart', 'Mermaid Directions', 'Mermaid Subgraphs', 'Mermaid Themes', 'Mermaid Editor',
   'Image Viewer', 'Image Gallery', 'TableView Settings', 'TableView Pickers', 'TableView Dynamic', 'TableView Drag Sort',
-  'TableView Styling', 'Overlay', 'Kanban', 'Keyframe Animation', 'Walkthrough', 'Tooltip', 'Spreadsheet',
+  'TableView Styling', 'Tree View', 'Data Grid', 'Tree Data Grid', 'Grid Grouping', 'Grid Formatting', 'Overlay', 'Kanban', 'Keyframe Animation', 'Walkthrough', 'Tooltip', 'Spreadsheet',
   'Document Viewer', 'Slide Viewer',
 ];
