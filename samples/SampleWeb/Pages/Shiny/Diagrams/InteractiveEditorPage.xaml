@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:diagram="http://shiny.net/maui/diagrams"
+             x:Class="Sample.Features.Diagrams.InteractiveEditorPage"
+             Title="Editor">
+
+    <Grid RowDefinitions="Auto,*,Auto,200"
+          RowSpacing="0">
+
+        <HorizontalStackLayout Grid.Row="0" Padding="12,8" Spacing="20">
+            <HorizontalStackLayout Spacing="6">
+                <Label Text="Pan" VerticalOptions="Center" />
+                <Switch x:Name="PanSwitch" AutomationId="EditorPanSwitch" IsToggled="True" Toggled="OnPanToggled" />
+            </HorizontalStackLayout>
+            <HorizontalStackLayout Spacing="6">
+                <Label Text="Zoom" VerticalOptions="Center" />
+                <Switch x:Name="ZoomSwitch" AutomationId="EditorZoomSwitch" IsToggled="True" Toggled="OnZoomToggled" />
+            </HorizontalStackLayout>
+        </HorizontalStackLayout>
+
+        <diagram:MermaidDiagramControl
+            Grid.Row="1"
+            x:Name="DiagramControl"
+            AutomationId="EditorDiagram"
+            HorizontalOptions="Fill"
+            VerticalOptions="Fill" />
+
+        <Label Grid.Row="2"
+               x:Name="ParseErrorLabel"
+               AutomationId="EditorParseError"
+               Text=""
+               TextColor="Red"
+               FontSize="13"
+               IsVisible="False"
+               Padding="12,5" />
+
+        <Border Grid.Row="3"
+                Stroke="Gray"
+                StrokeThickness="1"
+                Margin="12">
+            <Editor x:Name="DiagramEditor"
+                    AutomationId="EditorText"
+                    Placeholder="Enter mermaid diagram text here..."
+                    AutoSize="TextChanges"
+                    TextChanged="OnEditorTextChanged"
+                    FontSize="13"
+                    Margin="4" />
+        </Border>
+    </Grid>
+
+</ContentPage>

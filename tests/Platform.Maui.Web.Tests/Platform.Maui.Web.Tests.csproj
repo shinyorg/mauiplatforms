@@ -17,6 +17,8 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\Platform.Maui.Web\Platform.Maui.Web.csproj" />
+        <!-- Managed only: the tests don't render, so Skia's WebAssembly native library isn't needed. -->
+        <ProjectReference Include="..\..\src\Platform.Maui.Web.SkiaSharp\Platform.Maui.Web.SkiaSharp.csproj" />
     </ItemGroup>
 
     <ItemGroup>

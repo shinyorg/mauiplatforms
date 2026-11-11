@@ -98,6 +98,23 @@ try {
     return (await labels('/^Echo: Web$/')).length === 1;
   });
 
+  await navigate('SkiaSharp');
+  // Counts the opaque blue-ish ink pixels of the n-th Skia canvas.
+  const skiaInk = n => evaluate(`(() => { const c = document.querySelectorAll('canvas.maui-skia-canvas-view')[${n}]; if (!c || !c.width) return -1; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let ink = 0; for (let i = 0; i < d.length; i += 4) if (d[i + 3] && d[i + 2] > 200 && d[i] < 100) ink++; return ink; })()`);
+  await check('SKCanvasView renders through Skia', () => waitFor(`(() => { const c = document.querySelector('canvas.maui-skia-canvas-view'); if (!c || !c.width) return false; const d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; for (let i = 3; i < d.length; i += 4) if (d[i]) return true; return false; })()`));
+  await check('SKCanvasView touch events reach the app', async () => {
+    const before = await skiaInk(2);
+    const box = await evaluate(`(() => { const c = document.querySelectorAll('canvas.maui-skia-canvas-view')[2]; c.scrollIntoView({ block: 'center' }); const r = c.getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; })()`);
+    const [x, y, w, h] = box;
+    await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: x + 20, y: y + h / 2 });
+    await send('Input.dispatchMouseEvent', { type: 'mousePressed', x: x + 20, y: y + h / 2, button: 'left', buttons: 1, clickCount: 1 });
+    for (let i = 1; i <= 10; i++)
+      await send('Input.dispatchMouseEvent', { type: 'mouseMoved', x: x + 20 + i * (w - 40) / 10, y: y + h / 2, button: 'left', buttons: 1 });
+    await send('Input.dispatchMouseEvent', { type: 'mouseReleased', x: x + w - 20, y: y + h / 2, button: 'left', buttons: 0, clickCount: 1 });
+    await sleep(300);
+    return (await skiaInk(2)) > before + 100;
+  });
+
   await navigate('Alerts & Dialogs');
   await check('DisplayAlert shows a dialog and returns the choice', async () => {
     await click(byText('Confirm Alert (Yes / No)'));

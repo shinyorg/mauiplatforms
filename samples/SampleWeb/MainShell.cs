@@ -37,6 +37,7 @@ public class MainShell : FlyoutPage
 		new("🎠", "Carousel & Indicators", () => new CarouselIndicatorPage()),
 		new("🎨", "Graphics (Canvas)", () => new GraphicsPage()),
 		new("🧪", "Graphics Features", () => new GraphicsFeaturePage()),
+		new("🖌️", "SkiaSharp", () => new SkiaSharpPage()),
 		new("📱", "Device & App Info", () => new DeviceInfoPage()),
 		new("🔋", "Battery & Network", () => new BatteryNetworkPage()),
 		new("🗂️", "Clipboard & Storage", () => new ClipboardPrefsPage()),

@@ -10,7 +10,10 @@ test.describe('startup', () => {
 
   test('lists every gallery page in the flyout menu', async ({ app, page }) => {
     await app.open();
-    await expect(page.locator('.maui-flyout-pane .maui-collection-item')).toHaveCount(galleryPages.length);
+    // The menu is a virtualized CollectionView, so rows past the viewport aren't in the DOM; each
+    // row carries the size of the whole list instead.
+    const first = page.locator('.maui-flyout-pane .maui-collection-item[aria-posinset="1"]:not(.maui-recycled)');
+    await expect(first).toHaveAttribute('aria-setsize', String(galleryPages.length));
   });
 
   test('loads registered fonts, including variable weights', async ({ app, page }) => {

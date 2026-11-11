@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:local="clr-namespace:Sample.Features.Diagram"
+             x:Class="Sample.Features.Diagram.DiagramPage"
+             x:DataType="local:DiagramViewModel"
+             Title="Diagram"
+             AutomationId="DiagramPage">
+
+    <Grid RowDefinitions="Auto,Auto,Auto,*" Padding="12" RowSpacing="8">
+
+        <Label Grid.Row="0" Text="{Binding StatusMessage}" FontSize="13" TextColor="Gray"
+               AutomationId="DiagramStatus" />
+
+        <!-- Fit, undo and delete go through the control's own methods rather than through bindings:
+             they are viewport and selection operations, and a view model has no business knowing
+             where the viewport happens to be. -->
+        <ScrollView Grid.Row="1" Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+            <HorizontalStackLayout Spacing="6">
+                <Button Text="Fit" Clicked="OnFit" AutomationId="DiagramFit" />
+                <Button Text="Undo" Clicked="OnUndo" AutomationId="DiagramUndo" />
+                <Button Text="Redo" Clicked="OnRedo" AutomationId="DiagramRedo" />
+                <Button Text="Add" Clicked="OnAddNode" AutomationId="DiagramAdd" />
+                <Button Text="Delete" Clicked="OnDelete" AutomationId="DiagramDelete" />
+                <Button Text="Reset" Command="{Binding ResetCommand}" AutomationId="DiagramReset" />
+            </HorizontalStackLayout>
+        </ScrollView>
+
+        <ScrollView Grid.Row="2" Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+            <HorizontalStackLayout Spacing="14" VerticalOptions="Center">
+                <Picker ItemsSource="{x:Static local:DiagramViewModel.Samples}"
+                        SelectedItem="{Binding Sample, Mode=TwoWay}"
+                        Title="Sample" WidthRequest="150" AutomationId="DiagramSamplePicker" />
+                <Picker ItemsSource="{x:Static local:DiagramViewModel.Layouts}"
+                        SelectedItem="{Binding LayoutKind, Mode=TwoWay}"
+                        Title="Layout" WidthRequest="150" AutomationId="DiagramLayoutPicker" />
+                <Picker ItemsSource="{x:Static local:DiagramViewModel.Directions}"
+                        SelectedItem="{Binding Direction, Mode=TwoWay}"
+                        Title="Direction" WidthRequest="150" AutomationId="DiagramDirectionPicker" />
+                <Picker ItemsSource="{x:Static local:DiagramViewModel.Routers}"
+                        SelectedItem="{Binding Router, Mode=TwoWay}"
+                        Title="Connectors" WidthRequest="150" AutomationId="DiagramRouterPicker" />
+
+                <HorizontalStackLayout Spacing="4" VerticalOptions="Center">
+                    <Label Text="Tip over" FontSize="12" VerticalOptions="Center" />
+                    <Switch IsToggled="{Binding TipOver, Mode=TwoWay}" AutomationId="DiagramTipOverSwitch" />
+                </HorizontalStackLayout>
+                <HorizontalStackLayout Spacing="4" VerticalOptions="Center">
+                    <Label Text="Drag nodes" FontSize="12" VerticalOptions="Center" />
+                    <Switch IsToggled="{Binding AllowNodeDrag, Mode=TwoWay}" AutomationId="DiagramDragSwitch" />
+                </HorizontalStackLayout>
+                <HorizontalStackLayout Spacing="4" VerticalOptions="Center">
+                    <Label Text="Draw links" FontSize="12" VerticalOptions="Center" />
+                    <Switch IsToggled="{Binding AllowConnectionEdit, Mode=TwoWay}" AutomationId="DiagramLinkSwitch" />
+                </HorizontalStackLayout>
+                <HorizontalStackLayout Spacing="4" VerticalOptions="Center">
+                    <Label Text="Grid" FontSize="12" VerticalOptions="Center" />
+                    <Switch IsToggled="{Binding ShowGrid, Mode=TwoWay}" AutomationId="DiagramGridSwitch" />
+                </HorizontalStackLayout>
+                <HorizontalStackLayout Spacing="4" VerticalOptions="Center">
+                    <Label Text="Snap" FontSize="12" VerticalOptions="Center" />
+                    <Switch IsToggled="{Binding SnapToGrid, Mode=TwoWay}" AutomationId="DiagramSnapSwitch" />
+                </HorizontalStackLayout>
+            </HorizontalStackLayout>
+        </ScrollView>
+
+        <Border Grid.Row="3" StrokeThickness="1" Padding="0">
+            <shiny:DiagramView x:Name="Diagram"
+                               Nodes="{Binding Nodes}"
+                               Connections="{Binding Connections}"
+                               LayoutKind="{Binding LayoutKind}"
+                               Direction="{Binding Direction}"
+                               TreeStyle="{Binding TreeStyle}"
+                               Router="{Binding Router}"
+                               AllowNodeDrag="{Binding AllowNodeDrag}"
+                               AllowConnectionEdit="{Binding AllowConnectionEdit}"
+                               ShowGrid="{Binding ShowGrid}"
+                               SnapToGrid="{Binding SnapToGrid}"
+                               SelectedNode="{Binding SelectedNode, Mode=TwoWay}"
+                               SelectionChanged="OnSelectionChanged"
+                               Edited="OnEdited"
+                               Built="OnBuilt"
+                               AutomationId="DiagramSurface" />
+        </Border>
+    </Grid>
+</ContentPage>

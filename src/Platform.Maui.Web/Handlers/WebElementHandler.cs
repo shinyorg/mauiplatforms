@@ -18,6 +18,19 @@ public interface IWebElementHandler : IViewHandler
 /// <summary>Mappers shared by all web handlers for the common <see cref="IView"/> properties.</summary>
 public static class WebElementHandler
 {
+	/// <summary>
+	/// Narrows measure constraints to a view's explicit size and maximum, so wrapping content measures
+	/// against the size it will actually get (as Android's measure specs do). Without it a Label in a
+	/// Border with MaximumWidthRequest is measured as one long line and then arranged narrower, wrapped
+	/// to more lines than its measured height holds.
+	/// </summary>
+	public static (double Width, double Height) ConstrainToView(IView view, double widthConstraint, double heightConstraint)
+	{
+		var width = Primitives.Dimension.IsExplicitSet(view.Width) ? Math.Min(view.Width, widthConstraint) : widthConstraint;
+		var height = Primitives.Dimension.IsExplicitSet(view.Height) ? Math.Min(view.Height, heightConstraint) : heightConstraint;
+		return (Math.Min(width, view.MaximumWidth), Math.Min(height, view.MaximumHeight));
+	}
+
 	/// <summary>Bumped when something global (fonts, theme) can change every element's natural size.</summary>
 	public static int MeasureGeneration { get; private set; }
 
@@ -286,12 +299,7 @@ public abstract class WebElementHandler<TVirtualView, TPlatformView> : ViewHandl
 		if (view is null || Element is null)
 			return Size.Zero;
 
-		// An explicit size becomes the constraint so wrapping content measures against it.
-		var wc = Primitives.Dimension.IsExplicitSet(view.Width) ? Math.Min(view.Width, widthConstraint) : widthConstraint;
-		var hc = Primitives.Dimension.IsExplicitSet(view.Height) ? Math.Min(view.Height, heightConstraint) : heightConstraint;
-		wc = Math.Min(wc, view.MaximumWidth);
-		hc = Math.Min(hc, view.MaximumHeight);
-
+		var (wc, hc) = WebElementHandler.ConstrainToView(view, widthConstraint, heightConstraint);
 		var native = MeasureCached(wc, hc);
 
 		return new Size(

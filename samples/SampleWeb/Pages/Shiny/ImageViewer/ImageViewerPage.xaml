@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<shiny:ShinyContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:local="clr-namespace:Sample.Features.ImageViewer"
+             x:Class="Sample.Features.ImageViewer.ImageViewerPage"
+             x:DataType="local:ImageViewerViewModel"
+             Title="Image Viewer"
+             AutomationId="ImageViewerPage">
+
+    <shiny:ShinyContentPage.PageContent>
+        <ScrollView>
+            <VerticalStackLayout Padding="20" Spacing="16">
+                <Label Text="Tap an image to open the viewer"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       HorizontalTextAlignment="Center" />
+
+                <Label Text="Pinch to zoom, pan when zoomed, double-tap to toggle zoom, X to close."
+                       FontSize="14"
+                       HorizontalTextAlignment="Center"
+                       TextColor="Gray" />
+
+                <Label Text="{Binding LastViewerEvent, StringFormat='Last viewer event: {0}'}"
+                       AutomationId="ViewerEventLabel"
+                       FontSize="14"
+                       HorizontalTextAlignment="Center"
+                       TextColor="Gray" />
+
+                <shiny:ImageViewer Source="dotnet_bot.png"
+                                   AutomationId="LocalImageViewer"
+                                   IsOpen="{Binding IsViewerOpen}"
+                                   HeightRequest="200"
+                                   Aspect="AspectFit"
+                                   CloseButtonText="Done"
+                                   OpenedCommand="{Binding ViewerOpenedCommand}"
+                                   ClosedCommand="{Binding ViewerClosedCommand}">
+                    <shiny:ImageViewer.HeaderTemplate>
+                        <DataTemplate x:DataType="local:ImageViewerViewModel">
+                            <Label Text="dotnet_bot.png"
+                                   TextColor="White"
+                                   FontAttributes="Bold"
+                                   HorizontalTextAlignment="Center"
+                                   Margin="0,60,0,0" />
+                        </DataTemplate>
+                    </shiny:ImageViewer.HeaderTemplate>
+                    <shiny:ImageViewer.FooterTemplate>
+                        <DataTemplate x:DataType="local:ImageViewerViewModel">
+                            <Button Text="Close"
+                                    AutomationId="ViewerFooterCloseButton"
+                                    Command="{Binding CloseViewerCommand}"
+                                    TextColor="White"
+                                    BackgroundColor="{x:Static Colors.DimGray}"
+                                    CornerRadius="20"
+                                    HorizontalOptions="Center"
+                                    Margin="0,0,0,40" />
+                        </DataTemplate>
+                    </shiny:ImageViewer.FooterTemplate>
+                </shiny:ImageViewer>
+
+                <Label Text="Remote image"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       HorizontalTextAlignment="Center"
+                       Margin="0,12,0,0" />
+
+                <Label Text="A URI loads through the image service: cached to memory and disk, with a ring that fills to a real percentage when the server sends a Content-Length."
+                       FontSize="14"
+                       HorizontalTextAlignment="Center"
+                       TextColor="Gray" />
+
+                <!-- CloseButtonImage puts artwork in the same chip the glyph sits in -->
+                <shiny:ImageViewer Uri="https://picsum.photos/seed/shiny-viewer/1600/1200"
+                                   PlaceholderImage="dotnet_bot.png"
+                                   ErrorImage="dotnet_bot.png"
+                                   CloseButtonImage="dotnet_bot.png"
+                                   HeightRequest="200"
+                                   Aspect="AspectFill" />
+
+                <Label Text="Broken URL — error artwork"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       HorizontalTextAlignment="Center"
+                       Margin="0,12,0,0" />
+
+                <shiny:ImageViewer Uri="https://example.com/does-not-exist.png"
+                                   AutomationId="BrokenImageViewer"
+                                   ErrorImage="dotnet_bot.png"
+                                   HeightRequest="140"
+                                   Aspect="AspectFit" />
+            </VerticalStackLayout>
+        </ScrollView>
+    </shiny:ShinyContentPage.PageContent>
+
+</shiny:ShinyContentPage>

@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:kf="http://shiny.net/maui/keyframe"
+             x:Class="Sample.Features.Keyframe.KeyframePage"
+             Title="Keyframe"
+             AutomationId="KeyframePage">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="24" Spacing="32">
+
+            <Label Text="Declarative keyframes on real MAUI views"
+                   FontSize="20"
+                   FontAttributes="Bold" />
+
+            <!-- A pulse: two tracks on one timeline, ping-ponging forever. -->
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Pulse — Scale + BackgroundColor, alternating" FontSize="12" TextColor="Gray" />
+
+                <Border x:Name="PulseBox"
+                        AutomationId="PulseBox"
+                        WidthRequest="120"
+                        HeightRequest="120"
+                        HorizontalOptions="Start"
+                        StrokeThickness="0">
+                    <Border.StrokeShape>
+                        <RoundRectangle CornerRadius="24" />
+                    </Border.StrokeShape>
+
+                    <kf:Animate.Keyframes>
+                        <kf:Keyframes Duration="0:0:1.2"
+                                      Iterations="Infinite"
+                                      Direction="Alternate"
+                                      Fill="Both">
+                            <kf:Track Property="Scale">
+                                <kf:Key Offset="0" Value="1" />
+                                <kf:Key Offset="0.5" Value="1.15" Easing="CubicOut" />
+                                <kf:Key Offset="1" Value="1" />
+                            </kf:Track>
+                            <kf:Track Property="BackgroundColor">
+                                <kf:Key Offset="0" Value="#2563EB" />
+                                <kf:Key Offset="1" Value="#EC4899" />
+                            </kf:Track>
+                        </kf:Keyframes>
+                    </kf:Animate.Keyframes>
+                </Border>
+            </VerticalStackLayout>
+
+            <!-- Overshoot via a CSS-style cubic-bezier copied straight out of a design tool. -->
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Slide in — cubic-bezier() parsed from a string" FontSize="12" TextColor="Gray" />
+
+                <Border x:Name="SlideBox"
+                        AutomationId="SlideBox"
+                        BackgroundColor="#10B981"
+                        WidthRequest="160"
+                        HeightRequest="60"
+                        HorizontalOptions="Start"
+                        StrokeThickness="0">
+                    <kf:Animate.Keyframes>
+                        <kf:Keyframes Duration="0:0:1"
+                                      Iterations="Infinite"
+                                      Fill="Both">
+                            <kf:Track Property="TranslationX">
+                                <kf:Key Offset="0" Value="-200" Easing="cubic-bezier(0.34, 1.56, 0.64, 1)" />
+                                <kf:Key Offset="0.7" Value="0" />
+                                <kf:Key Offset="1" Value="0" />
+                            </kf:Track>
+                            <kf:Track Property="Opacity">
+                                <kf:Key Offset="0" Value="0" />
+                                <kf:Key Offset="0.4" Value="1" />
+                                <kf:Key Offset="1" Value="1" />
+                            </kf:Track>
+                        </kf:Keyframes>
+                    </kf:Animate.Keyframes>
+                </Border>
+            </VerticalStackLayout>
+
+            <!-- A spring curve, and a track that starts wherever the view currently is. -->
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Spring — starts from the view's current value" FontSize="12" TextColor="Gray" />
+
+                <Border x:Name="SpringBox"
+                        BackgroundColor="#F59E0B"
+                        WidthRequest="80"
+                        HeightRequest="80"
+                        HorizontalOptions="Start"
+                        StrokeThickness="0">
+                    <kf:Animate.Keyframes>
+                        <kf:Keyframes Duration="0:0:1.5"
+                                      Iterations="Infinite"
+                                      Easing="spring(0.35, 14)"
+                                      Fill="Both">
+                            <!-- No Value on the first key: it resolves to the live value at start. -->
+                            <kf:Track Property="Rotation">
+                                <kf:Key Offset="0" />
+                                <kf:Key Offset="1" Value="90" />
+                            </kf:Track>
+                        </kf:Keyframes>
+                    </kf:Animate.Keyframes>
+                </Border>
+            </VerticalStackLayout>
+
+            <!-- Stepped playback, for sprite-sheet style motion. -->
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Stepped — steps(8) quantises the motion" FontSize="12" TextColor="Gray" />
+
+                <Border x:Name="StepBox"
+                        BackgroundColor="#8B5CF6"
+                        WidthRequest="60"
+                        HeightRequest="60"
+                        HorizontalOptions="Start"
+                        StrokeThickness="0">
+                    <kf:Animate.Keyframes>
+                        <kf:Keyframes Duration="0:0:2"
+                                      Iterations="Infinite"
+                                      Easing="steps(8)"
+                                      Fill="Both">
+                            <kf:Track Property="Spin">
+                                <kf:Key Offset="0" Value="0" />
+                                <kf:Key Offset="1" Value="360" />
+                            </kf:Track>
+                        </kf:Keyframes>
+                    </kf:Animate.Keyframes>
+                </Border>
+            </VerticalStackLayout>
+
+            <!-- The drawing side: a keyframed scene, with a scrubber bound to it. -->
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Drawn scene — same timeline model, rendered to a canvas" FontSize="12" TextColor="Gray" />
+
+                <kf:KeyframeView x:Name="SceneView"
+                                 AutomationId="KeyframeScene"
+                                 HeightRequest="200"
+                                 Progress="{Binding Source={x:Reference Scrubber}, Path=Value, Mode=TwoWay}" />
+
+                <Slider x:Name="Scrubber" AutomationId="KeyframeScrubber" Minimum="0" Maximum="1" />
+
+                <HorizontalStackLayout Spacing="12">
+                    <Button AutomationId="KeyframePlayButton" Text="Play" Clicked="OnPlay" />
+                    <Button AutomationId="KeyframePauseButton" Text="Pause" Clicked="OnPause" />
+                    <Button AutomationId="KeyframeReverseButton" Text="Reverse" Clicked="OnReverse" />
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:gantt="clr-namespace:Shiny.Controls.Gantt;assembly=Shiny.Controls.Gantt.Shared"
+             xmlns:local="clr-namespace:Sample.Features.Gantt"
+             x:Class="Sample.Features.Gantt.GanttPage"
+             x:DataType="local:GanttViewModel"
+             Title="Gantt"
+             AutomationId="GanttPage">
+
+    <Grid RowDefinitions="Auto,Auto,Auto,*" Padding="12" RowSpacing="8">
+
+        <Label Grid.Row="0" Text="{Binding StatusMessage}" FontSize="13" TextColor="Gray"
+               AutomationId="GanttStatus" />
+
+        <!-- Zoom, fit and expansion all go through the control's own methods rather than through
+             bindings: they are viewport operations, and a view model has no business knowing how
+             wide the timeline happens to be. -->
+        <ScrollView Grid.Row="1" Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+            <HorizontalStackLayout Spacing="6">
+                <Button Text="−" Clicked="OnZoomOut" WidthRequest="40" AutomationId="GanttZoomOut" />
+                <Button Text="+" Clicked="OnZoomIn" WidthRequest="40" AutomationId="GanttZoomIn" />
+                <Button Text="Fit" Clicked="OnFit" AutomationId="GanttFit" />
+                <Button Text="Today" Clicked="OnToday" AutomationId="GanttToday" />
+                <Button Text="Expand" Clicked="OnExpandAll" AutomationId="GanttExpandAll" />
+                <Button Text="Collapse" Clicked="OnCollapseAll" AutomationId="GanttCollapseAll" />
+                <Button Text="Undo" Command="{Binding UndoCommand}" IsEnabled="{Binding CanUndo}"
+                        AutomationId="GanttUndo" />
+                <Button Text="Reset" Command="{Binding ResetCommand}" AutomationId="GanttReset" />
+            </HorizontalStackLayout>
+        </ScrollView>
+
+        <ScrollView Grid.Row="2" Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+            <HorizontalStackLayout Spacing="14" VerticalOptions="Center">
+                <HorizontalStackLayout Spacing="4" VerticalOptions="Center">
+                    <Label Text="Critical path" FontSize="12" VerticalOptions="Center" />
+                    <Switch IsToggled="{Binding ShowCriticalPath, Mode=TwoWay}" AutomationId="GanttCriticalSwitch" />
+                </HorizontalStackLayout>
+                <HorizontalStackLayout Spacing="4" VerticalOptions="Center">
+                    <Label Text="Work week" FontSize="12" VerticalOptions="Center" />
+                    <Switch IsToggled="{Binding UseWorkingCalendar, Mode=TwoWay}" AutomationId="GanttCalendarSwitch" />
+                </HorizontalStackLayout>
+                <HorizontalStackLayout Spacing="4" VerticalOptions="Center">
+                    <Label Text="Draw links" FontSize="12" VerticalOptions="Center" />
+                    <Switch IsToggled="{Binding AllowDependencyEdit, Mode=TwoWay}" AutomationId="GanttLinkSwitch" />
+                </HorizontalStackLayout>
+            </HorizontalStackLayout>
+        </ScrollView>
+
+        <shiny:GanttView Grid.Row="3"
+                         x:Name="Gantt"
+                         AutomationId="Gantt"
+                         Tasks="{Binding Tasks}"
+                         Dependencies="{Binding Dependencies}"
+                         Calendar="{Binding Calendar}"
+                         SelectedTask="{Binding SelectedTask, Mode=TwoWay}"
+                         ShowCriticalPath="{Binding ShowCriticalPath}"
+                         AllowDependencyEdit="{Binding AllowDependencyEdit}"
+                         CascadeMode="{Binding CascadeMode}"
+                         TimeScale="{Binding TimeScale}"
+                         SnapMode="Scale"
+                         BarLabel="Right"
+                         TaskPaneWidth="360"
+                         RowHeight="34"
+                         TaskChanging="OnTaskChanging"
+                         TaskChanged="OnTaskChanged">
+
+            <shiny:GanttView.Columns>
+                <shiny:GanttColumn Header="Task" Field="Name" Width="150" ShowHierarchy="True" />
+                <shiny:GanttColumn Header="Owner" Field="Resource" Width="80" />
+                <shiny:GanttColumn Header="Days" Field="Duration" Width="60"
+                                   HorizontalAlignment="End" />
+                <shiny:GanttColumn Header="%" Field="Progress" Width="55" Format="P0"
+                                   HorizontalAlignment="End" />
+            </shiny:GanttView.Columns>
+
+            <shiny:GanttView.EmptyView>
+                <Label Text="No tasks in this plan" HorizontalOptions="Center" VerticalOptions="Center"
+                       TextColor="Gray" />
+            </shiny:GanttView.EmptyView>
+        </shiny:GanttView>
+    </Grid>
+</ContentPage>

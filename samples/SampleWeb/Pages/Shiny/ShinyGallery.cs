@@ -8,24 +8,38 @@ using Sample.Features.Badge;
 using Sample.Features.BorderAnimations;
 using Sample.Features.ButtonGroups;
 using Sample.Features.Buttons;
+using Sample.Features.Chat;
 using Sample.Features.Chips;
 using Sample.Features.Confetti;
+using Sample.Features.Diagram;
+using Sample.Features.Diagrams;
 using Sample.Features.Dialogs;
 using Sample.Features.Expanders;
 using Sample.Features.Fab;
+using Sample.Features.FloatingPanel;
+using Sample.Features.Gantt;
+using Sample.Features.ImageViewer;
+using Sample.Features.Kanban;
+using Sample.Features.Keyframe;
 using Sample.Features.Gauges;
 using Sample.Features.Marquee;
+using Sample.Features.Overlay;
+using Sample.Features.Office;
 using Sample.Features.Media;
 using Sample.Features.PasswordStrength;
 using Sample.Features.Pills;
 using Sample.Features.ProgressBar;
 using Sample.Features.RangePickers;
+using Sample.Features.Scheduler;
+using Sample.Features.SignaturePad;
+using Sample.Features.TableView;
 using Sample.Features.Skeleton;
 using Sample.Features.Slider;
 using Sample.Features.Tags;
 using Sample.Features.TextEntry;
 using Sample.Features.Timeline;
 using Sample.Features.Toast;
+using Sample.Features.Walkthrough;
 
 namespace SampleWeb.Pages.Shiny;
 
@@ -65,6 +79,42 @@ public static class ShinyGallery
 		new("✨", "Border Animations", () => new BorderAnimationsPage()),
 		new("🍞", "Toast", Bound<ToastPage, ToastViewModel>),
 		new("🗨️", "Dialogs", Bound<DialogsPage, DialogsViewModel>),
+		new("💬", "ChatView", Bound<ChatPage, ChatViewModel>),
+		new("🪟", "Floating Panel", Bound<SheetPage, SheetViewModel>),
+		new("🔝", "Top Sheet", Bound<TopSheetPage, TopSheetViewModel>),
+		new("🗂️", "Dual Panels", Bound<DualPanelPage, DualPanelViewModel>),
+		new("🎵", "Minimized Sheet", Bound<MinimizedSheetStandalonePage, MinimizedSheetViewModel>),
+		new("✍️", "Signature Pad", Bound<SignaturePadPage, SignaturePadViewModel>),
+		new("📅", "Scheduler Calendar", Bound<CalendarPage, CalendarViewModel>),
+		new("🗓️", "Scheduler Agenda", Bound<AgendaPage, AgendaViewModel>),
+		new("📋", "Scheduler List", Bound<CalendarListPage, CalendarListViewModel>),
+		new("📆", "Agenda + Calendar Picker", Bound<AgendaCalendarPickerPage, AgendaCalendarPickerViewModel>),
+		new("📈", "Gantt", Bound<GanttPage, GanttViewModel>),
+		new("🧭", "Diagram", Bound<DiagramPage, DiagramViewModel>),
+		new("🧜", "Mermaid Flowchart", () => new BasicFlowchartPage()),
+		new("↪️", "Mermaid Directions", () => new DirectionsPage()),
+		new("🧩", "Mermaid Subgraphs", () => new SubgraphsPage()),
+		new("🎨", "Mermaid Themes", () => new ThemesPage()),
+		new("✏️", "Mermaid Editor", () => new InteractiveEditorPage()),
+		new("🔍", "Image Viewer", Bound<ImageViewerPage, ImageViewerViewModel>),
+		new("🖼️", "Image Gallery", Bound<ImageGalleryPage, ImageGalleryViewModel>),
+		new("⚙️", "TableView Settings", Bound<BasicSettingsPage, BasicSettingsViewModel>),
+		new("🎡", "TableView Pickers", Bound<PickerDemoPage, PickerDemoViewModel>),
+		new("➕", "TableView Dynamic", Bound<DynamicSectionsPage, DynamicSectionsViewModel>),
+		new("↕️", "TableView Drag Sort", Bound<DragSortPage, DragSortViewModel>),
+		new("🎨", "TableView Styling", () => new StylingPage()),
+		new("🪄", "Overlay", Bound<OverlayPage, OverlayViewModel>),
+		new("🗃️", "Kanban", Bound<KanbanPage, KanbanViewModel>),
+		new("🎞️", "Keyframe Animation", () => new KeyframePage()),
+		new("👣", "Walkthrough", Bound<WalkthroughPage, WalkthroughViewModel>),
+		new("💡", "Tooltip", Bound<TooltipPage, TooltipViewModel>),
+		// Shiny.Maui.Controls.Office, drawn by Skia through Platform.Maui.Web.SkiaSharp. The editors
+		// aren't here yet: building their ribbon touches MAUI's FilePickerFileType, whose type
+		// initializer throws on plain net10.0. ImageEditor is left out too: it loads through MAUI's
+		// net10.0 PlatformImage, which reads a PNG's size from its signature bytes.
+		new("📊", "Spreadsheet", () => OfficeWebFonts.With(new SpreadsheetPage())),
+		new("📄", "Document Viewer", () => OfficeWebFonts.With(new DocumentViewerPage())),
+		new("🖼️", "Slide Viewer", () => OfficeWebFonts.With(new SlideViewerPage())),
 	];
 
 	// In the controls sample, Shiny Shell creates each page's view model through DI and binds it;

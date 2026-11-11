@@ -31,6 +31,8 @@
     <ItemGroup>
         <ProjectReference Include="..\..\src\Platform.Maui.Web\Platform.Maui.Web.csproj" />
         <ProjectReference Include="..\..\src\Platform.Maui.Essentials.Web\Platform.Maui.Essentials.Web.csproj" />
+        <!-- SKCanvasView on the web; links Skia into dotnet.native.wasm (needs the wasm-tools workload). -->
+        <ProjectReference Include="..\..\src\Platform.Maui.Web.SkiaSharp\Platform.Maui.Web.SkiaSharp.csproj" />
         <!-- Shiny Controls tab: web backends for CameraView and MediaElement (they bring in the Shiny
              Camera and MediaElement packages), plus the core Shiny controls package. -->
         <ProjectReference Include="..\..\src\Shiny.Maui.Controls.Camera.Web\Shiny.Maui.Controls.Camera.Web.csproj" />
@@ -39,6 +41,11 @@
 
     <ItemGroup>
         <PackageReference Include="Shiny.Maui.Controls" Version="$(ShinyControlsVersion)" />
+        <!-- Spreadsheet, document, slide and notebook editors, drawn on SKCanvasView (Platform.Maui.Web.SkiaSharp). -->
+        <PackageReference Include="Shiny.Maui.Controls.Office" Version="$(ShinyControlsVersion)" />
+        <PackageReference Include="Shiny.Maui.Controls.Diagram" Version="$(ShinyControlsVersion)" />
+        <PackageReference Include="Shiny.Maui.Controls.MermaidDiagrams" Version="$(ShinyControlsVersion)" />
+        <PackageReference Include="Shiny.Maui.Controls.Keyframe" Version="$(ShinyControlsVersion)" />
         <!-- The Shiny pages are copied from the controls sample, whose view models use the MVVM toolkit. -->
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     </ItemGroup>

@@ -51,6 +51,7 @@ public class WebFileSystem : IFileSystem
 }
 
 /// <summary>Common <see cref="FilePickerFileType"/>s with an entry for <see cref="Devices.WebDevicePlatform.Web"/>.</summary>
+[Obsolete("Throws on net10.0: creating any FilePickerFileType runs MAUI's type initializer, which is not implemented there. Use FilePicker.Default.PickAsync(accept) with an <input accept> string instead (WebFilePickerExtensions).")]
 public static class WebFilePickerFileTypes
 {
 	public static FilePickerFileType Images { get; } = Create("image/*");
@@ -80,6 +81,16 @@ public class WebFilePicker : IFilePicker
 
 	public async Task<IEnumerable<FileResult>?> PickMultipleAsync(PickOptions? options = null)
 		=> (await PickFilesAsync(Accept(options), multiple: true, capture: null)).OfType<FileResult>().ToList();
+
+	/// <summary>Picks one file, filtered by an &lt;input accept&gt; string such as <c>"image/*"</c> or <c>".pdf,.docx"</c>.</summary>
+	public async Task<FileResult?> PickAsync(string? accept)
+		=> (await PickFilesAsync(Normalize(accept), multiple: false, capture: null)).FirstOrDefault();
+
+	/// <summary>Picks files, filtered by an &lt;input accept&gt; string such as <c>"image/*"</c> or <c>".pdf,.docx"</c>.</summary>
+	public async Task<IEnumerable<FileResult>?> PickMultipleAsync(string? accept)
+		=> (await PickFilesAsync(Normalize(accept), multiple: true, capture: null)).OfType<FileResult>().ToList();
+
+	static string? Normalize(string? accept) => string.IsNullOrWhiteSpace(accept) ? null : accept;
 
 	internal static string? Accept(PickOptions? options)
 	{
@@ -128,4 +139,20 @@ public class WebFilePicker : IFilePicker
 		}
 		return results;
 	}
+}
+
+/// <summary>
+/// File type filters for the web, where MAUI's <see cref="FilePickerFileType"/> can't be created
+/// (on net10.0 its type initializer throws). Off the web, the filter is dropped and the platform
+/// picker shows every file.
+/// </summary>
+public static class WebFilePickerExtensions
+{
+	/// <summary>Picks one file, filtered by an &lt;input accept&gt; string such as <c>"image/*"</c> or <c>".pdf,.docx"</c>.</summary>
+	public static Task<FileResult?> PickAsync(this IFilePicker picker, string? accept)
+		=> picker is WebFilePicker web ? web.PickAsync(accept) : picker.PickAsync(new PickOptions());
+
+	/// <summary>Picks files, filtered by an &lt;input accept&gt; string such as <c>"image/*"</c> or <c>".pdf,.docx"</c>.</summary>
+	public static Task<IEnumerable<FileResult>?> PickMultipleAsync(this IFilePicker picker, string? accept)
+		=> picker is WebFilePicker web ? web.PickMultipleAsync(accept) : picker.PickMultipleAsync(new PickOptions());
 }

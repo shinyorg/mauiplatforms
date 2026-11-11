@@ -54,8 +54,9 @@ public class LayoutHandler : WebElementHandler<ILayout, WebElement>, ILayoutHand
 
 	public override Size GetDesiredSize(double widthConstraint, double heightConstraint)
 	{
-		_measuredConstraints = new Size(widthConstraint, heightConstraint);
-		return VirtualView.CrossPlatformMeasure(widthConstraint, heightConstraint);
+		var (wc, hc) = WebElementHandler.ConstrainToView(VirtualView, widthConstraint, heightConstraint);
+		_measuredConstraints = new Size(wc, hc);
+		return VirtualView.CrossPlatformMeasure(wc, hc);
 	}
 
 	public override void PlatformArrange(Rect frame)

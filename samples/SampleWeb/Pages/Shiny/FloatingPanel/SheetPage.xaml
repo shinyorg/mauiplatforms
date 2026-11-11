@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<shiny:ShinyContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Sample.Features.FloatingPanel"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:local2="clr-namespace:Sample.Controls"
+             x:Class="Sample.Features.FloatingPanel.SheetPage"
+             x:DataType="local:SheetViewModel"
+             AutomationId="SheetPage">
+  <shiny:ShinyContentPage.PageContent>
+    <ScrollView>
+        <VerticalStackLayout Padding="30,0" Spacing="25">
+            <Label
+                Text="Sheet Demo"
+                FontSize="28"
+                FontAttributes="Bold"
+                HorizontalTextAlignment="Center" />
+
+            <Label AutomationId="SheetStatus"
+                Text="{Binding StatusMessage}"
+                FontSize="16"
+                HorizontalTextAlignment="Center"
+                TextColor="Gray" />
+
+            <Button AutomationId="OpenSheetButton"
+                Text="Open Sheet"
+                Command="{Binding OpenSheetCommand}" />
+
+            <Button AutomationId="ToggleSheetButton"
+                Text="Toggle Sheet"
+                Command="{Binding ToggleSheetCommand}" />
+
+            <BoxView HeightRequest="1" Color="LightGray" Margin="0,10" />
+
+            <Label Text="Top Sheet"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   HorizontalTextAlignment="Center" />
+
+            <Label Text="A sheet that slides down from the top of the screen."
+                   FontSize="14"
+                   HorizontalTextAlignment="Center"
+                   TextColor="Gray" />
+
+            <Button Text="Open Top Sheet" AutomationId="OpenTopSheetButton"
+                    Command="{Binding OpenTopSheetCommand}" />
+
+            <BoxView HeightRequest="1" Color="LightGray" Margin="0,10" />
+
+            <Label Text="Locked Sheets"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   HorizontalTextAlignment="Center" />
+
+            <Label Text="These sheets are locked — no swipe or backdrop dismiss. Only controls inside can close them."
+                   FontSize="14"
+                   HorizontalTextAlignment="Center"
+                   TextColor="Gray" />
+
+            <Button Text="Open Signature Sheet" AutomationId="OpenSignatureButton"
+                    Command="{Binding OpenSignatureCommand}" />
+
+            <Image Source="{Binding SignatureImage}"
+                   HeightRequest="150"
+                   Aspect="AspectFit"
+                   IsVisible="{Binding HasSignature}" />
+
+            <Label Text="No signature captured yet"
+                   IsVisible="{Binding HasNoSignature}"
+                   HorizontalTextAlignment="Center"
+                   TextColor="Gray" />
+
+            <Button Text="Open Country Selector" AutomationId="OpenSelectorButton"
+                    Command="{Binding OpenSelectorCommand}" />
+
+            <Label Text="{Binding SelectedCountry, StringFormat='Selected: {0}'}"
+                   AutomationId="SelectedCountryLabel"
+                   FontSize="16"
+                   HorizontalTextAlignment="Center"
+                   IsVisible="{Binding HasSelection}" />
+        </VerticalStackLayout>
+    </ScrollView>
+  </shiny:ShinyContentPage.PageContent>
+
+  <shiny:ShinyContentPage.Panels>
+    <!-- Sheet overlay -->
+    <shiny:FloatingPanel IsOpen="{Binding IsSheetOpen}" AutomationId="MainSheet"
+                  HasBackdrop="True"
+                  CloseOnBackdropTap="True"
+                  HandleColor="Gray"
+                  PanelBackgroundColor="White"
+                  PanelCornerRadius="20"
+                  ExpandOnInputFocus="True">
+        <VerticalStackLayout Padding="20" Spacing="15">
+            <Label Text="Sheet Content"
+                   FontSize="22"
+                   FontAttributes="Bold" />
+
+            <Label Text="Drag the handle to move between detents. Drag down past the lowest snap point to dismiss."
+                   FontSize="14" />
+
+            <BoxView HeightRequest="1" Color="LightGray" />
+
+            <Entry Placeholder="Type something here..."
+                   Text="{Binding EntryText}"
+                   FontSize="16" />
+
+            <Editor Placeholder="Multi-line editor..."
+                    Text="{Binding EditorText}"
+                    HeightRequest="80"
+                    FontSize="16" />
+
+            <BoxView HeightRequest="1" Color="LightGray" />
+
+            <Label Text="Item 1" FontSize="16" />
+            <Label Text="Item 2" FontSize="16" />
+            <Label Text="Item 3" FontSize="16" />
+            <Label Text="Item 4" FontSize="16" />
+            <Label Text="Item 5" FontSize="16" />
+            <Label Text="Item 6" FontSize="16" />
+            <Label Text="Item 7" FontSize="16" />
+            <Label Text="Item 8" FontSize="16" />
+            <Label Text="Item 9" FontSize="16" />
+            <Label Text="Item 10" FontSize="16" />
+
+            <Button Text="Close from inside" AutomationId="CloseSheetInsideButton"
+                    Command="{Binding CloseSheetCommand}" />
+        </VerticalStackLayout>
+    </shiny:FloatingPanel>
+
+    <!-- Locked: Signature sheet -->
+    <shiny:FloatingPanel IsOpen="{Binding IsSignatureOpen}" AutomationId="SignatureSheet"
+                  IsLocked="True"
+                  FitContent="True"
+                  HasBackdrop="True"
+                  PanelCornerRadius="20">
+        <VerticalStackLayout Padding="20" Spacing="15">
+            <Label Text="Draw your signature below"
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   HorizontalTextAlignment="Center" />
+
+            <Border Stroke="LightGray"
+                    StrokeThickness="1"
+                    StrokeShape="RoundRectangle 8"
+                    HeightRequest="200"
+                    BackgroundColor="White">
+                <local2:DrawingCanvas x:Name="drawingCanvas"
+                                      StrokeColor="Black"
+                                      StrokeWidth="3"
+                                      BackgroundColor="White" />
+            </Border>
+
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="10">
+                <Button Text="Cancel"
+                        AutomationId="CancelSignatureButton"
+                        BackgroundColor="Gray"
+                        TextColor="White"
+                        Command="{Binding CancelSignatureCommand}" />
+
+                <Button Text="Clear"
+                        Grid.Column="1"
+                        BackgroundColor="Orange"
+                        TextColor="White"
+                        Command="{Binding ClearSignatureCommand}"
+                        CommandParameter="{x:Reference drawingCanvas}" />
+
+                <Button Text="Done"
+                        Grid.Column="2"
+                        Command="{Binding DoneSignatureCommand}"
+                        CommandParameter="{x:Reference drawingCanvas}" />
+            </Grid>
+        </VerticalStackLayout>
+    </shiny:FloatingPanel>
+
+    <!-- Top sheet -->
+    <shiny:FloatingPanel IsOpen="{Binding IsTopSheetOpen}" AutomationId="TopSheetPanel"
+                  Position="Top"
+                  HasBackdrop="True"
+                  CloseOnBackdropTap="True"
+                  HandleColor="Gray"
+                  PanelBackgroundColor="White"
+                  PanelCornerRadius="20">
+        <VerticalStackLayout Padding="20" Spacing="15">
+            <Label Text="Top Sheet"
+                   FontSize="22"
+                   FontAttributes="Bold" />
+
+            <Label Text="This sheet slides down from the top. Drag the handle past the lowest snap point to dismiss."
+                   FontSize="14" />
+
+            <BoxView HeightRequest="1" Color="LightGray" />
+
+            <Label Text="Notifications, alerts, or contextual info work great in a top sheet."
+                   FontSize="14"
+                   TextColor="Gray" />
+
+            <Label Text="Item A" FontSize="16" />
+            <Label Text="Item B" FontSize="16" />
+            <Label Text="Item C" FontSize="16" />
+            <Label Text="Item D" FontSize="16" />
+
+            <Button Text="Close" AutomationId="CloseTopSheetButton"
+                    Command="{Binding CloseTopSheetCommand}" />
+        </VerticalStackLayout>
+    </shiny:FloatingPanel>
+
+    <!-- Locked: Country selector sheet -->
+    <shiny:FloatingPanel IsOpen="{Binding IsSelectorOpen}" AutomationId="CountrySelectorSheet"
+                  IsContentScrollEnabled="False"
+                  IsLocked="True"
+                  HasBackdrop="True"
+                  PanelCornerRadius="20"
+                  Detents="{Binding SelectorDetents}">
+        <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="20" RowSpacing="10">
+            <Label Text="Select a Country"
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   HorizontalTextAlignment="Center" />
+
+            <Label Grid.Row="1"
+                   Text="{Binding SelectedCountry, StringFormat='Selected: {0}'}"
+                   FontSize="14"
+                   HorizontalTextAlignment="Center"
+                   TextColor="Gray"
+                   IsVisible="{Binding HasSelection}" />
+
+            <CollectionView Grid.Row="2" AutomationId="CountryList"
+                            ItemsSource="{Binding Countries}"
+                            SelectionMode="Single"
+                            SelectionChangedCommand="{Binding SelectCountryCommand}"
+                            SelectionChangedCommandParameter="{Binding SelectedItem, Source={RelativeSource Self}}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="x:String">
+                        <Grid Padding="12,14">
+                            <Label Text="{Binding .}"
+                                   FontSize="16"
+                                   VerticalTextAlignment="Center" />
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <Button Grid.Row="3"
+                    Text="Cancel"
+                    BackgroundColor="Gray"
+                    TextColor="White"
+                    AutomationId="CancelSelectorButton"
+                    Command="{Binding CancelSelectorCommand}" />
+        </Grid>
+    </shiny:FloatingPanel>
+  </shiny:ShinyContentPage.Panels>
+</shiny:ShinyContentPage>

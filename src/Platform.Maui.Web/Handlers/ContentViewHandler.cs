@@ -39,7 +39,8 @@ public class ContentViewHandler : WebElementHandler<IContentView, WebElement>
 
 	public override Size GetDesiredSize(double widthConstraint, double heightConstraint)
 	{
-		var size = MeasureContent(widthConstraint, heightConstraint);
+		var (wc, hc) = WebElementHandler.ConstrainToView(VirtualView, widthConstraint, heightConstraint);
+		var size = MeasureContent(wc, hc);
 		return new Size(
 			LayoutManager.ResolveConstraints(widthConstraint, VirtualView.Width, size.Width, VirtualView.MinimumWidth, VirtualView.MaximumWidth),
 			LayoutManager.ResolveConstraints(heightConstraint, VirtualView.Height, size.Height, VirtualView.MinimumHeight, VirtualView.MaximumHeight));

@@ -6,6 +6,7 @@
       "src\\Platform.Maui.Essentials.Web\\Platform.Maui.Essentials.Web.csproj",
       "src\\Platform.Maui.TvOS\\Platform.Maui.TvOS.csproj",
       "src\\Platform.Maui.Web\\Platform.Maui.Web.csproj",
+      "src\\Platform.Maui.Web.SkiaSharp\\Platform.Maui.Web.SkiaSharp.csproj",
       "tests\\Platform.Maui.Web.Tests\\Platform.Maui.Web.Tests.csproj"
     ]
   }

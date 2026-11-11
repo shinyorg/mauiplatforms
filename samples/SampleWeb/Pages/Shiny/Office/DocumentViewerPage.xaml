@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:office="clr-namespace:Shiny.Maui.Controls.Office;assembly=Shiny.Maui.Controls.Office"
+             x:Class="Sample.Features.Office.DocumentViewerPage"
+             Title="Document Viewer">
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="12" RowSpacing="8">
+
+        <HorizontalStackLayout Grid.Row="0" Spacing="8">
+            <Button Text="−" AutomationId="DocViewerZoomOut" WidthRequest="48" Clicked="OnZoomOut" />
+            <Label x:Name="ZoomLabel" AutomationId="DocViewerZoomLabel" VerticalOptions="Center" WidthRequest="60" HorizontalTextAlignment="Center" />
+            <Button Text="+" AutomationId="DocViewerZoomIn" WidthRequest="48" Clicked="OnZoomIn" />
+            <Button Text="Theme" AutomationId="DocViewerTheme" Clicked="OnToggleTheme" />
+            <Button Text="Top" AutomationId="DocViewerTop" Clicked="OnScrollTop" />
+        </HorizontalStackLayout>
+
+        <Border Grid.Row="1" StrokeThickness="1">
+            <office:DocumentView x:Name="Viewer" AutomationId="DocViewerView" />
+        </Border>
+
+        <Label Grid.Row="2"
+               x:Name="NotRenderedLabel"
+               AutomationId="DocViewerNotRendered"
+               FontSize="12"
+               Opacity="0.7"
+               LineBreakMode="WordWrap" />
+    </Grid>
+</ContentPage>

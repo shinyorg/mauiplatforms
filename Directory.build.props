@@ -4,7 +4,9 @@
         <!-- One MAUI version for every backend and sample. -->
         <MauiVersion>10.0.120</MauiVersion>
         <!-- The Shiny controls the Shiny.Maui.Controls.*.Web backends and the web sample build against. -->
-        <ShinyControlsVersion>2.4.0-beta-0006</ShinyControlsVersion>
+        <ShinyControlsVersion>2.5.0-beta-0002</ShinyControlsVersion>
+        <!-- SkiaSharp for Platform.Maui.Web.SkiaSharp (managed, MAUI views and the WebAssembly native library). -->
+        <SkiaSharpVersion>4.151.1</SkiaSharpVersion>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
 
@@ -14,7 +16,7 @@
             - pushing a tag vX.Y.Z publishes exactly X.Y.Z (ReleaseVersion, set by CI from the tag)
             - local builds are $(NextVersion)-dev, so they never look like a release
         -->
-        <NextVersion>0.4.0</NextVersion>
+        <NextVersion>0.5.0</NextVersion>
         <PreviewLabel Condition="'$(PreviewLabel)' == ''">dev</PreviewLabel>
         <PlatformsPackageVersion Condition="'$(ReleaseVersion)' != ''">$(ReleaseVersion)</PlatformsPackageVersion>
         <PlatformsPackageVersion Condition="'$(ReleaseVersion)' == ''">$(NextVersion)-$(PreviewLabel)</PlatformsPackageVersion>
@@ -22,7 +24,7 @@
         <TvOSPackageVersion>$(PlatformsPackageVersion)</TvOSPackageVersion>
         <WebPackageVersion>$(PlatformsPackageVersion)</WebPackageVersion>
         <!-- The archived macOS backend's last release (archive/macos is not built). -->
-        <MacOSPackageVersion>0.3.0</MacOSPackageVersion>
+<!--        <MacOSPackageVersion>0.3.0</MacOSPackageVersion>-->
         <Description>MAUI Platforms</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Copyright>Copyright (c) $([System.DateTime]::Now.Year) Allan Ritchie</Copyright>

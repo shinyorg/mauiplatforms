@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<shiny:ShinyContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:local="clr-namespace:Sample.Features.ImageViewer"
+             x:Class="Sample.Features.ImageViewer.ImageGalleryPage"
+             x:DataType="local:ImageGalleryViewModel"
+             Title="Image Gallery">
+
+    <shiny:ShinyContentPage.PageContent>
+        <Grid RowDefinitions="Auto,*">
+            <VerticalStackLayout Padding="20,20,20,10">
+                <Label Text="Image Gallery"
+                       FontSize="22"
+                       FontAttributes="Bold"
+                       HorizontalTextAlignment="Center" />
+                <Label Text="Remote images with a per-cell loading ring. Tap any one to view full-screen with pinch-to-zoom — it opens off the cache the thumbnail filled."
+                       FontSize="14"
+                       HorizontalTextAlignment="Center"
+                       TextColor="Gray" />
+            </VerticalStackLayout>
+
+            <CollectionView Grid.Row="1"
+                            ItemsSource="{Binding Images}"
+                            Margin="8,0">
+                <CollectionView.ItemsLayout>
+                    <GridItemsLayout Orientation="Vertical"
+                                     Span="2"
+                                     HorizontalItemSpacing="8"
+                                     VerticalItemSpacing="8" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="local:GalleryImage">
+                        <Border StrokeShape="RoundRectangle 8"
+                                Stroke="LightGray"
+                                StrokeThickness="1"
+                                BackgroundColor="White"
+                                Padding="0"
+                                HeightRequest="180">
+                            <Grid RowDefinitions="*,Auto">
+                                <shiny:ImageViewer Uri="{Binding Uri}"
+                                                   IsOpen="{Binding IsOpen}"
+                                                   Aspect="AspectFill"
+                                                   RingSize="32"
+                                                   HorizontalOptions="Fill"
+                                                   VerticalOptions="Fill" />
+                                <Label Grid.Row="1"
+                                       Text="{Binding Title}"
+                                       FontSize="12"
+                                       Padding="8,4"
+                                       LineBreakMode="TailTruncation"
+                                       HorizontalTextAlignment="Center" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </Grid>
+    </shiny:ShinyContentPage.PageContent>
+
+</shiny:ShinyContentPage>

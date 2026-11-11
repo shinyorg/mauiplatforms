@@ -1,4 +1,4 @@
-import { test, expect, galleryPages, shinyPages, type App } from '../fixtures';
+import { test, expect, galleryPages, shinyPages, expectBrokenImageErrors, type App } from '../fixtures';
 
 /** Switches the flyout menu to the Shiny Controls tab and opens one of its pages. */
 async function openShiny(app: App, title: string) {
@@ -50,6 +50,10 @@ test.describe('Shiny Controls tab', () => {
         for (let i = appErrors.length - 1; i >= 0; i--)
           if (expected.some(r => r.test(appErrors[i]))) appErrors.splice(i, 1);
       }
+      // Image Viewer loads https://example.com/does-not-exist.png on purpose to show its error
+      // artwork; WebKit may log the failed (CORS) fetch, even after the test body ends.
+      if (title === 'Image Viewer')
+        expectBrokenImageErrors();
     });
   }
 

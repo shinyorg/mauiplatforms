@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:local="clr-namespace:Sample.Features.Walkthrough"
+             x:Class="Sample.Features.Walkthrough.WalkthroughPage"
+             x:DataType="local:WalkthroughViewModel"
+             Title="Walkthrough"
+             AutomationId="WalkthroughPage">
+
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <!--
+            The tour itself. Declared once, in order, rather than attached to each control it
+            describes - which is the whole point: reordering is moving a line, and the Advanced step
+            drops out of the run entirely when its IsVisible binding goes false.
+
+            It renders nothing where it sits, so it can go anywhere on the page.
+        -->
+        <shiny:Walkthrough x:Name="Tour"
+                           Grid.Row="0"
+                           AutomationId="DemoWalkthrough"
+                           RememberRunKey="sample-walkthrough-v1"
+                           AutoStart="True"
+                           AutoStartDelay="700"
+                           UseOverlay="{Binding UseOverlay}"
+                           OverlayOpacity="0.82"
+                           IsRunning="{Binding IsTouring}"
+                           RingColor="#7DD3FC"
+                           RingThickness="2"
+                           StepChangedCommand="{Binding StepEnteredCommand}"
+                           CompletedCommand="{Binding CompletedCommand}"
+                           SkippedCommand="{Binding SkippedCommand}">
+
+            <!-- No target: a centred welcome card, no cut-out. -->
+            <shiny:WalkthroughStep Name="Welcome"
+                                   Title="Welcome"
+                                   Text="This is a walkthrough. Everything it highlights is a real control on this page."
+                                   Display="Popover"
+                                   AnimationIn="Pop" />
+
+            <!-- Popover: the full card, tail pointing at the highlight. -->
+            <shiny:WalkthroughStep Name="Search"
+                                   Target="{x:Reference SearchBox}"
+                                   Title="Search"
+                                   Text="Type here to filter. The spotlight travels between targets rather than blinking."
+                                   Placement="Bottom" />
+
+            <!-- Tooltip: compact, no buttons, advances itself after the dwell time. -->
+            <shiny:WalkthroughStep Name="Filter"
+                                   Target="{x:Reference FilterSwitch}"
+                                   Text="This one auto-advances after 2.5 seconds."
+                                   Display="Tooltip"
+                                   Duration="2500"
+                                   AnimationIn="Slide" />
+
+            <!-- Spotlight: no card, text straight on the dim, circular cut-out. -->
+            <shiny:WalkthroughStep Name="Avatar"
+                                   Target="{x:Reference Avatar}"
+                                   Title="Your profile"
+                                   Text="A circular cut-out for a round control, with the text on the backdrop instead of in a card."
+                                   Display="Spotlight"
+                                   Highlight="Circle"
+                                   HighlightPadding="4" />
+
+            <!-- Conditional: drops out of the run when the checkbox is off. -->
+            <shiny:WalkthroughStep Name="Advanced"
+                                   Target="{x:Reference AdvancedPanel}"
+                                   IsVisible="{Binding ShowAdvanced}"
+                                   Title="Advanced"
+                                   Text="This step only exists while the Advanced box is ticked."
+                                   Display="Inline" />
+
+            <!-- Live target: the backdrop leaves a hole the tap can reach, and using it advances. -->
+            <shiny:WalkthroughStep Name="Save"
+                                   Target="{x:Reference SaveButton}"
+                                   Title="Try it"
+                                   Text="Press Save to finish the tour — the button is live through the cut-out."
+                                   Placement="Top"
+                                   AllowTargetInteraction="True"
+                                   AdvanceOnTargetTap="True" />
+        </shiny:Walkthrough>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Padding="16" Spacing="16">
+
+                <Label Text="A guided tour of a page: dim everything, cut a hole around one control at a time, and say what it does. The steps are declared together on the control, in order."
+                       LineBreakMode="WordWrap" />
+
+                <shiny:TextEntry x:Name="SearchBox"
+                                 AutomationId="WalkthroughSearchBox"
+                                 Text="{Binding SearchText}"
+                                 Placeholder="Search projects" />
+
+                <HorizontalStackLayout Spacing="10">
+                    <Switch x:Name="FilterSwitch" AutomationId="WalkthroughFilterSwitch" />
+                    <Label Text="Only show mine" VerticalOptions="Center" />
+
+                    <!-- The tooltip wraps its target, so it needs no reference at all. -->
+                    <shiny:Tooltip Text="Filters the list to projects you own."
+                                   Placement="Top"
+                                   Trigger="LongPress"
+                                   AutoDismissDelay="2500">
+                        <Label Text="&#x24D8;" FontSize="18" VerticalOptions="Center" AutomationId="FilterHintIcon" />
+                    </shiny:Tooltip>
+                </HorizontalStackLayout>
+
+                <HorizontalStackLayout Spacing="12">
+                    <Border x:Name="Avatar"
+                            AutomationId="WalkthroughAvatar"
+                            WidthRequest="48"
+                            HeightRequest="48"
+                            StrokeThickness="0"
+                            BackgroundColor="#6750A4">
+                        <Border.StrokeShape>
+                            <RoundRectangle CornerRadius="24" />
+                        </Border.StrokeShape>
+                        <Label Text="AR" TextColor="White" FontAttributes="Bold"
+                               HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                    <Label Text="Allan Ritchie" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+
+                <HorizontalStackLayout Spacing="10">
+                    <CheckBox IsChecked="{Binding ShowAdvanced}" AutomationId="WalkthroughAdvancedCheck" />
+                    <Label Text="Include the Advanced step" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+
+                <Border x:Name="AdvancedPanel"
+                        AutomationId="WalkthroughAdvancedPanel"
+                        Padding="12"
+                        StrokeThickness="1">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Advanced" FontAttributes="Bold" />
+                        <Label Text="Untick the box above and this panel's step vanishes from the run - the counter re-numbers itself."
+                               FontSize="12" LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <HorizontalStackLayout Spacing="10">
+                    <CheckBox IsChecked="{Binding UseOverlay}" AutomationId="WalkthroughOverlayCheck" />
+                    <Label Text="Dim the background" VerticalOptions="Center" />
+                </HorizontalStackLayout>
+
+                <Label Text="{Binding Status}" AutomationId="WalkthroughStatus" LineBreakMode="WordWrap" />
+            </VerticalStackLayout>
+        </ScrollView>
+
+        <Grid Grid.Row="2" Padding="16" ColumnDefinitions="*,*,*" ColumnSpacing="10">
+            <Button Grid.Column="0"
+                    Text="Start"
+                    AutomationId="WalkthroughStart"
+                    Command="{Binding Source={x:Reference Tour}, Path=StartCommand}" />
+
+            <!-- Restart clears the remembered flag first, which is the "show me the tour again" case. -->
+            <Button Grid.Column="1"
+                    Text="Restart"
+                    AutomationId="WalkthroughRestart"
+                    Command="{Binding Source={x:Reference Tour}, Path=RestartCommand}" />
+
+            <Button x:Name="SaveButton"
+                    Grid.Column="2"
+                    Text="Save"
+                    AutomationId="WalkthroughSave"
+                    Command="{Binding SaveCommand}" />
+        </Grid>
+    </Grid>
+</ContentPage>

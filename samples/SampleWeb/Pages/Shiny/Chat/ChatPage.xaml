@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shiny="http://shiny.net/maui/controls"
+    xmlns:local="clr-namespace:Sample.Features.Chat"
+    x:Class="Sample.Features.Chat.ChatPage"
+    x:DataType="local:ChatViewModel"
+    Title="Chat"
+    AutomationId="ChatPage">
+
+    <shiny:ChatView AutomationId="ChatView"
+                    Provider="{Binding Provider}"
+                    SessionId="{Binding SessionId}"
+                    InputActions="{Binding InputActions}"
+                    CustomBubbleActions="{Binding CustomBubbleActions}"
+                    PlaceholderText="Type a message..." />
+
+</ContentPage>

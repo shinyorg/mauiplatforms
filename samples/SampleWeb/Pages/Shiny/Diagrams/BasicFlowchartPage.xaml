@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:diagram="http://shiny.net/maui/diagrams"
+             x:Class="Sample.Features.Diagrams.BasicFlowchartPage"
+             Title="Flowchart">
+
+    <Grid RowDefinitions="Auto,*" Padding="16" RowSpacing="12">
+
+        <VerticalStackLayout Grid.Row="0" Spacing="4">
+            <Label Text="Basic Flowchart"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center" />
+            <Label Text="A static TD flowchart with decisions and branches. Pan and zoom enabled."
+                   FontSize="14"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center" />
+        </VerticalStackLayout>
+
+        <diagram:MermaidDiagramControl
+            AutomationId="FlowchartDiagram"
+            Grid.Row="1"
+            DiagramText="graph TD&#10;    A[Start] --&gt; B{Decision}&#10;    B --&gt;|Yes| C[Do Something]&#10;    B --&gt;|No| D[Do Other]&#10;    C --&gt; E[End]&#10;    D --&gt; E"
+            HorizontalOptions="Fill"
+            VerticalOptions="Fill" />
+
+    </Grid>
+
+</ContentPage>

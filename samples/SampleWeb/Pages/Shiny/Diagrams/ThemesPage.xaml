@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:diagram="http://shiny.net/maui/diagrams"
+             x:Class="Sample.Features.Diagrams.ThemesPage"
+             Title="Themes">
+
+    <Grid RowDefinitions="Auto,*"
+          Padding="16"
+          RowSpacing="12">
+
+        <Grid Grid.Row="0"
+              ColumnDefinitions="Auto,*"
+              ColumnSpacing="12">
+
+            <Label Grid.Column="0"
+                   Text="Theme:"
+                   VerticalOptions="Center"
+                   FontAttributes="Bold"
+                   FontSize="16" />
+
+            <Picker Grid.Column="1"
+                    x:Name="ThemePicker"
+                    AutomationId="ThemesPicker"
+                    Title="Select a theme"
+                    SelectedIndexChanged="OnThemePickerSelectedIndexChanged"
+                    VerticalOptions="Center">
+                <Picker.Items>
+                    <x:String>Default</x:String>
+                    <x:String>Dark</x:String>
+                    <x:String>Forest</x:String>
+                    <x:String>Neutral</x:String>
+                </Picker.Items>
+            </Picker>
+        </Grid>
+
+        <diagram:MermaidDiagramControl
+            Grid.Row="1"
+            x:Name="DiagramControl"
+            AutomationId="ThemesDiagram"
+            DiagramText="graph TD&#10;    A[Client] --&gt; B[Load Balancer]&#10;    B --&gt; C[Server 1]&#10;    B --&gt; D[Server 2]&#10;    C --&gt; E[Database]&#10;    D --&gt; E"
+            HorizontalOptions="Fill"
+            VerticalOptions="Fill" />
+
+    </Grid>
+
+</ContentPage>

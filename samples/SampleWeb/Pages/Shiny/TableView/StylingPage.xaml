@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:tv="http://shiny.net/maui/controls"
+    x:Class="Sample.Features.TableView.StylingPage"
+    Title="Styling">
+
+    <tv:TableView
+        CellTitleColor="#333333"
+        CellTitleFontSize="17"
+        CellDescriptionColor="#888888"
+        CellDescriptionFontSize="13"
+        CellValueTextColor="#007AFF"
+        CellValueTextFontSize="16"
+        CellBackgroundColor="White"
+        CellSelectedColor="#EFEFEF"
+        CellAccentColor="#007AFF"
+        CellIconSize="28"
+        HeaderTextColor="#666666"
+        HeaderFontSize="13"
+        HeaderBackgroundColor="#F2F2F7"
+        FooterTextColor="#8E8E93"
+        FooterFontSize="12"
+        SeparatorColor="#C6C6C8"
+        SeparatorPadding="16"
+        SectionSeparatorHeight="12"
+        SectionSeparatorColor="#F2F2F7">
+
+        <tv:TableRoot>
+            <tv:TableSection Title="GLOBAL STYLES APPLIED"
+                              FooterText="All cells inherit styles from the TableView unless overridden">
+                <tv:LabelCell Title="Default Styled Cell"
+                               ValueText="Blue value text"
+                               Description="Gray description text" />
+                <tv:SwitchCell Title="Accent Color Switch"
+                                On="True" />
+                <tv:CheckboxCell Title="Accent Color Checkbox"
+                                  Checked="True" />
+            </tv:TableSection>
+
+            <tv:TableSection Title="PER-CELL OVERRIDES"
+                              FooterText="These cells override the global styles">
+                <tv:LabelCell Title="Red Title Override"
+                               TitleColor="Red"
+                               ValueText="Custom green"
+                               ValueTextColor="Green"
+                               Description="Orange description"
+                               DescriptionColor="Orange" />
+                <tv:LabelCell Title="Large Font Override"
+                               TitleFontSize="24"
+                               ValueText="Small value"
+                               ValueTextFontSize="11" />
+                <tv:CommandCell Title="Custom Background"
+                                 CellBackgroundColor="#FFF3E0"
+                                 ValueText="Warm background" />
+            </tv:TableSection>
+
+            <tv:TableSection Title="SECTION-LEVEL HEADER STYLE"
+                              HeaderBackgroundColor="#E3F2FD"
+                              HeaderTextColor="#1565C0"
+                              HeaderFontSize="15"
+                              FooterText="This section has custom header colors">
+                <tv:LabelCell Title="Normal cell" ValueText="In custom section" />
+                <tv:EntryCell Title="Styled entry" Placeholder="Type here..." />
+            </tv:TableSection>
+
+            <tv:TableSection Title="BORDERS"
+                              FooterText="Per-cell border customization">
+                <tv:LabelCell Title="Blue border"
+                               ValueText="Rounded"
+                               BorderColor="#007AFF"
+                               BorderWidth="1"
+                               BorderRadius="8" />
+                <tv:LabelCell Title="Red thick border"
+                               ValueText="Square"
+                               BorderColor="Red"
+                               BorderWidth="2"
+                               BorderRadius="0" />
+                <tv:CommandCell Title="Pill shape"
+                                 ValueText="Tap me"
+                                 BorderColor="#34C759"
+                                 BorderWidth="1.5"
+                                 BorderRadius="22" />
+            </tv:TableSection>
+        </tv:TableRoot>
+    </tv:TableView>
+
+</ContentPage>

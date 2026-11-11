@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:local="clr-namespace:Sample.Features.Scheduler"
+             x:Class="Sample.Features.Scheduler.AgendaPage"
+             x:DataType="local:AgendaViewModel"
+             Title="Agenda"
+             AutomationId="AgendaPage">
+
+    <Grid RowDefinitions="Auto,Auto,*">
+        <HorizontalStackLayout Grid.Row="0" HorizontalOptions="End" Spacing="8" Margin="8,8,8,0">
+            <Label Text="Drag" VerticalOptions="Center" FontSize="12" />
+            <Switch IsToggled="{Binding AllowEventDrag}" AutomationId="AgendaDragSwitch" />
+            <Label Text="Resize" VerticalOptions="Center" FontSize="12" />
+            <Switch IsToggled="{Binding AllowEventResize}" AutomationId="AgendaResizeSwitch" />
+            <Button Text="{Binding SnapToggleText}"
+                    AutomationId="AgendaSnapButton"
+                    Command="{Binding CycleSnapCommand}"
+                    BackgroundColor="SeaGreen"
+                    TextColor="White"
+                    CornerRadius="8"
+                    FontSize="12" />
+        </HorizontalStackLayout>
+
+        <HorizontalStackLayout Grid.Row="1" HorizontalOptions="End" Spacing="8" Margin="8">
+            <Button Text="{Binding DatePickerToggleText}"
+                    AutomationId="AgendaPickerModeButton"
+                    Command="{Binding ToggleDatePickerModeCommand}"
+                    BackgroundColor="MediumPurple"
+                    TextColor="White"
+                    CornerRadius="8"
+                    FontSize="12" />
+            <Button Text="{Binding TimezoneToggleText}"
+                    AutomationId="AgendaTimezoneButton"
+                    Command="{Binding ToggleTimezonesCommand}"
+                    BackgroundColor="SlateGray"
+                    TextColor="White"
+                    CornerRadius="8"
+                    FontSize="12" />
+            <Button Text="{Binding DaysToggleText}"
+                    AutomationId="AgendaDaysButton"
+                    Command="{Binding ToggleDaysCommand}"
+                    BackgroundColor="DodgerBlue"
+                    TextColor="White"
+                    CornerRadius="8"
+                    FontSize="12" />
+        </HorizontalStackLayout>
+
+        <shiny:SchedulerAgendaView Grid.Row="2"
+            x:Name="AgendaView"
+            AutomationId="AgendaView"
+            AllowEventDrag="{Binding AllowEventDrag}"
+            AllowEventResize="{Binding AllowEventResize}"
+            DragSnapMinutes="{Binding DragSnapMinutes}"
+            MinEventDuration="00:15:00"
+            AllowCrossDayDrag="True"
+            Provider="{Binding Provider}"
+            SelectedDate="{Binding SelectedDate}"
+            DaysToShow="{Binding DaysToShow}"
+            DatePickerMode="{Binding DatePickerMode}"
+            ShowAdditionalTimezones="{Binding ShowAdditionalTimezones}"
+            ShowCarouselDatePicker="True"
+            ShowCurrentTimeMarker="True"
+            CurrentTimeMarkerColor="Red"
+            DefaultEventColor="CornflowerBlue"
+            TimeSlotHeight="60"
+            Use24HourTime="False" />
+    </Grid>
+
+</ContentPage>

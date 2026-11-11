@@ -267,6 +267,7 @@ src/
   Platform.Maui.Essentials.TvOS/    # tvOS Essentials library
   Platform.Maui.Web/                # Web backend library (net10.0, browser/WebAssembly)
   Platform.Maui.Essentials.Web/     # Web Essentials library
+  Platform.Maui.Web.SkiaSharp/      # Web handler for SkiaSharp's SKCanvasView (Skia on WebAssembly)
   Shiny.Maui.Controls.Camera.Web/   # Web handler for the Shiny CameraView (getUserMedia)
   Shiny.Maui.Controls.MediaElement.Web/ # Web backend for the Shiny MediaElement and VideoText (<video>)
 samples/
@@ -388,6 +389,45 @@ features fall short: the `ImageEditor` canvas stays blank and `SignaturePad` exp
 (both rely on platform image APIs plain `net10.0` lacks), the indeterminate `ProgressBar` doesn't
 animate (it starts in `Loaded`, which fires before layout on `net10.0`), and DataGrid inline row
 editing doesn't appear.
+
+SampleWeb's Shiny Controls tab runs these against the published packages with no web handlers:
+floating panels (bottom, top, dual and minimized-header sheets), ChatView, SignaturePad, the scheduler
+(calendar, agenda, list), Gantt, `Shiny.Maui.Controls.Diagram`, `Shiny.Maui.Controls.MermaidDiagrams` and
+ImageViewer, plus the Office viewers below. Two gaps come from the controls' `net10.0` build, not the
+web backend: SignaturePad's PNG export returns an empty stream (drawing works), and ImageEditor can't show
+an image, because MAUI's `net10.0` `PlatformImage` reads a PNG's size from its signature bytes.
+
+#### SkiaSharp
+
+`SkiaSharp.Views.Maui` ships its view handlers only for the native platforms, so `Platform.Maui.Web.SkiaSharp`
+provides `SKCanvasView` for the web. Reference it next to `Platform.Maui.Web` and call `UseSkiaSharpWeb()`
+**instead of** `UseSkiaSharp()`:
+
+```csharp
+builder
+    .UseMauiAppWeb<App>()
+    .UseSkiaSharpWeb();   // Platform.Maui.Web.SkiaSharp (namespace Microsoft.Maui.Platform.Web.Hosting)
+```
+
+Skia itself (`SkiaSharp.NativeAssets.WebAssembly`) is linked into the app's `dotnet.native.wasm`, so the app
+needs the `wasm-tools` workload and every build relinks the native runtime. The package turns this on for you.
+
+- **SKCanvasView** renders on WebAssembly into a raster surface at the device pixel ratio, and each frame
+  is copied onto a `<canvas>` in one interop call. It supports `PaintSurface`, `InvalidateSurface`
+  (at most one paint per animation frame, and none while the view is off screen), `CanvasSize`,
+  `IgnorePixelScaling`, and `EnableTouchEvents` with `Touch` for mouse, touch and pen (pointer ids, buttons,
+  pressure, wheel). A handled press captures the pointer and stops the browser from scrolling.
+- Not supported yet: `SKGLView` (WebGL) and the `SKImageImageSource` family of image sources. Skia on the
+  web has no system fonts; load typefaces with `SKTypeface.FromStream` (for example from a MauiAsset).
+
+**Shiny Office controls.** `Shiny.Maui.Controls.Office` draws on `SKCanvasView`, so its viewers run on the
+web with this package. Call `UseShinyOffice()` **before** `UseSkiaSharpWeb()` (it registers SkiaSharp's own
+handlers, and the last registration wins), and register fonts with `OfficeFontRegistry.Default`, or every
+document draws in Skia's monospace fallback. SampleWeb bundles Carlito and Caladea, the metric-compatible
+Calibri and Cambria substitutes, as MauiAssets (`Pages/Shiny/Office/OfficeWebFonts.cs`). `SpreadsheetView`,
+`DocumentView` and `SlideView` work. The editors (`DocumentEditorView`, `SlideEditorView`,
+`NotebookEditorView`) don't yet: building their ribbon creates a MAUI `FilePickerFileType`, whose type
+initializer throws on plain `net10.0`.
 
 #### Shiny CameraView and MediaElement
 

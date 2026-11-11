@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:tv="http://shiny.net/maui/controls"
+    x:Class="Sample.Features.TableView.DynamicSectionsPage"
+    Title="Dynamic">
+
+    <Grid RowDefinitions="Auto,*">
+        <HorizontalStackLayout Spacing="10" Padding="16">
+            <Button Text="Add Item" Command="{Binding AddCommand}" AutomationId="DynamicAddButton" />
+            <Button Text="Remove Item" Command="{Binding RemoveCommand}" AutomationId="DynamicRemoveButton" />
+        </HorizontalStackLayout>
+
+        <tv:TableView Grid.Row="1">
+            <tv:TableRoot>
+                <tv:TableSection Title="Static Header">
+                    <tv:LabelCell Title="This section is static" ValueText="Always here" />
+                </tv:TableSection>
+
+                <tv:TableSection Title="Dynamic Items"
+                                  ItemsSource="{Binding Items}"
+                                  FooterText="Items are generated from ItemsSource">
+                    <tv:TableSection.ItemTemplate>
+                        <DataTemplate>
+                            <tv:LabelCell Title="{Binding Name}" ValueText="{Binding Value}" />
+                        </DataTemplate>
+                    </tv:TableSection.ItemTemplate>
+                </tv:TableSection>
+            </tv:TableRoot>
+        </tv:TableView>
+    </Grid>
+
+</ContentPage>

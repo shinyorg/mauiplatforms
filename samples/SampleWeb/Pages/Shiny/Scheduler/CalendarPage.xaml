@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:local="clr-namespace:Sample.Features.Scheduler"
+             x:Class="Sample.Features.Scheduler.CalendarPage"
+             x:DataType="local:CalendarViewModel"
+             Title="Calendar"
+             AutomationId="CalendarPage">
+
+    <shiny:SchedulerCalendarView
+        AutomationId="SchedulerCalendar"
+        Provider="{Binding Provider}"
+        SelectedDate="{Binding SelectedDate}"
+        DisplayMonth="{Binding DisplayMonth}"
+        MaxEventsPerCell="3"
+        CurrentDayColor="DodgerBlue"
+        CalendarCellSelectedColor="LightBlue" />
+
+</ContentPage>

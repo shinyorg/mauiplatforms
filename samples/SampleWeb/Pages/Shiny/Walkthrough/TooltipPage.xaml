@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:local="clr-namespace:Sample.Features.Walkthrough"
+             x:Class="Sample.Features.Walkthrough.TooltipPage"
+             x:DataType="local:TooltipViewModel"
+             Title="Tooltip"
+             AutomationId="TooltipPage">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16" Spacing="18">
+
+            <Label Text="A tooltip either wraps the thing it describes or points at it by reference. The bubble is drawn in a layer above the page, so it is never clipped by the scroll view or card its target sits in."
+                   LineBreakMode="WordWrap" />
+
+            <!-- Wrapping: no reference needed, and the wrapper does not disturb the layout. -->
+            <Label Text="1. Wrapping a control" FontAttributes="Bold" />
+            <shiny:Tooltip Text="Applies the change without closing the sheet." AutomationId="ApplyTooltip"
+                           Placement="Top"
+                           Trigger="LongPress"
+                           AutoDismissDelay="3000"
+                           HorizontalOptions="Start">
+                <Button Text="Apply" AutomationId="TooltipApplyButton" />
+            </shiny:Tooltip>
+
+            <!-- Every side, so the auto-flip near a screen edge is visible. -->
+            <Label Text="2. Placement" FontAttributes="Bold" />
+            <HorizontalStackLayout Spacing="10">
+                <shiny:Tooltip Text="Above" Placement="Top" Trigger="Tap" AutomationId="TopTooltip">
+                    <Button Text="Top" AutomationId="TooltipTop" />
+                </shiny:Tooltip>
+                <shiny:Tooltip Text="Below" Placement="Bottom" Trigger="Tap" AutomationId="BottomTooltip">
+                    <Button Text="Bottom" AutomationId="TooltipBottom" />
+                </shiny:Tooltip>
+                <shiny:Tooltip Text="To the left" Placement="Left" Trigger="Tap">
+                    <Button Text="Left" AutomationId="TooltipLeft" />
+                </shiny:Tooltip>
+                <shiny:Tooltip Text="To the right" Placement="Right" Trigger="Tap">
+                    <Button Text="Right" AutomationId="TooltipRight" />
+                </shiny:Tooltip>
+            </HorizontalStackLayout>
+            <Label Text="Placement is a preference, not a promise: a side with no room flips to the opposite one, and the bubble is clamped to stay on screen while the tail slides along to keep pointing at the target."
+                   FontSize="12" LineBreakMode="WordWrap" />
+
+            <!-- Bound: no content, points at a target by reference, driven from the view-model. -->
+            <Label Text="3. Bound to a view-model" FontAttributes="Bold" />
+            <Button x:Name="HintTarget" Text="Nothing to save yet" AutomationId="TooltipHintTarget" IsEnabled="False" />
+            <Button Text="Toggle the hint"
+                    AutomationId="TooltipToggleHint"
+                    Command="{Binding ToggleHintCommand}" />
+
+            <shiny:Tooltip Target="{x:Reference HintTarget}"
+                           Title="Why is this disabled?"
+                           Text="Make a change first. Tap this hint to dismiss it."
+                           Placement="Bottom"
+                           IsOpen="{Binding ShowHint}"
+                           Command="{Binding HintTappedCommand}"
+                           AutomationId="BoundTooltip" />
+
+            <!-- The attached one-liner, for places an element does not fit. -->
+            <Label Text="4. The attached shorthand" FontAttributes="Bold" />
+            <Button Text="Sync"
+                    AutomationId="TooltipAttachedButton"
+                    shiny:TooltipProperties.Text="Pushes local changes to the server."
+                    shiny:TooltipProperties.Placement="Right"
+                    shiny:TooltipProperties.Trigger="LongPress" />
+
+            <!-- Styling -->
+            <Label Text="5. Styled" FontAttributes="Bold" />
+            <shiny:Tooltip Title="Heads up" AutomationId="StyledTooltip"
+                           Text="A tooltip takes the theme's inverse surface by default; give it a colour and it takes that instead."
+                           Placement="Top"
+                           Trigger="Tap"
+                           BubbleColor="#0F766E"
+                           TextColor="White"
+                           CornerRadius="14"
+                           TailSize="10"
+                           HorizontalOptions="Start">
+                <Button Text="Custom colours" AutomationId="TooltipStyled" />
+            </shiny:Tooltip>
+
+            <!-- Inside a list: each item lives in its own native cell, the tail still finds the row. -->
+            <Label Text="6. Inside a CollectionView" FontAttributes="Bold" />
+            <CollectionView HeightRequest="150" AutomationId="TooltipList">
+                <CollectionView.ItemsSource>
+                    <x:Array Type="{x:Type x:String}">
+                        <x:String>First</x:String>
+                        <x:String>Second</x:String>
+                        <x:String>Third</x:String>
+                    </x:Array>
+                </CollectionView.ItemsSource>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="x:String">
+                        <shiny:Tooltip Text="{Binding .}" Placement="Right" Trigger="Tap" HorizontalOptions="Start">
+                            <Button Text="{Binding .}" Margin="0,2" HorizontalOptions="Start" />
+                        </shiny:Tooltip>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <Label Text="{Binding Status}" AutomationId="TooltipStatus" LineBreakMode="WordWrap" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

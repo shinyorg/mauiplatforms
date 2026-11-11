@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:diagram="http://shiny.net/maui/diagrams"
+             x:Class="Sample.Features.Diagrams.DirectionsPage"
+             Title="Directions">
+
+    <Grid RowDefinitions="Auto,*,*"
+          ColumnDefinitions="*,*"
+          RowSpacing="8"
+          ColumnSpacing="8"
+          Padding="12">
+
+        <Label Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
+               Text="Same diagram in all four directions (panning &amp; zooming disabled)"
+               FontSize="14"
+               HorizontalOptions="Center"
+               HorizontalTextAlignment="Center"
+               Margin="0,0,0,4" />
+
+        <Grid Grid.Row="1" Grid.Column="0"
+              RowDefinitions="Auto,*">
+            <Label Grid.Row="0"
+                   Text="TD (Top Down)"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   FontSize="13"
+                   Margin="0,0,0,4" />
+            <diagram:MermaidDiagramControl
+                Grid.Row="1"
+                AutomationId="DirectionsTDDiagram"
+                DiagramText="graph TD&#10;    A[Alpha] --&gt; B[Beta]&#10;    B --&gt; C[Gamma]&#10;    A --&gt; C"
+                AllowPanning="False"
+                AllowZooming="False"
+                HorizontalOptions="Fill"
+                VerticalOptions="Fill" />
+        </Grid>
+
+        <Grid Grid.Row="1" Grid.Column="1"
+              RowDefinitions="Auto,*">
+            <Label Grid.Row="0"
+                   Text="LR (Left Right)"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   FontSize="13"
+                   Margin="0,0,0,4" />
+            <diagram:MermaidDiagramControl
+                Grid.Row="1"
+                AutomationId="DirectionsLRDiagram"
+                DiagramText="graph LR&#10;    A[Alpha] --&gt; B[Beta]&#10;    B --&gt; C[Gamma]&#10;    A --&gt; C"
+                AllowPanning="False"
+                AllowZooming="False"
+                HorizontalOptions="Fill"
+                VerticalOptions="Fill" />
+        </Grid>
+
+        <Grid Grid.Row="2" Grid.Column="0"
+              RowDefinitions="Auto,*">
+            <Label Grid.Row="0"
+                   Text="BT (Bottom Top)"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   FontSize="13"
+                   Margin="0,0,0,4" />
+            <diagram:MermaidDiagramControl
+                Grid.Row="1"
+                AutomationId="DirectionsBTDiagram"
+                DiagramText="graph BT&#10;    A[Alpha] --&gt; B[Beta]&#10;    B --&gt; C[Gamma]&#10;    A --&gt; C"
+                AllowPanning="False"
+                AllowZooming="False"
+                HorizontalOptions="Fill"
+                VerticalOptions="Fill" />
+        </Grid>
+
+        <Grid Grid.Row="2" Grid.Column="1"
+              RowDefinitions="Auto,*">
+            <Label Grid.Row="0"
+                   Text="RL (Right Left)"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center"
+                   FontSize="13"
+                   Margin="0,0,0,4" />
+            <diagram:MermaidDiagramControl
+                Grid.Row="1"
+                AutomationId="DirectionsRLDiagram"
+                DiagramText="graph RL&#10;    A[Alpha] --&gt; B[Beta]&#10;    B --&gt; C[Gamma]&#10;    A --&gt; C"
+                AllowPanning="False"
+                AllowZooming="False"
+                HorizontalOptions="Fill"
+                VerticalOptions="Fill" />
+        </Grid>
+
+    </Grid>
+
+</ContentPage>

@@ -104,4 +104,22 @@
     </DefineStaticWebAssetEndpoints>
   </Target>
 
+  <!--
+    Incremental builds otherwise serve a stale _framework/dotnet.js.gz (and other computed assets' .gz)
+    from `dotnet run`, so the app asks for assembly fingerprints that no longer exist and fails to boot.
+    The WebAssembly SDK defines these assets at their bin/wwwroot path but only copies them there after
+    compression runs; the compressor sees the previous build's .gz as newer than the stale bin copy and
+    keeps it. Refreshing the bin copies first makes compression see (and compress) the current files.
+  -->
+  <Target Name="_MauiWebRefreshComputedAssetsBeforeCompression" BeforeTargets="GenerateBuildCompressedStaticWebAssets"
+          Condition="'$(UsingMicrosoftNETSdkStaticWebAssets)' == 'true' and '$(OutputType)' == 'Exe'">
+    <ItemGroup>
+      <_MauiWebComputedAsset Include="@(StaticWebAsset)" Condition="'%(SourceType)' == 'Computed' and '%(AssetKind)' != 'Publish' and '%(OriginalItemSpec)' != '' and Exists('%(OriginalItemSpec)')" />
+      <_MauiWebStaleAsset Include="@(_MauiWebComputedAsset->'%(OriginalItemSpec)')" Condition="'$([System.IO.Path]::GetFullPath(%(OriginalItemSpec)))' != '%(Identity)'">
+        <Destination>%(Identity)</Destination>
+      </_MauiWebStaleAsset>
+    </ItemGroup>
+    <Copy SourceFiles="@(_MauiWebStaleAsset)" DestinationFiles="@(_MauiWebStaleAsset->'%(Destination)')" SkipUnchangedFiles="true" Condition="'@(_MauiWebStaleAsset)' != ''" />
+  </Target>
+
 </Project>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:diagram="http://shiny.net/maui/diagrams"
+             x:Class="Sample.Features.Diagrams.SubgraphsPage"
+             Title="Subgraphs">
+
+    <Grid RowDefinitions="Auto,*" Padding="16" RowSpacing="12">
+
+        <VerticalStackLayout Grid.Row="0" Spacing="4">
+            <Label Text="Nested Subgraphs"
+                   FontSize="22"
+                   FontAttributes="Bold"
+                   HorizontalOptions="Center" />
+            <Label Text="Frontend and backend subsystems shown as separate subgraphs."
+                   FontSize="14"
+                   HorizontalOptions="Center"
+                   HorizontalTextAlignment="Center" />
+        </VerticalStackLayout>
+
+        <diagram:MermaidDiagramControl
+            AutomationId="SubgraphsDiagram"
+            Grid.Row="1"
+            DiagramText="graph TD&#10;    subgraph Frontend&#10;        A[Web App] --&gt; B[Mobile App]&#10;    end&#10;    subgraph Backend&#10;        C[API] --&gt; D[Database]&#10;    end&#10;    A --&gt; C&#10;    B --&gt; C"
+            HorizontalOptions="Fill"
+            VerticalOptions="Fill" />
+
+    </Grid>
+
+</ContentPage>

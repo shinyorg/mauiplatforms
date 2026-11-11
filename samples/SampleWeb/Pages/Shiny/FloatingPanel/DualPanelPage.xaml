@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<shiny:ShinyContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Sample.Features.FloatingPanel"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             x:Class="Sample.Features.FloatingPanel.DualPanelPage"
+             x:DataType="local:DualPanelViewModel"
+             Title="Dual Panels">
+  <shiny:ShinyContentPage.PageContent>
+    <ScrollView>
+        <VerticalStackLayout Padding="30,0" Spacing="20">
+            <Label Text="Dual Panel Demo"
+                   FontSize="28"
+                   FontAttributes="Bold"
+                   HorizontalTextAlignment="Center"
+                   Margin="0,20,0,0" />
+
+            <Label Text="Top and bottom panels coexist with peek headers. Both can be open at the same time."
+                   FontSize="14"
+                   HorizontalTextAlignment="Center"
+                   TextColor="Gray" />
+
+            <Label Text="{Binding StatusMessage}" AutomationId="DualStatus"
+                   FontSize="16"
+                   HorizontalTextAlignment="Center"
+                   TextColor="Gray" />
+
+            <BoxView HeightRequest="1" Color="LightGray" Margin="0,10" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Button Text="Open Top" AutomationId="DualOpenTop"
+                        Command="{Binding OpenTopCommand}" />
+                <Button Grid.Column="1"
+                        Text="Close Top" AutomationId="DualCloseTop"
+                        Command="{Binding CloseTopCommand}" />
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Button Text="Open Bottom" AutomationId="DualOpenBottom"
+                        Command="{Binding OpenBottomCommand}" />
+                <Button Grid.Column="1"
+                        Text="Close Bottom" AutomationId="DualCloseBottom"
+                        Command="{Binding CloseBottomCommand}" />
+            </Grid>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Button Text="Open Both" AutomationId="DualOpenBoth"
+                        BackgroundColor="#6C63FF"
+                        TextColor="White"
+                        Command="{Binding OpenBothCommand}" />
+                <Button Grid.Column="1"
+                        Text="Close Both" AutomationId="DualCloseBoth"
+                        BackgroundColor="#EF4444"
+                        TextColor="White"
+                        Command="{Binding CloseBothCommand}" />
+            </Grid>
+        </VerticalStackLayout>
+    </ScrollView>
+  </shiny:ShinyContentPage.PageContent>
+
+  <shiny:ShinyContentPage.Panels>
+    <!-- Top Panel: Notifications -->
+    <shiny:FloatingPanel IsOpen="{Binding IsTopOpen}" AutomationId="DualTopPanel"
+                         Position="Top"
+                         HasBackdrop="False"
+                         HandleColor="#94A3B8"
+                         PanelBackgroundColor="#FEF3C7"
+                         HeaderBackgroundColor="#F59E0B"
+                         PanelCornerRadius="20"
+                         ShowHeaderWhenClosed="True">
+        <shiny:FloatingPanel.HeaderTemplate>
+            <Border BackgroundColor="#F59E0B"
+                    Padding="16,10"
+                    StrokeThickness="0">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                    <Label Text="&#x1F514;"
+                           FontSize="20"
+                           VerticalOptions="Center" />
+                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="1">
+                        <Label Text="Notifications"
+                               FontSize="15"
+                               FontAttributes="Bold"
+                               TextColor="White" />
+                        <Label Text="3 unread - Tap to expand"
+                               FontSize="11"
+                               TextColor="#FEF3C7" />
+                    </VerticalStackLayout>
+                    <Label Grid.Column="2"
+                           Text="3"
+                           FontSize="14"
+                           FontAttributes="Bold"
+                           TextColor="White"
+                           VerticalOptions="Center" />
+                </Grid>
+            </Border>
+        </shiny:FloatingPanel.HeaderTemplate>
+
+        <VerticalStackLayout Padding="16" Spacing="12">
+            <Label Text="Recent Notifications"
+                   FontSize="18"
+                   FontAttributes="Bold"
+                   TextColor="#92400E" />
+
+            <Border BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 12" Padding="14,10">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="Build Succeeded" FontSize="15" FontAttributes="Bold" TextColor="#166534" />
+                    <Label Text="Your PR #142 passed all checks and is ready to merge." FontSize="13" TextColor="#64748B" />
+                    <Label Text="2 minutes ago" FontSize="11" TextColor="#94A3B8" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 12" Padding="14,10">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="New Comment" FontSize="15" FontAttributes="Bold" TextColor="#1E40AF" />
+                    <Label Text="Alice left feedback on your FloatingPanel implementation." FontSize="13" TextColor="#64748B" />
+                    <Label Text="15 minutes ago" FontSize="11" TextColor="#94A3B8" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Border BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 12" Padding="14,10">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="Deployment Complete" FontSize="15" FontAttributes="Bold" TextColor="#7C3AED" />
+                    <Label Text="v2.4.0 has been deployed to production." FontSize="13" TextColor="#64748B" />
+                    <Label Text="1 hour ago" FontSize="11" TextColor="#94A3B8" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Button Text="Mark All Read" AutomationId="DualMarkAllRead"
+                    BackgroundColor="#F59E0B"
+                    TextColor="White"
+                    Command="{Binding CloseTopCommand}"
+                    Margin="0,4,0,0" />
+        </VerticalStackLayout>
+    </shiny:FloatingPanel>
+
+    <!-- Bottom Panel: Now Playing -->
+    <shiny:FloatingPanel IsOpen="{Binding IsBottomOpen}" AutomationId="DualBottomPanel"
+                         Position="Bottom"
+                         HasBackdrop="False"
+                         HandleColor="#94A3B8"
+                         PanelBackgroundColor="#EDE9FE"
+                         HeaderBackgroundColor="#7C3AED"
+                         PanelCornerRadius="20"
+                         ShowHeaderWhenClosed="True">
+        <shiny:FloatingPanel.HeaderTemplate>
+            <Border BackgroundColor="#7C3AED"
+                    Padding="16,10"
+                    StrokeThickness="0">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                    <Label Text="&#x266B;"
+                           FontSize="22"
+                           TextColor="White"
+                           VerticalOptions="Center" />
+                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="1">
+                        <Label Text="Midnight City"
+                               FontSize="15"
+                               FontAttributes="Bold"
+                               TextColor="White" />
+                        <Label Text="M83 - Hurry Up, We're Dreaming"
+                               FontSize="11"
+                               TextColor="#C4B5FD" />
+                    </VerticalStackLayout>
+                    <Label Grid.Column="2"
+                           Text="&#x25B6;"
+                           FontSize="18"
+                           TextColor="White"
+                           VerticalOptions="Center" />
+                </Grid>
+            </Border>
+        </shiny:FloatingPanel.HeaderTemplate>
+
+        <VerticalStackLayout Padding="20" Spacing="16">
+            <Label Text="Now Playing"
+                   FontSize="20"
+                   FontAttributes="Bold"
+                   TextColor="#4C1D95"
+                   HorizontalTextAlignment="Center" />
+
+            <Border BackgroundColor="#7C3AED"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 16"
+                    HeightRequest="180"
+                    WidthRequest="180"
+                    HorizontalOptions="Center">
+                <Label Text="&#x266B;"
+                       FontSize="72"
+                       TextColor="White"
+                       HorizontalTextAlignment="Center"
+                       VerticalTextAlignment="Center" />
+            </Border>
+
+            <VerticalStackLayout Spacing="2" HorizontalOptions="Center">
+                <Label Text="Midnight City"
+                       FontSize="22"
+                       FontAttributes="Bold"
+                       TextColor="#4C1D95"
+                       HorizontalTextAlignment="Center" />
+                <Label Text="M83 - Hurry Up, We're Dreaming"
+                       FontSize="14"
+                       TextColor="#7C3AED"
+                       HorizontalTextAlignment="Center" />
+            </VerticalStackLayout>
+
+            <!-- Progress bar -->
+            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8" Margin="0,8,0,0">
+                <Label Text="1:23" FontSize="12" TextColor="#7C3AED" VerticalOptions="Center" />
+                <ProgressBar Grid.Column="1" Progress="0.35" ProgressColor="#7C3AED" />
+                <Label Grid.Column="2" Text="4:03" FontSize="12" TextColor="#7C3AED" VerticalOptions="Center" />
+            </Grid>
+
+            <!-- Playback controls -->
+            <HorizontalStackLayout HorizontalOptions="Center" Spacing="30">
+                <Label Text="&#x23EE;" FontSize="32" TextColor="#7C3AED" VerticalOptions="Center" />
+                <Border BackgroundColor="#7C3AED"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 28"
+                        WidthRequest="56"
+                        HeightRequest="56">
+                    <Label Text="&#x25B6;"
+                           FontSize="24"
+                           TextColor="White"
+                           HorizontalTextAlignment="Center"
+                           VerticalTextAlignment="Center" />
+                </Border>
+                <Label Text="&#x23ED;" FontSize="32" TextColor="#7C3AED" VerticalOptions="Center" />
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+    </shiny:FloatingPanel>
+  </shiny:ShinyContentPage.Panels>
+</shiny:ShinyContentPage>

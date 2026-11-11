@@ -18,6 +18,7 @@ lessons of the backends in [dotnet/maui-labs](https://github.com/dotnet/maui-lab
 |---|---|
 | `Platform.Maui.Web` | Handlers, hosting, dispatcher, fonts, dialogs, theming, build targets |
 | `Platform.Maui.Web.Essentials` | MAUI Essentials implemented with browser APIs |
+| `Platform.Maui.Web.SkiaSharp` | SkiaSharp's `SKCanvasView`, drawn by Skia on WebAssembly (`UseSkiaSharpWeb()`; needs the `wasm-tools` workload). See the [main readme](../../readme.md#skiasharp) |
 
 ## Getting started
 
@@ -160,8 +161,9 @@ focus, VisualStateManager (PointerOver, Focused, Disabled, Selected).
 
 Browser rules apply: file/media pickers, clipboard reads, sharing and motion-sensor permission
 prompts (iOS) must start from a user gesture. FileSystem directories live in memory and are lost
-on reload. FilePicker types need a `WebDevicePlatform.Web` entry (`WebFilePickerFileTypes`
-provides the common ones).
+on reload. Filter FilePicker with an `<input accept>` string: `FilePicker.Default.PickAsync("image/*")`
+(`WebFilePickerExtensions`). MAUI's `FilePickerFileType` can't be created on `net10.0` (its type
+initializer throws), so `PickOptions.FileTypes` can't carry a filter there.
 
 ## XAML and existing MAUI apps
 

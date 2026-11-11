@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:office="clr-namespace:Shiny.Maui.Controls.Office;assembly=Shiny.Maui.Controls.Office"
+             x:Class="Sample.Features.Office.SlideViewerPage"
+             Title="Slide Viewer">
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="12" RowSpacing="8">
+
+        <HorizontalStackLayout Grid.Row="0" Spacing="8">
+            <Button Text="‹" AutomationId="SlideViewerPrevious" WidthRequest="48" Clicked="OnPrevious" />
+            <Label x:Name="CounterLabel" AutomationId="SlideViewerCounter" VerticalOptions="Center" WidthRequest="70" HorizontalTextAlignment="Center" />
+            <Button Text="›" AutomationId="SlideViewerNext" WidthRequest="48" Clicked="OnNext" />
+            <Button x:Name="ModeButton" AutomationId="SlideViewerMode" Text="Grid" Clicked="OnToggleMode" />
+            <Button Text="Theme" AutomationId="SlideViewerTheme" Clicked="OnToggleTheme" />
+            <Button Text="Present" AutomationId="SlideViewerPresent" Clicked="OnPresent" />
+        </HorizontalStackLayout>
+
+        <Border Grid.Row="1" StrokeThickness="1">
+            <office:SlideView x:Name="Viewer" AutomationId="SlideViewerView" SlideChanged="OnSlideChanged" PresentingChanged="OnPresentingChanged" />
+        </Border>
+
+        <Label Grid.Row="2" x:Name="NotesLabel" AutomationId="SlideViewerNotes" FontSize="12" Opacity="0.75" LineBreakMode="WordWrap" />
+    </Grid>
+</ContentPage>

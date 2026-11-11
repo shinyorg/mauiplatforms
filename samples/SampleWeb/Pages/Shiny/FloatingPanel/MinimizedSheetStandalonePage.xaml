@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<shiny:ShinyContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Sample.Features.FloatingPanel"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             x:Class="Sample.Features.FloatingPanel.MinimizedSheetStandalonePage"
+             x:DataType="local:MinimizedSheetViewModel"
+             Title="Header Peek">
+  <shiny:ShinyContentPage.PageContent>
+    <ScrollView>
+        <VerticalStackLayout Padding="30,0" Spacing="25">
+            <Label
+                Text="Header / Minimized Demo"
+                FontSize="28"
+                FontAttributes="Bold"
+                HorizontalTextAlignment="Center"
+                Margin="0,20,0,0" />
+
+            <Label
+                Text="The music player header peeks from the bottom edge when closed. Tap it or use the buttons to expand."
+                FontSize="14"
+                HorizontalTextAlignment="Center"
+                TextColor="Gray" />
+
+            <Label AutomationId="PeekStatus"
+                Text="{Binding StatusMessage}"
+                FontSize="16"
+                HorizontalTextAlignment="Center"
+                TextColor="Gray" />
+
+            <BoxView HeightRequest="1" Color="LightGray" Margin="0,10" />
+
+            <Button AutomationId="PeekOpenButton"
+                Text="Open Music Player"
+                Command="{Binding OpenSheetCommand}" />
+
+            <Button AutomationId="PeekCloseButton"
+                Text="Close Music Player"
+                Command="{Binding CloseSheetCommand}" />
+        </VerticalStackLayout>
+    </ScrollView>
+  </shiny:ShinyContentPage.PageContent>
+
+  <shiny:ShinyContentPage.Panels>
+    <!-- Bottom: Music Player (no tabs - uses Bottom position) -->
+    <shiny:FloatingPanel IsOpen="{Binding IsSheetOpen}" AutomationId="PeekPanel"
+                  Position="Bottom"
+                  HasBackdrop="True"
+                  CloseOnBackdropTap="True"
+                  HandleColor="Gray"
+                  PanelBackgroundColor="#1E1E2E"
+                  HeaderBackgroundColor="#1E1E2E"
+                  PanelCornerRadius="20"
+                  ShowHeaderWhenClosed="True">
+        <shiny:FloatingPanel.HeaderTemplate>
+            <Border BackgroundColor="#1E1E2E"
+                    Padding="16,12"
+                    StrokeThickness="0">
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="12">
+                    <Border BackgroundColor="#6C63FF"
+                            WidthRequest="44"
+                            HeightRequest="44"
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 8">
+                        <Label Text="&#9834;"
+                               FontSize="22"
+                               HorizontalOptions="Center"
+                               VerticalOptions="Center"
+                               TextColor="White" />
+                    </Border>
+                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                        <Label Text="Midnight Drive"
+                               AutomationId="PeekHeaderTitle"
+                               FontSize="14"
+                               FontAttributes="Bold"
+                               TextColor="White" />
+                        <Label Text="The Synthwave Collective"
+                               FontSize="12"
+                               TextColor="#9CA3AF" />
+                    </VerticalStackLayout>
+                    <Label Grid.Column="2"
+                           Text="||"
+                           FontSize="22"
+                           TextColor="White"
+                           VerticalOptions="Center" />
+                    <Label Grid.Column="3"
+                           Text="&gt;&gt;"
+                           FontSize="22"
+                           TextColor="#9CA3AF"
+                           VerticalOptions="Center" />
+                </Grid>
+            </Border>
+        </shiny:FloatingPanel.HeaderTemplate>
+
+        <VerticalStackLayout Padding="20" Spacing="15">
+            <!-- Album Art -->
+            <Border BackgroundColor="#6C63FF"
+                    WidthRequest="240"
+                    HeightRequest="240"
+                    StrokeThickness="0"
+                    StrokeShape="RoundRectangle 20"
+                    HorizontalOptions="Center">
+                <Border.Shadow>
+                    <Shadow Brush="#6C63FF" Offset="0,8" Radius="20" Opacity="0.4" />
+                </Border.Shadow>
+                <Label Text="&#9834;"
+                       FontSize="90"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       TextColor="White" />
+            </Border>
+
+            <!-- Track Info -->
+            <Label Text="Midnight Drive"
+                   FontSize="24"
+                   FontAttributes="Bold"
+                   TextColor="White"
+                   HorizontalTextAlignment="Center" />
+
+            <Label Text="The Synthwave Collective"
+                   FontSize="16"
+                   TextColor="#9CA3AF"
+                   HorizontalTextAlignment="Center" />
+
+            <!-- Progress Bar -->
+            <Grid RowDefinitions="Auto,Auto" Margin="10,10,10,0">
+                <BoxView HeightRequest="4"
+                         CornerRadius="2"
+                         Color="#3B3B5C" />
+                <BoxView HeightRequest="4"
+                         CornerRadius="2"
+                         Color="#6C63FF"
+                         HorizontalOptions="Start"
+                         WidthRequest="120" />
+                <Grid Grid.Row="1" ColumnDefinitions="*,*" Margin="0,6,0,0">
+                    <Label Text="1:24" FontSize="12" TextColor="#9CA3AF" />
+                    <Label Text="3:47" FontSize="12" TextColor="#9CA3AF"
+                           HorizontalTextAlignment="End" Grid.Column="1" />
+                </Grid>
+            </Grid>
+
+            <Button Text="Close Player" AutomationId="PeekClosePlayerButton"
+                    BackgroundColor="#3B3B5C"
+                    TextColor="White"
+                    Command="{Binding CloseSheetCommand}"
+                    Margin="0,15,0,0" />
+        </VerticalStackLayout>
+    </shiny:FloatingPanel>
+  </shiny:ShinyContentPage.Panels>
+</shiny:ShinyContentPage>

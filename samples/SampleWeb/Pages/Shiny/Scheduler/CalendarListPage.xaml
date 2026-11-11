@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:local="clr-namespace:Sample.Features.Scheduler"
+             x:Class="Sample.Features.Scheduler.CalendarListPage"
+             x:DataType="local:CalendarListViewModel"
+             Title="Event List"
+             AutomationId="CalendarListPage">
+
+    <shiny:SchedulerCalendarListView
+        AutomationId="SchedulerCalendarList"
+        Provider="{Binding Provider}"
+        SelectedDate="{Binding SelectedDate}"
+        DefaultEventColor="CornflowerBlue" />
+
+</ContentPage>

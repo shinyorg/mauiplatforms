@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<shiny:ShinyContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Sample.Features.FloatingPanel"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             x:Class="Sample.Features.FloatingPanel.TopSheetPage"
+             x:DataType="local:TopSheetViewModel">
+  <shiny:ShinyContentPage.PageContent>
+    <ScrollView>
+        <VerticalStackLayout Padding="30,0" Spacing="25">
+            <Label
+                Text="Top Sheet - Weather Demo"
+                FontSize="28"
+                FontAttributes="Bold"
+                HorizontalTextAlignment="Center"
+                Margin="0,20,0,0" />
+
+            <Label
+                Text="A weather summary peeks from the top edge when closed. Tap it or use the buttons to expand."
+                FontSize="14"
+                HorizontalTextAlignment="Center"
+                TextColor="Gray" />
+
+            <Label AutomationId="WeatherStatus"
+                Text="{Binding StatusMessage}"
+                FontSize="16"
+                HorizontalTextAlignment="Center"
+                TextColor="Gray" />
+
+            <BoxView HeightRequest="1" Color="LightGray" Margin="0,10" />
+
+            <Button AutomationId="WeatherOpenButton"
+                Text="Open Weather"
+                Command="{Binding OpenSheetCommand}" />
+
+            <Button AutomationId="WeatherCloseButton"
+                Text="Close Weather"
+                Command="{Binding CloseSheetCommand}" />
+        </VerticalStackLayout>
+    </ScrollView>
+  </shiny:ShinyContentPage.PageContent>
+
+  <shiny:ShinyContentPage.Panels>
+    <!-- Top: Weather Widget -->
+    <shiny:FloatingPanel IsOpen="{Binding IsSheetOpen}" AutomationId="WeatherPanel"
+                  Position="Top"
+                  HasBackdrop="True"
+                  CloseOnBackdropTap="True"
+                  HandleColor="#CBD5E1"
+                  PanelBackgroundColor="#EFF6FF"
+                  HeaderBackgroundColor="#3B82F6"
+                  PanelCornerRadius="20"
+                  ShowHeaderWhenClosed="True">
+        <shiny:FloatingPanel.HeaderTemplate>
+            <Border BackgroundColor="#3B82F6"
+                    Padding="16,10"
+                    StrokeThickness="0">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                    <Label Text="*"
+                           FontSize="28"
+                           VerticalOptions="Center" />
+                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="1">
+                        <Label Text="72&#176;F  Sunny"
+                               FontSize="15"
+                               FontAttributes="Bold"
+                               TextColor="White" />
+                        <Label Text="San Francisco - Tap for details" AutomationId="WeatherHeaderTitle"
+                               FontSize="11"
+                               TextColor="#BFDBFE" />
+                    </VerticalStackLayout>
+                    <Label Grid.Column="2"
+                           Text="H:78&#176; L:61&#176;"
+                           FontSize="12"
+                           TextColor="#BFDBFE"
+                           VerticalOptions="Center" />
+                </Grid>
+            </Border>
+        </shiny:FloatingPanel.HeaderTemplate>
+
+        <VerticalStackLayout Padding="20" Spacing="15">
+            <!-- Current conditions -->
+            <Grid ColumnDefinitions="*,Auto" Margin="0,0,0,5">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="San Francisco, CA"
+                           FontSize="20"
+                           FontAttributes="Bold"
+                           TextColor="#1E3A5F" />
+                    <Label Text="Sunny with light breeze"
+                           FontSize="14"
+                           TextColor="#64748B" />
+                    <Label Text="Feels like 70&#176;F"
+                           FontSize="13"
+                           TextColor="#94A3B8" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1" HorizontalOptions="End">
+                    <Label Text="72&#176;"
+                           FontSize="48"
+                           FontAttributes="Bold"
+                           TextColor="#1E3A5F"
+                           HorizontalTextAlignment="End" />
+                </VerticalStackLayout>
+            </Grid>
+
+            <!-- Details row -->
+            <Grid ColumnDefinitions="*,*,*,*"
+                  ColumnSpacing="8">
+                <Border BackgroundColor="White"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 12"
+                        Padding="10,8">
+                    <VerticalStackLayout HorizontalOptions="Center" Spacing="3">
+                        <Label Text="Humidity" FontSize="10" TextColor="#94A3B8"
+                               HorizontalTextAlignment="Center" />
+                        <Label Text="45%" FontSize="15" FontAttributes="Bold" TextColor="#1E3A5F"
+                               HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Column="1"
+                        BackgroundColor="White"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 12"
+                        Padding="10,8">
+                    <VerticalStackLayout HorizontalOptions="Center" Spacing="3">
+                        <Label Text="Wind" FontSize="10" TextColor="#94A3B8"
+                               HorizontalTextAlignment="Center" />
+                        <Label Text="8 mph NW" FontSize="15" FontAttributes="Bold" TextColor="#1E3A5F"
+                               HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Column="2"
+                        BackgroundColor="White"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 12"
+                        Padding="10,8">
+                    <VerticalStackLayout HorizontalOptions="Center" Spacing="3">
+                        <Label Text="UV Index" FontSize="10" TextColor="#94A3B8"
+                               HorizontalTextAlignment="Center" />
+                        <Label Text="3 Low" FontSize="15" FontAttributes="Bold" TextColor="#1E3A5F"
+                               HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Column="3"
+                        BackgroundColor="White"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 12"
+                        Padding="10,8">
+                    <VerticalStackLayout HorizontalOptions="Center" Spacing="3">
+                        <Label Text="Visibility" FontSize="10" TextColor="#94A3B8"
+                               HorizontalTextAlignment="Center" />
+                        <Label Text="10 mi" FontSize="15" FontAttributes="Bold" TextColor="#1E3A5F"
+                               HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+
+            <BoxView HeightRequest="1" Color="#CBD5E1" Margin="0,5" />
+
+            <!-- Hourly forecast -->
+            <Label Text="Hourly Forecast"
+                   FontSize="16"
+                   FontAttributes="Bold"
+                   TextColor="#1E3A5F" />
+
+            <ScrollView Orientation="Horizontal">
+                <HorizontalStackLayout Spacing="12">
+                    <Border BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 10" Padding="12,8">
+                        <VerticalStackLayout HorizontalOptions="Center" Spacing="4">
+                            <Label Text="Now" FontSize="11" TextColor="#64748B" HorizontalTextAlignment="Center" />
+                            <Label Text="72&#176;" FontSize="15" FontAttributes="Bold" TextColor="#1E3A5F" HorizontalTextAlignment="Center" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 10" Padding="12,8">
+                        <VerticalStackLayout HorizontalOptions="Center" Spacing="4">
+                            <Label Text="1 PM" FontSize="11" TextColor="#64748B" HorizontalTextAlignment="Center" />
+                            <Label Text="74&#176;" FontSize="15" FontAttributes="Bold" TextColor="#1E3A5F" HorizontalTextAlignment="Center" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 10" Padding="12,8">
+                        <VerticalStackLayout HorizontalOptions="Center" Spacing="4">
+                            <Label Text="2 PM" FontSize="11" TextColor="#64748B" HorizontalTextAlignment="Center" />
+                            <Label Text="76&#176;" FontSize="15" FontAttributes="Bold" TextColor="#1E3A5F" HorizontalTextAlignment="Center" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 10" Padding="12,8">
+                        <VerticalStackLayout HorizontalOptions="Center" Spacing="4">
+                            <Label Text="3 PM" FontSize="11" TextColor="#64748B" HorizontalTextAlignment="Center" />
+                            <Label Text="77&#176;" FontSize="15" FontAttributes="Bold" TextColor="#1E3A5F" HorizontalTextAlignment="Center" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 10" Padding="12,8">
+                        <VerticalStackLayout HorizontalOptions="Center" Spacing="4">
+                            <Label Text="4 PM" FontSize="11" TextColor="#64748B" HorizontalTextAlignment="Center" />
+                            <Label Text="75&#176;" FontSize="15" FontAttributes="Bold" TextColor="#1E3A5F" HorizontalTextAlignment="Center" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 10" Padding="12,8">
+                        <VerticalStackLayout HorizontalOptions="Center" Spacing="4">
+                            <Label Text="5 PM" FontSize="11" TextColor="#64748B" HorizontalTextAlignment="Center" />
+                            <Label Text="73&#176;" FontSize="15" FontAttributes="Bold" TextColor="#1E3A5F" HorizontalTextAlignment="Center" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 10" Padding="12,8">
+                        <VerticalStackLayout HorizontalOptions="Center" Spacing="4">
+                            <Label Text="6 PM" FontSize="11" TextColor="#64748B" HorizontalTextAlignment="Center" />
+                            <Label Text="69&#176;" FontSize="15" FontAttributes="Bold" TextColor="#1E3A5F" HorizontalTextAlignment="Center" />
+                        </VerticalStackLayout>
+                    </Border>
+                    <Border BackgroundColor="White" StrokeThickness="0" StrokeShape="RoundRectangle 10" Padding="12,8">
+                        <VerticalStackLayout HorizontalOptions="Center" Spacing="4">
+                            <Label Text="7 PM" FontSize="11" TextColor="#64748B" HorizontalTextAlignment="Center" />
+                            <Label Text="66&#176;" FontSize="15" FontAttributes="Bold" TextColor="#1E3A5F" HorizontalTextAlignment="Center" />
+                        </VerticalStackLayout>
+                    </Border>
+                </HorizontalStackLayout>
+            </ScrollView>
+
+            <BoxView HeightRequest="1" Color="#CBD5E1" Margin="0,5" />
+
+            <!-- 5-Day Forecast -->
+            <Label Text="5-Day Forecast"
+                   FontSize="16"
+                   FontAttributes="Bold"
+                   TextColor="#1E3A5F" />
+
+            <Grid ColumnDefinitions="*,*,*,*,*" ColumnSpacing="8">
+                <VerticalStackLayout HorizontalOptions="Center" Spacing="6">
+                    <Label Text="Mon" FontSize="12" TextColor="#64748B" HorizontalTextAlignment="Center" />
+                    <Label Text="75&#176;" FontSize="14" FontAttributes="Bold" TextColor="#1E3A5F" HorizontalTextAlignment="Center" />
+                    <Label Text="62&#176;" FontSize="12" TextColor="#94A3B8" HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="1" HorizontalOptions="Center" Spacing="6">
+                    <Label Text="Tue" FontSize="12" TextColor="#64748B" HorizontalTextAlignment="Center" />
+                    <Label Text="71&#176;" FontSize="14" FontAttributes="Bold" TextColor="#1E3A5F" HorizontalTextAlignment="Center" />
+                    <Label Text="59&#176;" FontSize="12" TextColor="#94A3B8" HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="2" HorizontalOptions="Center" Spacing="6">
+                    <Label Text="Wed" FontSize="12" TextColor="#64748B" HorizontalTextAlignment="Center" />
+                    <Label Text="64&#176;" FontSize="14" FontAttributes="Bold" TextColor="#1E3A5F" HorizontalTextAlignment="Center" />
+                    <Label Text="55&#176;" FontSize="12" TextColor="#94A3B8" HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="3" HorizontalOptions="Center" Spacing="6">
+                    <Label Text="Thu" FontSize="12" TextColor="#64748B" HorizontalTextAlignment="Center" />
+                    <Label Text="68&#176;" FontSize="14" FontAttributes="Bold" TextColor="#1E3A5F" HorizontalTextAlignment="Center" />
+                    <Label Text="57&#176;" FontSize="12" TextColor="#94A3B8" HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+                <VerticalStackLayout Grid.Column="4" HorizontalOptions="Center" Spacing="6">
+                    <Label Text="Fri" FontSize="12" TextColor="#64748B" HorizontalTextAlignment="Center" />
+                    <Label Text="74&#176;" FontSize="14" FontAttributes="Bold" TextColor="#1E3A5F" HorizontalTextAlignment="Center" />
+                    <Label Text="60&#176;" FontSize="12" TextColor="#94A3B8" HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+            </Grid>
+
+            <BoxView HeightRequest="1" Color="#CBD5E1" Margin="0,5" />
+
+            <!-- Sun and pressure -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Border BackgroundColor="White"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 12"
+                        Padding="14,10">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Sunrise" FontSize="11" TextColor="#94A3B8" />
+                        <Label Text="6:23 AM" FontSize="16" FontAttributes="Bold" TextColor="#1E3A5F" />
+                        <Label Text="Sunset" FontSize="11" TextColor="#94A3B8" Margin="0,6,0,0" />
+                        <Label Text="7:48 PM" FontSize="16" FontAttributes="Bold" TextColor="#1E3A5F" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Column="1"
+                        BackgroundColor="White"
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 12"
+                        Padding="14,10">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Pressure" FontSize="11" TextColor="#94A3B8" />
+                        <Label Text="30.12 inHg" FontSize="16" FontAttributes="Bold" TextColor="#1E3A5F" />
+                        <Label Text="Dew Point" FontSize="11" TextColor="#94A3B8" Margin="0,6,0,0" />
+                        <Label Text="52&#176;F" FontSize="16" FontAttributes="Bold" TextColor="#1E3A5F" />
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+
+            <Button Text="Close Weather" AutomationId="WeatherClosePanelButton"
+                    BackgroundColor="#3B82F6"
+                    TextColor="White"
+                    Command="{Binding CloseSheetCommand}"
+                    Margin="0,10,0,0" />
+        </VerticalStackLayout>
+    </shiny:FloatingPanel>
+  </shiny:ShinyContentPage.Panels>
+</shiny:ShinyContentPage>

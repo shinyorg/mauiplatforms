@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:tv="http://shiny.net/maui/controls"
+    x:Class="Sample.Features.TableView.DragSortPage"
+    Title="Drag &amp; Sort">
+
+    <tv:TableView x:Name="DragTableView"
+                  ItemDroppedCommand="{Binding ItemDroppedCommand}">
+        <tv:TableRoot>
+            <tv:TableSection Title="Drag to Reorder"
+                             FooterText="Grab a handle and drag. Dragging near the top or bottom edge auto-scrolls."
+                             UseDragSort="True">
+                <tv:LabelCell Title="First Item" ValueText="1" />
+                <tv:LabelCell Title="Second Item" ValueText="2" />
+                <tv:LabelCell Title="Third Item" ValueText="3" />
+                <tv:LabelCell Title="Fourth Item" ValueText="4" />
+                <tv:LabelCell Title="Fifth Item" ValueText="5" />
+                <tv:LabelCell Title="Sixth Item" ValueText="6" />
+                <tv:LabelCell Title="Seventh Item" ValueText="7" />
+                <tv:LabelCell Title="Eighth Item" ValueText="8" />
+                <tv:LabelCell Title="Ninth Item" ValueText="9" />
+                <tv:LabelCell Title="Tenth Item" ValueText="10" />
+                <tv:LabelCell Title="Eleventh Item" ValueText="11" />
+                <tv:LabelCell Title="Twelfth Item" ValueText="12" />
+            </tv:TableSection>
+
+            <!-- Templated rows: the control can't reorder your collection for you, so the
+                 handler moves the item itself using ItemDroppedEventArgs.Item -->
+            <tv:TableSection Title="Templated Rows"
+                             FooterText="Bound to ItemsSource - the drop handler reorders the collection."
+                             UseDragSort="True"
+                             ItemsSource="{Binding Players}">
+                <tv:TableSection.ItemTemplate>
+                    <DataTemplate>
+                        <tv:LabelCell Title="{Binding Name}" ValueText="{Binding Position}" />
+                    </DataTemplate>
+                </tv:TableSection.ItemTemplate>
+            </tv:TableSection>
+
+            <tv:TableSection Title="Non-Draggable Section">
+                <tv:LabelCell Title="This section is fixed" ValueText="Cannot drag" />
+            </tv:TableSection>
+        </tv:TableRoot>
+    </tv:TableView>
+
+</ContentPage>

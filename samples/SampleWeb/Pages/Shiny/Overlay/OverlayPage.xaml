@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<shiny:ShinyContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+                        xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+                        xmlns:shiny="http://shiny.net/maui/controls"
+                        xmlns:local="clr-namespace:Sample.Features.Overlay"
+                        x:Class="Sample.Features.Overlay.OverlayPage"
+                        x:DataType="local:OverlayViewModel"
+                        Title="Overlay"
+                        AutomationId="OverlayPage"
+                        IsLoading="{Binding IsPageLoading}"
+                        LoadingMessage="Working on it…"
+                        LoadingBlurRadius="8"><!-- built-in page loading overlay -->
+
+    <ScrollView Padding="16">
+        <VerticalStackLayout Spacing="24">
+
+            <!-- Basic Overlay -->
+            <Label Text="Basic Overlay" FontSize="18" FontAttributes="Bold" />
+            <Label Text="Shows a custom overlay with configurable backdrop and blur." />
+            <Button AutomationId="ShowCustomOverlayButton" Text="Show Custom Overlay"
+                    Command="{Binding ShowCustomOverlayCommand}" />
+
+            <!-- Loading Overlay (Indeterminate) -->
+            <Label Text="Loading Overlay (Indeterminate)" FontSize="18" FontAttributes="Bold" />
+            <Label Text="Shows a spinner with a message." />
+            <Button AutomationId="ShowSpinnerButton" Text="Show Loading (Spinner)"
+                    Command="{Binding ShowIndeterminateCommand}" />
+
+            <!-- Loading Overlay (Determinate) -->
+            <Label Text="Loading Overlay (Determinate)" FontSize="18" FontAttributes="Bold" />
+            <Label Text="Shows a progress bar that fills to 100%." />
+            <Button AutomationId="ShowProgressButton" Text="Show Loading (Progress Bar)"
+                    Command="{Binding ShowDeterminateCommand}" />
+
+            <!-- Built-in page-level loading overlay (ShinyContentPage.IsLoading) -->
+            <Label Text="Built-in Page Loading" FontSize="18" FontAttributes="Bold" />
+            <Label Text="Every ShinyContentPage has a LoadingOverlay for free — just bind IsLoading." />
+            <Button AutomationId="ShowPageLoadingButton" Text="Show Page Loading"
+                    Command="{Binding ShowPageLoadingCommand}" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+    <shiny:ShinyContentPage.Panels>
+        <!-- Custom Overlay -->
+        <shiny:Overlay IsShown="{Binding IsCustomOverlayShown}" AutomationId="CustomOverlay"
+                       BlurRadius="10">
+            <shiny:Overlay.OverlayContentTemplate>
+                <DataTemplate>
+                    <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="12">
+                        <Label Text="Custom Overlay Content"
+                               TextColor="White"
+                               FontSize="20"
+                               FontAttributes="Bold"
+                               HorizontalTextAlignment="Center" />
+                        <Label Text="Tap the button below to dismiss"
+                               TextColor="White"
+                               FontSize="14"
+                               HorizontalTextAlignment="Center" />
+                        <Button Text="Dismiss" AutomationId="DismissOverlayButton"
+                                TextColor="White"
+                                BackgroundColor="#6D28D9"
+                                Command="{Binding DismissCustomOverlayCommand}" />
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </shiny:Overlay.OverlayContentTemplate>
+        </shiny:Overlay>
+
+        <!-- Loading Overlay -->
+        <shiny:LoadingOverlay IsShown="{Binding IsLoadingShown}" AutomationId="LoadingOverlay"
+                              IsIndeterminate="{Binding IsIndeterminate}"
+                              Progress="{Binding Progress}"
+                              Message="{Binding LoadingMessage}" />
+    </shiny:ShinyContentPage.Panels>
+
+</shiny:ShinyContentPage>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             xmlns:local="clr-namespace:Sample.Features.Kanban"
+             x:Class="Sample.Features.Kanban.KanbanPage"
+             x:DataType="local:KanbanViewModel"
+             Title="Kanban"
+             AutomationId="KanbanPage">
+
+    <Grid RowDefinitions="Auto,Auto,*" Padding="12" RowSpacing="8">
+
+        <Label Grid.Row="0" Text="{Binding StatusMessage}" FontSize="13" TextColor="Gray"
+               AutomationId="KanbanStatus" />
+
+        <!-- Collapse is a viewport operation, so it goes through the control's own methods rather
+             than through a binding: a view model has no business knowing which columns are folded. -->
+        <ScrollView Grid.Row="1" Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+            <HorizontalStackLayout Spacing="14" VerticalOptions="Center">
+                <HorizontalStackLayout Spacing="4" VerticalOptions="Center">
+                    <Label Text="Swimlanes" FontSize="12" VerticalOptions="Center" />
+                    <Switch IsToggled="{Binding UseSwimlanes, Mode=TwoWay}" AutomationId="KanbanSwimlaneSwitch" />
+                </HorizontalStackLayout>
+                <HorizontalStackLayout Spacing="4" VerticalOptions="Center">
+                    <Label Text="Block at WIP" FontSize="12" VerticalOptions="Center" />
+                    <Switch IsToggled="{Binding BlockAtWipLimit, Mode=TwoWay}" AutomationId="KanbanWipSwitch" />
+                </HorizontalStackLayout>
+                <Button Text="Collapse" Clicked="OnCollapseAll" AutomationId="KanbanCollapseAll" />
+                <Button Text="Expand" Clicked="OnExpandAll" AutomationId="KanbanExpandAll" />
+                <Button Text="Undo" Command="{Binding UndoCommand}" IsEnabled="{Binding CanUndo}"
+                        AutomationId="KanbanUndo" />
+                <Button Text="Reset" Command="{Binding ResetCommand}" AutomationId="KanbanReset" />
+            </HorizontalStackLayout>
+        </ScrollView>
+
+        <shiny:KanbanView Grid.Row="2"
+                          x:Name="Board"
+                          AutomationId="KanbanBoard"
+                          Cards="{Binding Cards}"
+                          Columns="{Binding Columns}"
+                          Swimlanes="{Binding Swimlanes}"
+                          SwimlaneMode="{Binding SwimlaneMode}"
+                          WipBehavior="{Binding WipBehavior}"
+                          SelectedCard="{Binding SelectedCard, Mode=TwoWay}"
+                          AddCardMode="Inline"
+                          ShowWipLimits="True"
+                          ColumnWidth="260"
+                          CardMoving="OnCardMoving"
+                          CardMoved="OnCardMoved"
+                          DropRejected="OnDropRejected"
+                          AddCardRequested="OnAddCardRequested" />
+    </Grid>
+</ContentPage>

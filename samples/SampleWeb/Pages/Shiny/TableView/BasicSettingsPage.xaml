@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:tv="http://shiny.net/maui/controls"
+    x:Class="Sample.Features.TableView.BasicSettingsPage"
+    Title="Basic"
+    AutomationId="BasicSettingsPage">
+
+    <tv:TableView x:Name="MyTableView" AutomationId="SettingsTableView"
+                  CellSelectedColor="#E0E0E0">
+        <tv:TableRoot>
+            <tv:TableSection Title="Toggle Controls">
+                <tv:SwitchCell Title="Wi-Fi"
+                               AutomationId="WifiCell"
+                               Description="Connect to wireless networks"
+                               On="{Binding WifiEnabled, Mode=TwoWay}" />
+                <tv:SwitchCell Title="Bluetooth"
+                               AutomationId="BluetoothCell"
+                               On="{Binding BluetoothEnabled, Mode=TwoWay}" />
+                <!-- Only the switch toggles it: a row that can't be selected has no tap recognizer
+                     to take the click from the switch (it did on macOS). -->
+                <tv:SwitchCell Title="Location Services"
+                               AutomationId="LocationCell"
+                               IsSelectable="False"
+                               On="True" />
+                <tv:CheckboxCell Title="Accept Terms"
+                                  Description="You must accept the terms to continue"
+                                  Checked="{Binding TermsAccepted, Mode=TwoWay}" />
+                <tv:SimpleCheckCell Title="Dark Mode"
+                                     Checked="{Binding DarkMode, Mode=TwoWay}" />
+            </tv:TableSection>
+
+            <tv:TableSection Title="Labels and Commands">
+                <tv:LabelCell Title="Version"
+                               ValueText="1.0.0" />
+                <tv:LabelCell Title="Build"
+                               ValueText="2024.01.15"
+                               Description="Latest stable release" />
+                <tv:CommandCell Title="About"
+                                 ValueText="Learn more"
+                                 Command="{Binding AboutCommand}" />
+                <tv:CommandCell Title="Privacy Policy"
+                                 Command="{Binding PrivacyCommand}" />
+            </tv:TableSection>
+
+            <tv:TableSection Title="Text Input">
+                <tv:EntryCell Title="Username"
+                               ValueText="{Binding Username, Mode=TwoWay}"
+                               Placeholder="Enter your name" />
+                <tv:EntryCell Title="Password"
+                               ValueText="{Binding Password, Mode=TwoWay}"
+                               Placeholder="Enter password"
+                               IsPassword="True" />
+                <tv:EntryCell Title="Email"
+                               ValueText="{Binding Email, Mode=TwoWay}"
+                               Placeholder="user@example.com"
+                               Keyboard="Email"
+                               IsAutoCompleteEnabled="False" />
+            </tv:TableSection>
+
+            <!-- Masks + a keyboard accessory bar, shared with TextEntry. FieldGroup keeps prev/next
+                 inside this section rather than walking the whole page. -->
+            <tv:TableSection Title="Masked Input">
+                <tv:EntryCell Title="Phone"
+                               AutomationId="PhoneCell"
+                               Mask="(###) ###-####"
+                               ValueText="{Binding Phone, Mode=TwoWay}"
+                               Placeholder="(555) 123-4567"
+                               FieldGroup="masked"
+                               AccessoryPreset="NavigationAndDone" />
+                <tv:EntryCell Title="Card"
+                               Mask="#### #### #### ####"
+                               ValueText="{Binding CardNumber, Mode=TwoWay}"
+                               Placeholder="1234 5678 9012 3456"
+                               FieldGroup="masked"
+                               AccessoryPreset="NavigationAndDone" />
+                <tv:EntryCell Title="Expiry"
+                               AutomationId="ExpiryCell"
+                               Mask="##/####"
+                               ValueText="{Binding Expiry, Mode=TwoWay}"
+                               Placeholder="MM/YYYY"
+                               FieldGroup="masked"
+                               AccessoryPreset="NavigationAndDone" />
+            </tv:TableSection>
+
+            <tv:TableSection Title="Theme" tv:RadioCell.SelectedValue="{Binding SelectedTheme, Mode=TwoWay}">
+                <tv:RadioCell Title="Light" Value="Light" />
+                <tv:RadioCell Title="Dark" Value="Dark" />
+                <tv:RadioCell Title="System" Value="System" />
+            </tv:TableSection>
+
+            <tv:TableSection Title="Pickers">
+                <tv:NumberPickerCell Title="Font Size"
+                                      AutomationId="FontSizeCell"
+                                      Number="{Binding FontSizeValue, Mode=TwoWay}"
+                                      Min="8" Max="72" Unit="pt" />
+                <tv:TimePickerCell Title="Alarm"
+                                    Time="{Binding AlarmTime, Mode=TwoWay}" />
+                <tv:DatePickerCell Title="Birthday"
+                                    Date="{Binding BirthDate, Mode=TwoWay}" />
+                <tv:DurationPickerCell Title="Session Length"
+                                        Duration="{Binding SessionLength, Mode=TwoWay}"
+                                        MaxDuration="4:00:00" />
+            </tv:TableSection>
+
+            <tv:TableSection Title="Actions">
+                <tv:ButtonCell Title="Reset All Settings"
+                                Command="{Binding ResetCommand}" />
+            </tv:TableSection>
+        </tv:TableRoot>
+    </tv:TableView>
+
+</ContentPage>

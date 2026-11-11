@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<shiny:ShinyContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:Sample.Features.SignaturePad"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             x:Class="Sample.Features.SignaturePad.SignaturePadPage"
+             x:DataType="local:SignaturePadViewModel"
+             Title="Signature Pad"
+             AutomationId="SignaturePadPage">
+  <shiny:ShinyContentPage.PageContent>
+    <ScrollView>
+        <VerticalStackLayout Padding="30,0" Spacing="20">
+            <Label Text="Signature Pad Demo"
+                   FontSize="28"
+                   FontAttributes="Bold"
+                   HorizontalTextAlignment="Center"
+                   Margin="0,20,0,0" />
+
+            <Label Text="Capture a signature using the floating panel. The Sign button is disabled until you draw something."
+                   FontSize="14"
+                   HorizontalTextAlignment="Center"
+                   TextColor="Gray" />
+
+            <Label AutomationId="SignatureStatusLabel" Text="{Binding StatusMessage}"
+                   FontSize="16"
+                   HorizontalTextAlignment="Center"
+                   TextColor="Gray" />
+
+            <BoxView HeightRequest="1" Color="LightGray" Margin="0,10" />
+
+            <Button AutomationId="CaptureSignatureButton" Text="Capture Signature"
+                    Command="{Binding OpenSignatureCommand}" />
+
+            <Button AutomationId="ClearSignatureButton" Text="Clear Signature"
+                    BackgroundColor="#EF4444"
+                    TextColor="White"
+                    Command="{Binding ClearSignatureCommand}"
+                    IsVisible="{Binding HasSignature}" />
+
+            <Border StrokeShape="RoundRectangle 12"
+                    Stroke="LightGray"
+                    StrokeThickness="1"
+                    Padding="10"
+                    IsVisible="{Binding HasSignature}">
+                <Image Source="{Binding SignatureImage}"
+                       HeightRequest="150"
+                       Aspect="AspectFit" />
+            </Border>
+        </VerticalStackLayout>
+    </ScrollView>
+  </shiny:ShinyContentPage.PageContent>
+
+  <shiny:ShinyContentPage.Panels>
+    <shiny:SignaturePad AutomationId="SignaturePanel" IsOpen="{Binding IsSignatureOpen}"
+                        StrokeColor="Black"
+                        SignatureBackgroundColor="#F8F8F8"
+                        StrokeWidth="3"
+                        SignButtonColor="#6C63FF"
+                        CancelButtonColor="#94A3B8"
+                        SignCommand="{Binding HandleSignedCommand}"
+                        CancelCommand="{Binding HandleCancelledCommand}" />
+  </shiny:ShinyContentPage.Panels>
+</shiny:ShinyContentPage>
