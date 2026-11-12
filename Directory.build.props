@@ -1,11 +1,8 @@
 <Project>
     <PropertyGroup>
         <BaseTargetFramework>net10.0</BaseTargetFramework>
-        <!-- One MAUI version for every backend and sample. -->
         <MauiVersion>10.0.120</MauiVersion>
-        <!-- The Shiny controls the Shiny.Maui.Controls.*.Web backends and the web sample build against. -->
         <ShinyControlsVersion>2.5.0-beta-0002</ShinyControlsVersion>
-        <!-- SkiaSharp for Platform.Maui.Web.SkiaSharp (managed, MAUI views and the WebAssembly native library). -->
         <SkiaSharpVersion>4.151.1</SkiaSharpVersion>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
@@ -23,8 +20,6 @@
         <PackageVersion>$(PlatformsPackageVersion)</PackageVersion>
         <TvOSPackageVersion>$(PlatformsPackageVersion)</TvOSPackageVersion>
         <WebPackageVersion>$(PlatformsPackageVersion)</WebPackageVersion>
-        <!-- The archived macOS backend's last release (archive/macos is not built). -->
-<!--        <MacOSPackageVersion>0.3.0</MacOSPackageVersion>-->
         <Description>MAUI Platforms</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <Copyright>Copyright (c) $([System.DateTime]::Now.Year) Allan Ritchie</Copyright>
@@ -45,7 +40,6 @@
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-        <!-- Every package lands in one folder for CI to push and attach to releases. -->
         <PackageOutputPath>$(MSBuildThisFileDirectory)artifacts/nuget</PackageOutputPath>
         <PublishRepositoryUrl>True</PublishRepositoryUrl>
         <EmbedUntrackedSources>True</EmbedUntrackedSources>
