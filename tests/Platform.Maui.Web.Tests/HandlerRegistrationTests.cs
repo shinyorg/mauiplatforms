@@ -5,6 +5,8 @@ using Microsoft.Maui.Platform.Web.Hosting;
 
 namespace Microsoft.Maui.Platform.Web.Tests;
 
+// Building a MAUI app writes to its shared static mappers, so the registration tests never run in parallel.
+[Collection("MAUI app")]
 public class HandlerRegistrationTests
 {
 	sealed class TestApp : Application;

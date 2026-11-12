@@ -7,6 +7,7 @@ using SkiaSharp.Views.Maui.Controls;
 
 namespace Microsoft.Maui.Platform.Web.Tests;
 
+[Collection("MAUI app")]
 public class SkiaSharpRegistrationTests
 {
 	sealed class TestApp : Application;

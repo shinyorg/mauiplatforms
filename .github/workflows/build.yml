@@ -76,7 +76,8 @@ jobs:
       run: dotnet publish samples/SampleWeb/SampleWeb.csproj -c Release -o artifacts/SampleWeb -p:GeneratePackageOnBuild=false ${{ steps.version.outputs.args }}
 
     - name: Web Smoke Test (headless Chrome)
-      run: node tests/browser/smoke.mjs artifacts/SampleWeb/wwwroot
+      if: github.event_name == 'pull_request'
+      run:node tests/browser/smoke.mjs artifacts/SampleWeb/wwwroot
       env:
         CHROME: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
 

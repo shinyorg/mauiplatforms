@@ -271,7 +271,7 @@ public class CollectionViewHandler : WebElementHandler<ItemsView, WebElement>
 	{
 		var frame = ArrangedFrame;
 		if (frame.Width > 0 || frame.Height > 0)
-			UpdateViewport(frame.Width, frame.Height);
+			UpdateViewport(frame);
 	}
 
 	// ---- property mapping ---------------------------------------------------
@@ -1062,15 +1062,7 @@ public class CollectionViewHandler : WebElementHandler<ItemsView, WebElement>
 	public override void PlatformArrange(Rect frame)
 	{
 		base.PlatformArrange(frame);
-
-		// A classic scrollbar takes its room from the viewport once the items overflow (overlay scrollbars take
-		// nothing). The extent is only known after a pass, so lay out again if that pass changes the answer;
-		// narrowing only makes the list longer, so it settles.
-		var bar = Dom.ScrollbarThickness(PlatformView.Js);
-		var viewport = Viewport(frame, bar);
-		UpdateViewport(viewport.Width, viewport.Height);
-		if (Viewport(frame, bar) is var settled && settled != viewport)
-			UpdateViewport(settled.Width, settled.Height);
+		UpdateViewport(frame);
 
 		if (_pendingScrollWaitsForLayout && _pendingScroll is { } pending)
 		{
@@ -1078,6 +1070,21 @@ public class CollectionViewHandler : WebElementHandler<ItemsView, WebElement>
 			_pendingScroll = null;
 			ScrollToEntry(pending.Entry, pending.Position, pending.Animated);
 		}
+	}
+
+	/// <summary>
+	/// Lays out the entries for the viewport <paramref name="frame"/> leaves. A classic scrollbar takes its room from
+	/// the viewport once the items overflow (overlay scrollbars take nothing), on scrolls as well as layout passes.
+	/// The extent is only known after a pass, so lay out again if that pass changes the answer; narrowing only makes
+	/// the list longer, so it settles.
+	/// </summary>
+	void UpdateViewport(Rect frame)
+	{
+		var bar = Dom.ScrollbarThickness(PlatformView.Js);
+		var viewport = Viewport(frame, bar);
+		UpdateViewport(viewport.Width, viewport.Height);
+		if (Viewport(frame, bar) is var settled && settled != viewport)
+			UpdateViewport(settled.Width, settled.Height);
 	}
 
 	/// <summary>The frame less a classic scrollbar along the scrolling axis, once the items overflow it.</summary>
