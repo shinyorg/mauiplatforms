@@ -45,8 +45,12 @@ public class ScrollViewHandler : WebElementHandler<IScrollView, WebElement>
 
 	public override Size GetDesiredSize(double widthConstraint, double heightConstraint)
 	{
-		var content = VirtualView.CrossPlatformMeasure(widthConstraint, heightConstraint);
 		var view = VirtualView;
+		// Unbounded along the scrolling axes, as ScrollView.CrossPlatformMeasure does (Neither measures both ways).
+		var orientation = view.Orientation;
+		var content = MeasureContent(view,
+			orientation is ScrollOrientation.Vertical ? widthConstraint : double.PositiveInfinity,
+			orientation is ScrollOrientation.Horizontal ? heightConstraint : double.PositiveInfinity);
 		return new Size(
 			LayoutManager.ResolveConstraints(widthConstraint, view.Width, Math.Min(content.Width, widthConstraint), view.MinimumWidth, view.MaximumWidth),
 			LayoutManager.ResolveConstraints(heightConstraint, view.Height, Math.Min(content.Height, heightConstraint), view.MinimumHeight, view.MaximumHeight));
@@ -58,15 +62,48 @@ public class ScrollViewHandler : WebElementHandler<IScrollView, WebElement>
 
 		// Measure the content against the viewport, unbounded along the scrolling axes,
 		// then give it at least the viewport so Fill options still stretch.
-		var orientation = VirtualView.Orientation;
+		var view = VirtualView;
+		var orientation = view.Orientation;
 		var horizontal = orientation is ScrollOrientation.Horizontal or ScrollOrientation.Both;
 		var vertical = orientation is ScrollOrientation.Vertical or ScrollOrientation.Both;
-		var desired = VirtualView.CrossPlatformMeasure(
-			horizontal ? double.PositiveInfinity : frame.Width,
-			vertical ? double.PositiveInfinity : frame.Height);
-		VirtualView.CrossPlatformArrange(new Rect(0, 0,
-			horizontal ? Math.Max(frame.Width, desired.Width) : frame.Width,
-			vertical ? Math.Max(frame.Height, desired.Height) : frame.Height));
+
+		// The viewport is what a classic scrollbar leaves of the frame (overlay scrollbars take nothing): always
+		// for ScrollBarVisibility.Always, otherwise only once the content overflows that way.
+		var bar = Dom.ScrollbarThickness(PlatformView.Js);
+		var barRight = vertical && bar > 0 && view.VerticalScrollBarVisibility == ScrollBarVisibility.Always;
+		var barBottom = horizontal && bar > 0 && view.HorizontalScrollBarVisibility == ScrollBarVisibility.Always;
+		var width = frame.Width - (barRight ? bar : 0);
+		var height = frame.Height - (barBottom ? bar : 0);
+		var desired = MeasureContent(view, horizontal ? double.PositiveInfinity : width, vertical ? double.PositiveInfinity : height);
+		if (bar > 0 && view.VerticalScrollBarVisibility != ScrollBarVisibility.Never && view.HorizontalScrollBarVisibility != ScrollBarVisibility.Never)
+		{
+			var overflowsDown = vertical && !barRight && desired.Height > height;
+			var overflowsAcross = horizontal && !barBottom && desired.Width > width;
+			if (overflowsDown || overflowsAcross)
+			{
+				width -= overflowsDown ? bar : 0;
+				height -= overflowsAcross ? bar : 0;
+				desired = MeasureContent(view, horizontal ? double.PositiveInfinity : width, vertical ? double.PositiveInfinity : height);
+			}
+		}
+
+		view.CrossPlatformArrange(new Rect(0, 0,
+			horizontal ? Math.Max(width, desired.Width) : width,
+			vertical ? Math.Max(height, desired.Height) : height));
+	}
+
+	/// <summary>
+	/// The content measured inside the scroll view's padding, plus the padding, as MAUI's own ScrollView handlers
+	/// do (ScrollView.CrossPlatformMeasure leaves the padding to the handler). ScrollView.CrossPlatformArrange
+	/// then insets the content by the padding, so it fits the viewport instead of overhanging it.
+	/// </summary>
+	static Size MeasureContent(IScrollView view, double width, double height)
+	{
+		var padding = view.Padding;
+		var size = view.PresentedContent is { } content
+			? content.Measure(width - padding.HorizontalThickness, height - padding.VerticalThickness)
+			: Size.Zero;
+		return new Size(size.Width + padding.HorizontalThickness, size.Height + padding.VerticalThickness);
 	}
 
 	public static void MapContent(ScrollViewHandler handler, IScrollView scrollView)

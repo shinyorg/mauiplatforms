@@ -321,6 +321,26 @@ export function createObjectUrl(bytes, mime) {
 
 export function revokeObjectUrl(url) { if (url && url.startsWith('blob:')) URL.revokeObjectURL(url); }
 
+// The room a classic scrollbar takes from an element's content box: 0 for overlay scrollbars (macOS
+// trackpads, phones) and for hidden ones. Measured on a probe with the element's classes, so app styles such as
+// scrollbar-width: thin count; cached per class list until the window resizes (zoom changes it).
+const scrollbarThicknesses = new Map();
+addEventListener('resize', () => scrollbarThicknesses.clear());
+export function scrollbarThickness(el) {
+    const key = el.className;
+    let size = scrollbarThicknesses.get(key);
+    if (size === undefined) {
+        const probe = document.createElement('div');
+        probe.className = key;
+        probe.style.cssText = 'position:absolute;left:-10000px;top:-10000px;width:100px;height:100px;overflow:scroll;visibility:hidden';
+        document.body.appendChild(probe);
+        size = probe.offsetWidth - probe.clientWidth;
+        probe.remove();
+        scrollbarThicknesses.set(key, size);
+    }
+    return size;
+}
+
 export function naturalSize(img) { return [img.naturalWidth || 0, img.naturalHeight || 0]; }
 
 // Rasterises a font glyph (FontImageSource) into a PNG data URL at device resolution.

@@ -211,6 +211,10 @@ internal static partial class Dom
 	[JSImport("scrollTo", Module)]
 	public static partial void ScrollTo(JSObject el, double x, double y, bool smooth);
 
+	/// <summary>Width a classic scrollbar takes from <paramref name="el"/>'s content box; 0 for overlay or hidden scrollbars.</summary>
+	[JSImport("scrollbarThickness", Module)]
+	public static partial double ScrollbarThickness(JSObject el);
+
 	[JSImport("getScrollExtent", Module)]
 	[return: JSMarshalAs<JSType.Array<JSType.Number>>]
 	public static partial double[] GetScrollExtent(JSObject el);

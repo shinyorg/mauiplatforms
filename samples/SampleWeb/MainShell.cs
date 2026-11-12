@@ -32,6 +32,7 @@ public class MainShell : FlyoutPage
 		new("🔄", "Transforms & Effects", () => new TransformsPage()),
 		new("💬", "Alerts & Dialogs", () => new AlertsPage()),
 		new("📋", "Collection View", () => new CollectionViewPage()),
+		new("📜", "Scrolling", () => new ScrollingPage()),
 		new("✏️", "Text Input Styling", () => new TextInputStylingPage()),
 		new("♻️", "Refresh & Swipe", () => new RefreshSwipePage()),
 		new("🎠", "Carousel & Indicators", () => new CarouselIndicatorPage()),
