@@ -126,7 +126,7 @@ export function expectBrokenImageErrors() {
 /** Every page in the SampleWeb flyout menu, in menu order. */
 export const galleryPages = [
   'Home', 'XAML Runtime', 'Image / Font / Icon', 'Image Showcase', 'Controls', 'Pickers & Search', 'Layouts',
-  'Flex & Absolute', 'FormattedText', 'Shapes', 'Transforms & Effects', 'Alerts & Dialogs', 'Collection View',
+  'Flex & Absolute', 'FormattedText', 'Shapes', 'Transforms & Effects', 'Alerts & Dialogs', 'Collection View', 'Scrolling',
   'Text Input Styling', 'Refresh & Swipe', 'Carousel & Indicators', 'Graphics (Canvas)', 'Graphics Features', 'SkiaSharp',
   'Device & App Info', 'Battery & Network', 'Clipboard & Storage', 'Communication', 'Launch & Share',
   'Location, Sensors & Speech', 'WebView', 'Navigation', 'TabbedPage', 'FlyoutPage', 'Shell Navigation',

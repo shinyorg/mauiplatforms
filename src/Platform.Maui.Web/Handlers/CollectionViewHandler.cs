@@ -1036,7 +1036,15 @@ public class CollectionViewHandler : WebElementHandler<ItemsView, WebElement>
 	public override void PlatformArrange(Rect frame)
 	{
 		base.PlatformArrange(frame);
-		UpdateViewport(frame.Width, frame.Height);
+
+		// A classic scrollbar takes its room from the viewport once the items overflow (overlay scrollbars take
+		// nothing). The extent is only known after a pass, so lay out again if that pass changes the answer;
+		// narrowing only makes the list longer, so it settles.
+		var bar = Dom.ScrollbarThickness(PlatformView.Js);
+		var viewport = Viewport(frame, bar);
+		UpdateViewport(viewport.Width, viewport.Height);
+		if (Viewport(frame, bar) is var settled && settled != viewport)
+			UpdateViewport(settled.Width, settled.Height);
 
 		if (_pendingScrollWaitsForLayout && _pendingScroll is { } pending)
 		{
@@ -1044,6 +1052,16 @@ public class CollectionViewHandler : WebElementHandler<ItemsView, WebElement>
 			_pendingScroll = null;
 			ScrollToEntry(pending.Entry, pending.Position, pending.Animated);
 		}
+	}
+
+	/// <summary>The frame less a classic scrollbar along the scrolling axis, once the items overflow it.</summary>
+	(double Width, double Height) Viewport(Rect frame, double bar)
+	{
+		if (bar <= 0)
+			return (frame.Width, frame.Height);
+		return IsVertical
+			? (_total > frame.Height ? Math.Max(0, frame.Width - bar) : frame.Width, frame.Height)
+			: (frame.Width, _total > frame.Width ? Math.Max(0, frame.Height - bar) : frame.Height);
 	}
 
 	/// <summary>
