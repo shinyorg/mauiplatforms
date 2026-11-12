@@ -1,0 +1,26 @@
+data: {"type":"RUN_STARTED","threadId":"thread-1","runId":"run-backend-state","protocolVersion":"1.0"}
+
+data: {"type":"TOOL_CALL_START","toolCallId":"call-be-1","toolCallName":"update_cart","parentMessageId":"m1","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"functionCall","name":"update_cart","arguments":{},"informationalOnly":false,"callId":"call-be-1","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TOOL_CALL_ARGS","toolCallId":"call-be-1","delta":"{}","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"functionCall","name":"update_cart","arguments":{},"informationalOnly":false,"callId":"call-be-1","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TOOL_CALL_END","toolCallId":"call-be-1","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"functionCall","name":"update_cart","arguments":{},"informationalOnly":false,"callId":"call-be-1","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TOOL_CALL_RESULT","messageId":"call-be-1","toolCallId":"call-be-1","content":"{\n  \u0022cart\u0022: {\n    \u0022items\u0022: [\n      {\n        \u0022sku\u0022: \u0022A1\u0022,\n        \u0022qty\u0022: 2\n      }\n    ],\n    \u0022total\u0022: 19.98\n  }\n}","rawEvent":{"authorName":null,"role":"tool","contents":[{"$type":"functionResult","result":{"cart":{"items":[{"sku":"A1","qty":2}],"total":19.98}},"callId":"call-be-1","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":"1bbd8ea69a4242d385ebdbd3d951fdd6","messageId":"1bbd8ea69a4242d385ebdbd3d951fdd6","conversationId":null,"createdAt":"2026-11-12T14:57:31.890639\u002B00:00","finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"STATE_SNAPSHOT","snapshot":{"cart":{"items":[{"sku":"A1","qty":2}],"total":19.98}}}
+
+data: {"type":"TEXT_MESSAGE_START","messageId":"m3","role":"assistant","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"Done ","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m3","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_CONTENT","messageId":"m3","delta":"Done ","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"Done ","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m3","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_CONTENT","messageId":"m3","delta":"\u2014 ","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"\u2014 ","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m3","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_CONTENT","messageId":"m3","delta":"that\u0027s ","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"that\u0027s ","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m3","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_CONTENT","messageId":"m3","delta":"updated.","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"updated.","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m3","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_END","messageId":"m3"}
+
+data: {"type":"RUN_FINISHED","threadId":"thread-1","runId":"run-backend-state","outcome":{"type":"success"}}
+

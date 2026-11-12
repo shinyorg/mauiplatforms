@@ -2,7 +2,7 @@
     <PropertyGroup>
         <BaseTargetFramework>net10.0</BaseTargetFramework>
         <MauiVersion>10.0.120</MauiVersion>
-        <ShinyControlsVersion>2.5.0-beta-0002</ShinyControlsVersion>
+        <ShinyControlsVersion>2.5.0-beta-0008</ShinyControlsVersion>
         <SkiaSharpVersion>4.151.1</SkiaSharpVersion>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>

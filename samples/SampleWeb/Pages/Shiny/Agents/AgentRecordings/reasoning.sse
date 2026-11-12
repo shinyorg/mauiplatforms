@@ -1,0 +1,38 @@
+data: {"type":"RUN_STARTED","threadId":"thread-1","runId":"run-reasoning","protocolVersion":"1.0"}
+
+data: {"type":"REASONING_START","messageId":"msg_zrEW4VJWil46Cd7BuY0m0XdX"}
+
+data: {"type":"REASONING_MESSAGE_START","messageId":"msg_zrEW4VJWil46Cd7BuY0m0XdX","role":"reasoning"}
+
+data: {"type":"REASONING_MESSAGE_CONTENT","messageId":"msg_zrEW4VJWil46Cd7BuY0m0XdX","delta":"The "}
+
+data: {"type":"REASONING_MESSAGE_CONTENT","messageId":"msg_zrEW4VJWil46Cd7BuY0m0XdX","delta":"user "}
+
+data: {"type":"REASONING_MESSAGE_CONTENT","messageId":"msg_zrEW4VJWil46Cd7BuY0m0XdX","delta":"wants "}
+
+data: {"type":"REASONING_MESSAGE_CONTENT","messageId":"msg_zrEW4VJWil46Cd7BuY0m0XdX","delta":"a "}
+
+data: {"type":"REASONING_MESSAGE_CONTENT","messageId":"msg_zrEW4VJWil46Cd7BuY0m0XdX","delta":"greeting. "}
+
+data: {"type":"REASONING_MESSAGE_CONTENT","messageId":"msg_zrEW4VJWil46Cd7BuY0m0XdX","delta":"Keep "}
+
+data: {"type":"REASONING_MESSAGE_CONTENT","messageId":"msg_zrEW4VJWil46Cd7BuY0m0XdX","delta":"it "}
+
+data: {"type":"REASONING_MESSAGE_CONTENT","messageId":"msg_zrEW4VJWil46Cd7BuY0m0XdX","delta":"short."}
+
+data: {"type":"REASONING_ENCRYPTED_VALUE","subtype":"message","entityId":"msg_zrEW4VJWil46Cd7BuY0m0XdX","encryptedValue":"ENCRYPTED-BLOB","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"reasoning","text":"","protectedData":"ENCRYPTED-BLOB","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"REASONING_MESSAGE_END","messageId":"msg_zrEW4VJWil46Cd7BuY0m0XdX"}
+
+data: {"type":"REASONING_END","messageId":"msg_zrEW4VJWil46Cd7BuY0m0XdX"}
+
+data: {"type":"TEXT_MESSAGE_START","messageId":"m1","role":"assistant","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"Hello ","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_CONTENT","messageId":"m1","delta":"Hello ","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"Hello ","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_CONTENT","messageId":"m1","delta":"there!","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"there!","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_END","messageId":"m1"}
+
+data: {"type":"RUN_FINISHED","threadId":"thread-1","runId":"run-reasoning","outcome":{"type":"success"}}
+

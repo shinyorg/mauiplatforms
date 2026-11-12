@@ -17,6 +17,9 @@
         <!-- AOT-compile to WebAssembly on publish (needs the wasm-tools workload). Debug/dotnet run
              still uses the interpreter; code AOT can't handle falls back to it at runtime. -->
         <RunAOTCompilation>true</RunAOTCompilation>
+        <!-- Trimmed WebAssembly apps turn reflection-based System.Text.Json off by default (Blazor turns
+             it back on). The agent demo's scripted session serializes anonymous event objects with it. -->
+        <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
     </PropertyGroup>
 
     <!-- The gallery pages (ported from the maui-labs GTK4 sample) use string-path bindings and
@@ -26,6 +29,14 @@
     </PropertyGroup>
     <ItemGroup>
         <TrimmerRootAssembly Include="SampleWeb" />
+        <!-- AGUI.Server's JSON options reach AGUI.Abstractions' interrupt content types by reflection;
+             trimmed, every "Your key" run fails. The controls sample roots it for the same reason. -->
+        <TrimmerRootAssembly Include="AGUI.Abstractions" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <!-- The agent page's "Recordings" source: AGUI.Server streams copied from the controls repo's tests. -->
+        <EmbeddedResource Include="Pages\Shiny\Agents\AgentRecordings\*.sse" LogicalName="AgentRecordings/%(Filename)%(Extension)" />
     </ItemGroup>
 
     <ItemGroup>
@@ -51,6 +62,15 @@
         <PackageReference Include="Shiny.Maui.Controls.Diagram" Version="$(ShinyControlsVersion)" />
         <PackageReference Include="Shiny.Maui.Controls.MermaidDiagrams" Version="$(ShinyControlsVersion)" />
         <PackageReference Include="Shiny.Maui.Controls.Keyframe" Version="$(ShinyControlsVersion)" />
+        <!-- AgentView and A2UISurfaceView (AG-UI / A2UI), and the Visual-Studio-style DockHostView. -->
+        <PackageReference Include="Shiny.Maui.Controls.Agents" Version="$(ShinyControlsVersion)" />
+        <PackageReference Include="Shiny.Maui.Controls.Desktop" Version="$(ShinyControlsVersion)" />
+        <!-- The agent page's "Endpoint" and "Your key" sources: an AG-UI HTTP client, and AGUI.Server
+             in-process over an OpenAI-compatible IChatClient, as the controls sample uses them. -->
+        <PackageReference Include="AGUI.Client" Version="1.0.1" />
+        <PackageReference Include="AGUI.Server" Version="1.0.1" />
+        <PackageReference Include="Microsoft.Extensions.AI" Version="10.8.3" />
+        <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.8.1" />
         <!-- The Shiny pages are copied from the controls sample, whose view models use the MVVM toolkit. -->
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     </ItemGroup>

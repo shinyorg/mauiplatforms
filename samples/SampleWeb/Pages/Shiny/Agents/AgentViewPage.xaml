@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             x:Class="Sample.Features.Agents.AgentViewPage"
+             Title="Agent View"
+             AutomationId="AgentViewPage">
+
+    <!--
+        The AgentView fills its row and owns the vertical scroll - nothing here wraps it in a
+        ScrollView. The reading list beside it (below it on a phone) is bound to the conversation's
+        shared state: ask the agent to "track my reading list" and watch it fill in.
+    -->
+    <Grid RowDefinitions="Auto,Auto,*,Auto" ColumnDefinitions="*,Auto">
+
+        <!--
+            where the agent lives: the scripted demo, recorded AGUI.Server streams, a live AG-UI
+            endpoint, or a real model with your own OpenAI-compatible key (no server)
+        -->
+        <Grid Grid.ColumnSpan="2" Padding="12,8,12,0" ColumnSpacing="8" ColumnDefinitions="*,Auto">
+            <Picker x:Name="SourcePicker"
+                    Title="Agent"
+                    SelectedIndexChanged="OnSourceChanged"
+                    AutomationId="AgentSourcePicker"
+                    SemanticProperties.Description="Where the agent runs">
+                <Picker.ItemsSource>
+                    <x:Array Type="{x:Type x:String}">
+                        <x:String>Demo</x:String>
+                        <x:String>Recordings</x:String>
+                        <x:String>Endpoint</x:String>
+                        <x:String>Your key</x:String>
+                    </x:Array>
+                </Picker.ItemsSource>
+            </Picker>
+            <Button Grid.Column="1" Text="Clear" Clicked="OnClear" AutomationId="AgentClearButton" />
+        </Grid>
+
+        <!-- the selected source's options -->
+        <VerticalStackLayout Grid.Row="1" Grid.ColumnSpan="2" Padding="12,4,12,8" Spacing="6">
+
+            <!-- The controls sample's "custom sub-agent template" switch is left out: AgentView.SubagentTemplate
+                 is newer than the published Shiny.Maui.Controls.Agents package. -->
+            <Label x:Name="DemoOptions"
+                   FontSize="13"
+                   Text="A scripted agent: every scenario works offline. Tap a suggestion below." />
+            <Label x:Name="RecordingsOptions"
+                   IsVisible="False"
+                   FontSize="13"
+                   Text="Recorded AGUI.Server streams, played back byte for byte. Tap a recording below." />
+
+            <Grid x:Name="EndpointOptions" IsVisible="False" ColumnSpacing="8" ColumnDefinitions="*,Auto">
+                <Entry x:Name="EndpointEntry"
+                       Placeholder="http://localhost:5299/agent"
+                       Keyboard="Url"
+                       AutomationId="AgentEndpointEntry"
+                       SemanticProperties.Description="AG-UI endpoint URL" />
+                <Button Grid.Column="1" Text="Connect" Clicked="OnConnectEndpoint" AutomationId="AgentConnectButton" />
+            </Grid>
+
+            <!-- the key stays in memory only: it goes to the endpoint and nowhere else -->
+            <VerticalStackLayout x:Name="KeyOptions" IsVisible="False" Spacing="6">
+                <Grid ColumnSpacing="8" ColumnDefinitions="2*,*">
+                    <Entry x:Name="BaseUrlEntry"
+                           Text="https://api.openai.com/v1"
+                           Keyboard="Url"
+                           AutomationId="AgentBaseUrlEntry"
+                           SemanticProperties.Description="OpenAI-compatible base URL" />
+                    <Entry x:Name="ModelEntry"
+                           Grid.Column="1"
+                           Text="gpt-4.1-mini"
+                           AutomationId="AgentModelEntry"
+                           SemanticProperties.Description="Model" />
+                </Grid>
+                <Grid ColumnSpacing="8" ColumnDefinitions="*,Auto">
+                    <Entry x:Name="ApiKeyEntry"
+                           IsPassword="True"
+                           Placeholder="API key"
+                           AutomationId="AgentApiKeyEntry"
+                           SemanticProperties.Description="API key, kept in memory only" />
+                    <Button Grid.Column="1" Text="Connect" Clicked="OnConnectKey" AutomationId="AgentKeyConnectButton" />
+                </Grid>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+
+        <shiny:AgentView x:Name="Agent"
+                         Grid.Row="2"
+                         ShowReasoning="Collapsed"
+                         PlaceholderText="Ask the agent…"
+                         AutomationId="SampleAgentView" />
+
+        <!-- shared state panel: the side column on a wide window, the bottom row on a phone -->
+        <Border x:Name="StatePanel"
+                Grid.Row="2" Grid.Column="1"
+                WidthRequest="260"
+                Padding="14"
+                Margin="0,0,12,12"
+                StrokeShape="RoundRectangle 12"
+                AutomationId="ReadingListPanel">
+            <VerticalStackLayout Spacing="8">
+                <Label Text="Reading list" FontAttributes="Bold" FontSize="16" />
+                <Label x:Name="GoalLabel" FontSize="13" Text="Shared state - ask the agent to “track my reading list”." AutomationId="ReadingListGoal" />
+                <VerticalStackLayout x:Name="BooksStack" Spacing="4" AutomationId="ReadingListBooks" />
+            </VerticalStackLayout>
+        </Border>
+    </Grid>
+
+</ContentPage>

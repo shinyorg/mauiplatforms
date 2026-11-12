@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:shiny="http://shiny.net/maui/controls"
+             x:Class="Sample.Features.Agents.A2UIGalleryPage"
+             Title="A2UI Gallery"
+             AutomationId="A2UIGalleryPage">
+
+    <!--
+        A standalone A2UISurfaceView: no agent, just A2UI messages applied to a surface host. The view
+        fills the middle row and owns the vertical scroll, so the page doesn't add a ScrollView.
+    -->
+    <Grid RowDefinitions="Auto,*,Auto">
+
+        <HorizontalStackLayout Padding="12,8" Spacing="8">
+            <Button Text="Dashboard" Clicked="OnDashboard" AutomationId="GalleryDashboardButton" />
+            <Button Text="Form" Clicked="OnForm" AutomationId="GalleryFormButton" />
+            <Button Text="Kitchen sink" Clicked="OnKitchenSink" AutomationId="GalleryKitchenSinkButton" />
+        </HorizontalStackLayout>
+
+        <shiny:A2UISurfaceView x:Name="SurfaceView"
+                               Grid.Row="1"
+                               Margin="16,0"
+                               AutomationId="SampleA2UISurfaceView" />
+
+        <!-- what the surface sends back: actions, errors and function calls -->
+        <Border Grid.Row="2" Padding="12,8" Margin="12" StrokeShape="RoundRectangle 10">
+            <VerticalStackLayout Spacing="2">
+                <Label Text="Outbound" FontAttributes="Bold" FontSize="13" />
+                <Label x:Name="LogLabel"
+                       FontSize="12"
+                       FontFamily="Menlo"
+                       MaxLines="6"
+                       LineBreakMode="TailTruncation"
+                       Text="Tap a button or a grid row."
+                       AutomationId="GalleryLogLabel" />
+            </VerticalStackLayout>
+        </Border>
+    </Grid>
+
+</ContentPage>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:docking="clr-namespace:Shiny.Maui.Controls.Desktop.Docking;assembly=Shiny.Maui.Controls.Desktop"
+             x:Class="Sample.Features.Docking.DockingPage"
+             Title="Docking"
+             AutomationId="DockingPage">
+    <Grid RowDefinitions="Auto,Auto,*,Auto" Padding="0">
+        <Label Grid.Row="0"
+               Text="Visual-Studio-style docking. Drag tabs between groups (middle merges, edges split, empty space tears off a floating pane); drag the separators to resize."
+               Padding="16,12"
+               FontSize="13"
+               TextColor="Gray" />
+
+        <HorizontalStackLayout Grid.Row="1" Padding="16,0,16,8" Spacing="8">
+            <Button Text="Show Explorer" FontSize="12" Clicked="OnShowExplorer" AutomationId="DockingShowExplorer" />
+            <Button Text="Show Output" FontSize="12" Clicked="OnShowOutput" AutomationId="DockingShowOutput" />
+            <Button Text="Reset" FontSize="12" Clicked="OnReset" AutomationId="DockingReset" />
+            <HorizontalStackLayout Spacing="4" VerticalOptions="Center">
+                <CheckBox x:Name="LockCheck" CheckedChanged="OnLockChanged" AutomationId="DockingLock" />
+                <Label Text="Lock" FontSize="12" VerticalOptions="Center" />
+            </HorizontalStackLayout>
+        </HorizontalStackLayout>
+
+        <docking:DockHostView x:Name="Dock" Grid.Row="2" AutomationId="DockingHost" />
+
+        <Label x:Name="Status"
+               AutomationId="DockingStatus"
+               Grid.Row="3"
+               Padding="16,8"
+               FontSize="11"
+               TextColor="Gray"
+               Text="Tap tabs to switch panels." />
+    </Grid>
+</ContentPage>

@@ -19,6 +19,14 @@ public static class MauiProgram
 			.UseShinyControls()
 			.UseShinyCameraWeb()
 			.UseShinyMediaElementWeb()
+			// Docking, as the controls sample registers its panels. The tray, hot keys and notch
+			// window it also adds report themselves unsupported in the browser.
+			.UseShinyDesktop(cfg => cfg
+				.AddDockPanel<Sample.Features.Docking.SolutionExplorerPanel>("solution-explorer", "Solution Explorer", "📁")
+				.AddDockPanel<Sample.Features.Docking.OutputPanel>("output", "Output", "🖥️")
+				.AddDockPanel<Sample.Features.Docking.PropertiesPanel>("properties", "Properties", "🔧")
+				.AddDockPanel<Sample.Features.Docking.EditorPanel>("editor", icon: "📄")
+			)
 			// The Office editors draw on SKCanvasView. UseShinyOffice registers SkiaSharp's own handlers,
 			// so UseSkiaSharpWeb comes after it: the last registration for a view type wins.
 			.UseShinyOffice()

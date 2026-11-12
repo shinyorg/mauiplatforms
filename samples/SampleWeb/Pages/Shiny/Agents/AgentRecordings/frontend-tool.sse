@@ -1,0 +1,16 @@
+data: {"type":"RUN_STARTED","threadId":"thread-1","runId":"run-frontend-tool","protocolVersion":"1.0"}
+
+data: {"type":"TEXT_MESSAGE_START","messageId":"m1","role":"assistant","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"Let me ask you for dates.","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_CONTENT","messageId":"m1","delta":"Let me ask you for dates.","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"Let me ask you for dates.","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_END","messageId":"m1","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"functionCall","name":"pick_date_range","arguments":{"min":"2026-11-01","max":"2026-12-31"},"informationalOnly":false,"callId":"call-fe-1","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TOOL_CALL_START","toolCallId":"call-fe-1","toolCallName":"pick_date_range","parentMessageId":"m1","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"functionCall","name":"pick_date_range","arguments":{"min":"2026-11-01","max":"2026-12-31"},"informationalOnly":false,"callId":"call-fe-1","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TOOL_CALL_ARGS","toolCallId":"call-fe-1","delta":"{\u0022min\u0022:\u00222026-11-01\u0022,\u0022max\u0022:\u00222026-12-31\u0022}","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"functionCall","name":"pick_date_range","arguments":{"min":"2026-11-01","max":"2026-12-31"},"informationalOnly":false,"callId":"call-fe-1","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TOOL_CALL_END","toolCallId":"call-fe-1","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"functionCall","name":"pick_date_range","arguments":{"min":"2026-11-01","max":"2026-12-31"},"informationalOnly":false,"callId":"call-fe-1","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"RUN_FINISHED","threadId":"thread-1","runId":"run-frontend-tool","outcome":{"type":"success"}}
+

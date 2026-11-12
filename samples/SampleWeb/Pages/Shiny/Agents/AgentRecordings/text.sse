@@ -1,0 +1,26 @@
+data: {"type":"RUN_STARTED","threadId":"thread-1","runId":"run-text","protocolVersion":"1.0"}
+
+data: {"type":"TEXT_MESSAGE_START","messageId":"m1","role":"assistant","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"Hi! ","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_CONTENT","messageId":"m1","delta":"Hi! ","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"Hi! ","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_CONTENT","messageId":"m1","delta":"**Markdown** ","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"**Markdown** ","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_CONTENT","messageId":"m1","delta":"works, ","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"works, ","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_CONTENT","messageId":"m1","delta":"and ","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"and ","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_CONTENT","messageId":"m1","delta":"so ","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"so ","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_CONTENT","messageId":"m1","delta":"does ","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"does ","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_CONTENT","messageId":"m1","delta":"\u0060code\u0060.\n\n- ","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"\u0060code\u0060.\n\n- ","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_CONTENT","messageId":"m1","delta":"one\n- ","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"one\n- ","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_CONTENT","messageId":"m1","delta":"two","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"two","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_END","messageId":"m1"}
+
+data: {"type":"RUN_FINISHED","threadId":"thread-1","runId":"run-text","outcome":{"type":"success"}}
+

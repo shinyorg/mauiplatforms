@@ -1,0 +1,8 @@
+data: {"type":"RUN_STARTED","threadId":"thread-1","runId":"run-error","protocolVersion":"1.0"}
+
+data: {"type":"TEXT_MESSAGE_START","messageId":"m1","role":"assistant","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"Starting\u2026","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_CONTENT","messageId":"m1","delta":"Starting\u2026","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"Starting\u2026","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"RUN_ERROR","message":"An error occurred while streaming the agent response.","code":"StreamingError"}
+

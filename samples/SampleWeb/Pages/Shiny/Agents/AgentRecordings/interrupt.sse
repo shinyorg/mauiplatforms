@@ -1,0 +1,10 @@
+data: {"type":"RUN_STARTED","threadId":"thread-1","runId":"run-interrupt","protocolVersion":"1.0"}
+
+data: {"type":"TEXT_MESSAGE_START","messageId":"m1","role":"assistant","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"I need approval to place the order.","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_CONTENT","messageId":"m1","delta":"I need approval to place the order.","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"text","text":"I need approval to place the order.","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"TEXT_MESSAGE_END","messageId":"m1","rawEvent":{"authorName":null,"role":"assistant","contents":[{"$type":"interruptRequest","reason":"approval","message":"Place order for $19.98?","responseSchema":{"type":"object","properties":{"approved":{"type":"boolean"}}},"requestId":"int-1","annotations":null,"additionalProperties":null}],"additionalProperties":null,"responseId":null,"messageId":"m1","conversationId":null,"createdAt":null,"finishReason":null,"modelId":null,"continuationToken":null}}
+
+data: {"type":"RUN_FINISHED","threadId":"thread-1","runId":"run-interrupt","outcome":{"type":"interrupt","interrupts":[{"id":"int-1","reason":"approval","message":"Place order for $19.98?","responseSchema":{"type":"object","properties":{"approved":{"type":"boolean"}}}}]}}
+

@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui;
 using Microsoft.Maui.Controls;
+using Sample.Features.Agents;
 using Sample.Features.AnimatedBackgrounds;
 using Sample.Features.Avatars;
 using Sample.Features.Badge;
@@ -15,6 +16,7 @@ using Sample.Features.DataGrid;
 using Sample.Features.Diagram;
 using Sample.Features.Diagrams;
 using Sample.Features.Dialogs;
+using Sample.Features.Docking;
 using Sample.Features.Expanders;
 using Sample.Features.Fab;
 using Sample.Features.FloatingPanel;
@@ -82,6 +84,8 @@ public static class ShinyGallery
 		new("🍞", "Toast", Bound<ToastPage, ToastViewModel>),
 		new("🗨️", "Dialogs", Bound<DialogsPage, DialogsViewModel>),
 		new("💬", "ChatView", Bound<ChatPage, ChatViewModel>),
+		new("🤖", "Agent View", () => new AgentViewPage()),
+		new("🧱", "A2UI Gallery", () => new A2UIGalleryPage()),
 		new("🪟", "Floating Panel", Bound<SheetPage, SheetViewModel>),
 		new("🔝", "Top Sheet", Bound<TopSheetPage, TopSheetViewModel>),
 		new("🗂️", "Dual Panels", Bound<DualPanelPage, DualPanelViewModel>),
@@ -112,6 +116,7 @@ public static class ShinyGallery
 		new("🎨", "Grid Formatting", Bound<DataGridFormattingPage, DataGridFormattingViewModel>),
 		new("🪄", "Overlay", Bound<OverlayPage, OverlayViewModel>),
 		new("🗃️", "Kanban", Bound<KanbanPage, KanbanViewModel>),
+		new("▨", "Docking", () => new DockingPage()),
 		new("🎞️", "Keyframe Animation", () => new KeyframePage()),
 		new("👣", "Walkthrough", Bound<WalkthroughPage, WalkthroughViewModel>),
 		new("💡", "Tooltip", Bound<TooltipPage, TooltipViewModel>),
