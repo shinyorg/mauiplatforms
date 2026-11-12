@@ -47,12 +47,27 @@
   </ItemGroup>
 
   <!--
+    The name each MauiImage is served under. As in MAUI's resizetizer, a Link names the image
+    (<MauiImage Include="Resources\splashfg.svg" Link="Resources\Images\splash_logo.svg" /> is
+    "splash_logo"); the file keeps its own extension, since SVGs are deployed as SVG.
+  -->
+  <Target Name="_MauiWebImageNames">
+    <ItemGroup>
+      <_MauiWebImage Remove="@(_MauiWebImage)" />
+      <_MauiWebImage Include="@(MauiImage)">
+        <MauiWebName Condition="'%(MauiImage.Link)' != ''">$([System.IO.Path]::GetFileNameWithoutExtension('%(MauiImage.Link)'))</MauiWebName>
+        <MauiWebName Condition="'%(MauiImage.Link)' == ''">%(MauiImage.Filename)</MauiWebName>
+      </_MauiWebImage>
+    </ItemGroup>
+  </Target>
+
+  <!--
     SVG MauiImages are deployed as SVG (browsers render them natively) and listed in assembly
     metadata so "name.png" references resolve to "name.svg" at runtime.
   -->
-  <Target Name="_MauiWebVectorImageMetadata" BeforeTargets="AssignTargetPaths">
+  <Target Name="_MauiWebVectorImageMetadata" BeforeTargets="AssignTargetPaths" DependsOnTargets="_MauiWebImageNames">
     <ItemGroup>
-      <AssemblyMetadata Include="MauiWebVectorImage" Value="%(MauiImage.Filename)" Condition="'%(MauiImage.Extension)' == '.svg'" />
+      <AssemblyMetadata Include="MauiWebVectorImage" Value="%(_MauiWebImage.MauiWebName)" Condition="'%(_MauiWebImage.Extension)' == '.svg'" />
     </ItemGroup>
   </Target>
 
@@ -63,13 +78,16 @@
     as wwwroot Content instead makes the SDK assume they live in wwwroot/, and the dev server then
     answers with empty files.
   -->
-  <Target Name="_MauiWebStaticWebAssets" AfterTargets="ResolveProjectStaticWebAssets" Condition="'$(UsingMicrosoftNETSdkStaticWebAssets)' == 'true'">
+  <Target Name="_MauiWebStaticWebAssets" AfterTargets="ResolveProjectStaticWebAssets" DependsOnTargets="_MauiWebImageNames" Condition="'$(UsingMicrosoftNETSdkStaticWebAssets)' == 'true'">
     <PropertyGroup>
       <_MauiWebStagingDir>$([MSBuild]::NormalizeDirectory('$(MSBuildProjectDirectory)', '$(IntermediateOutputPath)', 'mauiweb'))</_MauiWebStagingDir>
     </PropertyGroup>
 
     <ItemGroup>
-      <_MauiWebResource Include="@(MauiImage);@(MauiFont)">
+      <_MauiWebResource Include="@(_MauiWebImage)">
+        <MauiWebPath>%(_MauiWebImage.MauiWebName)%(_MauiWebImage.Extension)</MauiWebPath>
+      </_MauiWebResource>
+      <_MauiWebResource Include="@(MauiFont)">
         <MauiWebPath>%(Filename)%(Extension)</MauiWebPath>
       </_MauiWebResource>
       <_MauiWebResource Include="@(MauiAsset)">
