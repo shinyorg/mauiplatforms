@@ -29,6 +29,11 @@
     </ItemGroup>
 
     <ItemGroup>
+        <!-- A Link names the image, as in MAUI's resizetizer: this is "app_logo.png" in the app. -->
+        <MauiImage Include="Resources\AppIcon\appicon.svg" Link="Resources\Images\app_logo.svg" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\..\src\Platform.Maui.Web\Platform.Maui.Web.csproj" />
         <ProjectReference Include="..\..\src\Platform.Maui.Essentials.Web\Platform.Maui.Essentials.Web.csproj" />
         <!-- SKCanvasView on the web; links Skia into dotnet.native.wasm (needs the wasm-tools workload). -->

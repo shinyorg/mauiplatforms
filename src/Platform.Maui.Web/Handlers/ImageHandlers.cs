@@ -23,11 +23,19 @@ internal sealed class WebImageLoader(WebElement image, Func<IImageSourcePart?> p
 	[
 		image.On("load", () =>
 		{
+			image.ToggleClass(FailedClass, false);
 			part()?.UpdateIsLoading(false);
 			onLoaded();
 		}),
-		image.On("error", () => part()?.UpdateIsLoading(false)),
+		image.On("error", () =>
+		{
+			// A missing image shows nothing, as on the native platforms, not the browser's broken-image box.
+			image.ToggleClass(FailedClass, true);
+			part()?.UpdateIsLoading(false);
+		}),
 	];
+
+	const string FailedClass = "maui-image-failed";
 
 	public async Task LoadAsync(IImageSource? source)
 	{
@@ -45,6 +53,7 @@ internal sealed class WebImageLoader(WebElement image, Func<IImageSourcePart?> p
 
 			WebImageSource.Release(_url);
 			_url = url;
+			image.ToggleClass(FailedClass, false);
 			image.SetAttribute("src", url);
 			if (url is null)
 				part()?.UpdateIsLoading(false);

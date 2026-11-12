@@ -203,6 +203,7 @@ html, body {
 
 /* Images & shapes */
 .maui-image { object-fit: contain; display: block; user-select: none; -webkit-user-drag: none; }
+img.maui-image-failed { visibility: hidden; }
 .maui-shape, .maui-shape > svg { overflow: visible; }
 .maui-shape > svg { position: absolute; left: 0; top: 0; }
 .maui-border-stroke { position: absolute; inset: 0; pointer-events: none; border-style: solid; border-color: transparent; border-width: 0; }
