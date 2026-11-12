@@ -91,6 +91,25 @@ public partial class AgentViewPage : ContentPage
 
     void OnClear(object? sender, EventArgs e) => Agent.Clear();
 
+    // a custom sub-agent card: the template replaces the whole group, bound to the AgentSubagent
+    void OnSubagentTemplateToggled(object? sender, ToggledEventArgs e)
+        => Agent.SubagentTemplate = e.Value ? SubagentCard : null;
+
+    static readonly DataTemplate SubagentCard = new(() =>
+    {
+        var name = new Label { FontAttributes = FontAttributes.Bold, AutomationId = "CustomSubagentName" };
+        name.SetBinding(Label.TextProperty, static (AgentSubagent s) => s.Name, stringFormat: "🧪 {0}");
+        var status = new Label { FontSize = 13, AutomationId = "CustomSubagentStatus" };
+        status.SetBinding(Label.TextProperty, static (AgentSubagent s) => s.Status, stringFormat: "{0}");
+        return new Border
+        {
+            Padding = new Thickness(12, 8),
+            StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = 10 },
+            AutomationId = "CustomSubagentCard",
+            Content = new HorizontalStackLayout { Spacing = 10, Children = { name, status } }
+        };
+    });
+
     // the panel is bound to the same shared state the agent edits; tapping a book edits it back
     void ShowReadingList(JsonNode? state)
     {

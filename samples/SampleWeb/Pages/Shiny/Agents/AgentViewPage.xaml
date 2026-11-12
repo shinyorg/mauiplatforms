@@ -38,11 +38,16 @@
         <!-- the selected source's options -->
         <VerticalStackLayout Grid.Row="1" Grid.ColumnSpan="2" Padding="12,4,12,8" Spacing="6">
 
-            <!-- The controls sample's "custom sub-agent template" switch is left out: AgentView.SubagentTemplate
-                 is newer than the published Shiny.Maui.Controls.Agents package. -->
-            <Label x:Name="DemoOptions"
-                   FontSize="13"
-                   Text="A scripted agent: every scenario works offline. Tap a suggestion below." />
+            <!-- Demo: a custom SubagentTemplate in place of the default sub-agent group -->
+            <HorizontalStackLayout x:Name="DemoOptions" Spacing="8">
+                <Switch x:Name="SubagentTemplateSwitch"
+                        Toggled="OnSubagentTemplateToggled"
+                        VerticalOptions="Center"
+                        AutomationId="AgentSubagentTemplateSwitch"
+                        SemanticProperties.Description="Custom sub-agent template" />
+                <Label Text="Custom sub-agent template" VerticalOptions="Center" />
+            </HorizontalStackLayout>
+
             <Label x:Name="RecordingsOptions"
                    IsVisible="False"
                    FontSize="13"
