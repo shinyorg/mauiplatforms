@@ -8,7 +8,6 @@
         <PackageId>Platform.Maui.Web.SkiaSharp</PackageId>
         <PackageVersion>$(WebPackageVersion)</PackageVersion>
         <!-- Not published to NuGet yet: built only as part of SampleWeb. -->
-        <IsPackable>false</IsPackable>
         <Description>SkiaSharp for Platform.Maui.Web: the SkiaSharp.Views.Maui SKCanvasView rendered by Skia on WebAssembly into an HTML canvas, and Skia-backed MAUI image loading and bitmap export.</Description>
         <PackageTags>$(PackageTags) web wasm webassembly browser skia skiasharp canvas</PackageTags>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
