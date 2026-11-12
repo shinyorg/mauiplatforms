@@ -986,6 +986,15 @@ public class CollectionViewHandler : WebElementHandler<ItemsView, WebElement>
 			if (!double.IsFinite(heightConstraint))
 				height = content.Height;
 		}
+		else
+		{
+			EnsureModel();
+			var main = BoundedMainExtent(_geometry ?? MakeGeometry(widthConstraint, heightConstraint), mainConstraint);
+			if (vertical)
+				height = main;
+			else
+				width = main;
+		}
 
 		IView view = VirtualView;
 		return new Size(
@@ -1018,19 +1027,36 @@ public class CollectionViewHandler : WebElementHandler<ItemsView, WebElement>
 
 		// Bounded along the scroll axis: keep the extents measured at the arranged cross size, and
 		// only measure the realized entries' natural cross size.
-		var arranged = _geometry ?? g;
-		UseGeometry(arranged);
-		EnsureOffsets(arranged);
-		var scroll = vertical ? _scrollY : _scrollX;
-		var overscan = mainConstraint * OverscanFactor;
-		var (first, last) = RowRange(scroll - overscan, scroll + mainConstraint + overscan);
-		RealizeRows(first, last);
+		var main = BoundedMainExtent(_geometry ?? g, mainConstraint);
 		foreach (var (e, slot) in _realized)
 		{
 			var size = ((IView)slot.View).Measure(double.PositiveInfinity, double.PositiveInfinity);
 			_maxCross = Math.Max(_maxCross, vertical ? size.Width : size.Height);
 		}
-		return vertical ? new Size(_maxCross, mainConstraint) : new Size(mainConstraint, _maxCross);
+		return vertical ? new Size(_maxCross, main) : new Size(main, _maxCross);
+	}
+
+	/// <summary>
+	/// The length to ask for along a bounded scroll axis, realizing the rows in view on the way. That's
+	/// the whole constraint unless every row fits in it: then, like the native CollectionViews, a list
+	/// shorter than the space offered asks only for what it needs, so a short list in an Auto row or a
+	/// centered card doesn't stretch to fill the screen. An empty list keeps the space for its EmptyView.
+	/// </summary>
+	double BoundedMainExtent(in Geometry g, double mainConstraint)
+	{
+		UseGeometry(g);
+		EnsureOffsets(g);
+		var scroll = g.Vertical ? _scrollY : _scrollX;
+		var overscan = mainConstraint * OverscanFactor;
+		var (first, last) = RowRange(scroll - overscan, scroll + mainConstraint + overscan);
+		RealizeRows(first, last);
+		if (_itemCount == 0 || first != 0 || last != _rowStart.Count - 1)
+			return mainConstraint;
+
+		// Every row is realized, so measuring them gives the content's real length.
+		if (MeasureRealized(g, out _))
+			EnsureOffsets(g);
+		return Math.Min(_total, mainConstraint);
 	}
 
 	public override void PlatformArrange(Rect frame)

@@ -56,4 +56,20 @@ test.describe('MAUI resources are served as static web assets', () => {
     await expect.poll(() => page.locator('img.maui-image').evaluateAll(imgs =>
       imgs.filter(i => (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0).length)).toBeGreaterThan(0);
   });
+
+  test('a linked MauiImage is served under its Link name', async ({ app, page }) => {
+    await app.open();
+    await app.navigate('Image Showcase');
+    const linked = page.locator('[data-automation-id="linkedImage"]');
+    await expect.poll(() => linked.evaluate(i => (i as HTMLImageElement).complete && (i as HTMLImageElement).naturalWidth > 0)).toBe(true);
+    await expect(linked).toHaveAttribute('src', /app_logo\.svg$/);
+  });
+
+  test('an image that fails to load shows nothing', async ({ app, page }) => {
+    await app.open();
+    await app.navigate('Image Showcase');
+    const missing = page.locator('[data-automation-id="missingImage"]');
+    await expect(missing).toHaveClass(/maui-image-failed/);
+    await expect(missing).toHaveCSS('visibility', 'hidden');
+  });
 });

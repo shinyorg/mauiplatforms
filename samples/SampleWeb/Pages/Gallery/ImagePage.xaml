@@ -41,6 +41,28 @@
                        Aspect="AspectFit" />
             </Border>
 
+            <Label Text="FileSource (linked MauiImage)"
+                   FontAttributes="Bold" />
+            <Border Stroke="LightGray"
+                    Padding="12"
+                    BackgroundColor="#F1FAF4">
+                <Image Source="app_logo.png"
+                       AutomationId="linkedImage"
+                       HeightRequest="80"
+                       Aspect="AspectFit" />
+            </Border>
+
+            <Label Text="FileSource (missing file: shows nothing)"
+                   FontAttributes="Bold" />
+            <Border Stroke="LightGray"
+                    Padding="12"
+                    BackgroundColor="#FFF4F4">
+                <Image Source="does_not_exist.png"
+                       AutomationId="missingImage"
+                       HeightRequest="80"
+                       Aspect="AspectFit" />
+            </Border>
+
             <Label Text="FontImageSource"
                    FontAttributes="Bold" />
             <HorizontalStackLayout Spacing="16">
