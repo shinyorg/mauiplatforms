@@ -33,6 +33,7 @@ public class CollectionViewPage : ContentPage
 			("CollectionView", BuildCollectionViewDemo),
 			("Grouped", BuildGroupedDemo),
 			("10K Virtual", BuildVirtualizedDemo),
+			("Sized to Content", BuildSizedToContentDemo),
 		};
 
 		var picker = new Picker
@@ -560,6 +561,59 @@ public class CollectionViewPage : ContentPage
 				new Label { Text = "IsGrouped=true with GroupHeaderTemplate + ItemTemplate", FontSize = 12, TextColor = Colors.Gray }.Row(1),
 				selectedLabel.Row(2),
 				cv.Row(3),
+			}
+		};
+	}
+
+	// --- Tab 7: A short list sized to its content ---
+
+	View BuildSizedToContentDemo()
+	{
+		var cv = new CollectionView
+		{
+			AutomationId = "shortList",
+			ItemsSource = new[] { "Gallons", "Liters", "Imperial gallons" },
+			SelectionMode = SelectionMode.Single,
+			ItemTemplate = new DataTemplate(() =>
+			{
+				var label = new Label { FontSize = 15 };
+				label.SetBinding(Label.TextProperty, ".");
+				return new VerticalStackLayout
+				{
+					Padding = new Thickness(16, 12),
+					Children = { label },
+				};
+			}),
+		};
+
+		// A centered card, like a picker popup: it should shrink to the three rows instead of
+		// taking all the height the page offers.
+		var card = new Border
+		{
+			AutomationId = "shortListCard",
+			VerticalOptions = LayoutOptions.Center,
+			HorizontalOptions = LayoutOptions.Center,
+			WidthRequest = 280,
+			Padding = new Thickness(0, 8),
+			StrokeShape = new Microsoft.Maui.Controls.Shapes.RoundRectangle { CornerRadius = 14 },
+			Content = cv,
+		};
+		Theme.Bind(card, VisualElement.BackgroundColorProperty, Theme.Paper);
+		Theme.BindBrush(card, Border.StrokeProperty, Theme.Line);
+
+		return new Grid
+		{
+			RowDefinitions = new RowDefinitionCollection(
+				new RowDefinition(GridLength.Auto),
+				new RowDefinition(GridLength.Auto),
+				new RowDefinition(GridLength.Star)
+			),
+			RowSpacing = 8,
+			Children =
+			{
+				new Label { Text = "Sized to Content", FontSize = 16, FontAttributes = FontAttributes.Bold },
+				new Label { Text = "A short CollectionView in a centered card asks only for the height of its rows", FontSize = 12, TextColor = Colors.Gray }.Row(1),
+				card.Row(2),
 			}
 		};
 	}

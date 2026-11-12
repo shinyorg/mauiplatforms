@@ -63,6 +63,19 @@ test.describe('CollectionView', () => {
     }
   });
 
+  test('a short list asks only for the height of its rows', async ({ page }) => {
+    await page.locator('select.maui-picker').first().selectOption('Sized to Content');
+    const card = page.locator('[data-automation-id="shortListCard"]');
+    await expect(card.locator('.maui-collection-item')).toHaveCount(3);
+    // The card is centered in a much taller area; it should wrap the rows (plus its padding and
+    // border), not stretch to the space the list was offered.
+    await expect.poll(() => card.evaluate(c => {
+      const items = [...c.querySelectorAll('.maui-collection-item')];
+      const rows = items.at(-1)!.getBoundingClientRect().bottom - items[0].getBoundingClientRect().top;
+      return Math.round(c.getBoundingClientRect().height - rows);
+    })).toBeLessThanOrEqual(24);
+  });
+
   test('grouped lists show group headers and the footer', async ({ app, page }) => {
     await page.locator('select.maui-picker').first().selectOption('Grouped');
     await expect(app.label('🐱 Cats')).toBeVisible();
