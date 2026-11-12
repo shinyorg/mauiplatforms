@@ -77,7 +77,7 @@ jobs:
 
     - name: Web Smoke Test (headless Chrome)
       if: github.event_name == 'pull_request'
-      run:node tests/browser/smoke.mjs artifacts/SampleWeb/wwwroot
+      run: node tests/browser/smoke.mjs artifacts/SampleWeb/wwwroot
       env:
         CHROME: /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
 
