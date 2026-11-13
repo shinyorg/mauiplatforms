@@ -624,4 +624,63 @@ export function showPrompt(title, message, accept, cancel, placeholder, initialV
     });
 }
 
+// ---- browser history (Interop/Dom.cs, Platform/WebHistory.cs) -------------
+// One history entry per step Back can take inside the app (pushed pages, modals, an open popover
+// flyout), each tagged with its depth. Entries are added as the app navigates, normally while the
+// user's tap still counts as user activation, so browsers don't skip them as a back-button trap.
+// Browser Back lands on a shallower entry and asks .NET to go back; in-app back makes the app
+// shallower and history.go() steps back to match. From the root entry, Back leaves the page.
+
+const historyState = { entryDepth: 0, appDepth: 0, settling: false, onBack: null };
+
+function historyReconcile() {
+    const h = historyState;
+    if (h.settling) return;
+    if (h.appDepth > h.entryDepth) {
+        while (h.entryDepth < h.appDepth)
+            history.pushState({ ...history.state, mauiDepth: ++h.entryDepth }, '');
+    } else if (h.appDepth < h.entryDepth) {
+        h.settling = true;
+        history.go(h.appDepth - h.entryDepth);
+    }
+}
+
+export function historyInit(onBack) {
+    const h = historyState;
+    if (h.onBack) { h.onBack = onBack; return; }
+    h.onBack = onBack;
+    // A fresh load or a reload always starts the app at its root.
+    history.replaceState({ ...history.state, mauiDepth: 0 }, '');
+
+    addEventListener('popstate', e => {
+        const target = Number(e.state?.mauiDepth ?? 0);
+        const ours = h.settling;
+        h.settling = false;
+        h.entryDepth = target;
+        if (!ours && target < h.appDepth) {
+            // Back, or a jump back several entries from the history menu. Count the app at the target
+            // depth until .NET reports otherwise, so a second quick Back isn't taken as two.
+            const steps = h.appDepth - target;
+            h.appDepth = target;
+            h.onBack?.(steps);
+            return;
+        }
+        // Our own history.go() settled, or Forward onto an entry whose page is gone: line up again.
+        historyReconcile();
+    });
+
+    // Restored from the back/forward cache: the entries are still ours.
+    addEventListener('pageshow', e => {
+        if (!e.persisted) return;
+        h.entryDepth = Number(history.state?.mauiDepth ?? 0);
+        h.settling = false;
+        historyReconcile();
+    });
+}
+
+export function historySync(depth) {
+    historyState.appDepth = depth;
+    historyReconcile();
+}
+
 export function log(message) { console.debug('[maui-web]', message); }

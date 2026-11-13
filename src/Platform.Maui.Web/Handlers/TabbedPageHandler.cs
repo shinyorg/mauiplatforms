@@ -159,6 +159,8 @@ public class TabbedPageHandler : WebElementHandler<ITabbedView, WebElement>, IPa
 			handler._tabs[i].SetAttribute("aria-selected", i == index ? "true" : "false");
 		}
 		WebLayoutScheduler.Request();
+		// Each tab keeps its own stack, so switching tabs changes how far Back can go.
+		WebHistory.Invalidate();
 	}
 
 	public static void MapBarAppearance(TabbedPageHandler handler, ITabbedView view)

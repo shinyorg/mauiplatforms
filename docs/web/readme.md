@@ -138,6 +138,16 @@ and bottom tabs, back button behavior), modal pages (full-window, or centered di
 `WebPage.SetModalPresentationStyle`, mirroring the GTK backend's `GtkPage`), DisplayAlert /
 DisplayActionSheet / DisplayPromptAsync.
 
+**Browser Back and Forward:** the browser's Back button (and the back gesture of mobile browsers)
+steps back through the app the way Android's Back button does. An open popover flyout closes, and
+otherwise `IWindow.BackButtonClicked` runs, so the top modal pops, NavigationPage and Shell pop,
+and pages that override `OnBackButtonPressed` handle it first. The backend keeps one history entry
+per step Back can take (modals, pushed pages, an open popover flyout); in-app back removes the
+matching entries, and Back on the root page leaves the site. Set `WebHistory.IsEnabled = false`
+before the window is created to manage browser history yourself. Entries are added as the app
+navigates, normally right after a tap. Browsers skip entries a page adds without a user gesture,
+so pages an app pushes on its own long after a tap may be skipped by Back.
+
 **Controls:** Label (FormattedText, HTML, line breaks, MaxLines, decorations, transforms),
 Button, ImageButton, Entry, Editor (auto-size), SearchBar, CheckBox, Switch, RadioButton, Slider, Stepper, ProgressBar, ActivityIndicator, Picker, DatePicker, TimePicker,
 Image (file, URI, stream, font glyph), BoxView, Rectangle/Ellipse/Line/Path/Polygon/Polyline,
@@ -245,8 +255,8 @@ for its `Microsoft.Maui.Controls` reference, so the app doesn't see a package do
 - **ListView and TableView** (obsolete) and **HybridWebView** render a placeholder; MenuBar and
   context menus aren't rendered.
 - **Not yet:** pull-to-refresh and swipe-item gestures, PinchGestureRecognizer, drag & drop,
-  MenuBar/ContextFlyout, BlazorWebView, `Application.OpenWindow`, browser
-  history integration for navigation.
+  MenuBar/ContextFlyout, BlazorWebView, `Application.OpenWindow`, deep links (URLs for
+  routes; browser Back and Forward do drive navigation).
 - **GraphicsView images** draw (the browser decodes them), but MAUI's `net10.0` `PlatformImage`
   can't decode, so its `Width`/`Height` are wrong; code that sizes drawing from them misplaces it.
 - **`Loaded` fires before the first layout pass** (sizes are still -1). That's MAUI Controls' own
