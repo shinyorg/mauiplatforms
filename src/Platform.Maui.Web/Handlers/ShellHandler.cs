@@ -182,6 +182,7 @@ public class ShellHandler : WebElementHandler<Shell, WebElement>, IPageHost
 		BuildTabs(item, section);
 		BuildFlyoutItems();
 		WebLayoutScheduler.Request();
+		WebHistory.Invalidate();
 	}
 
 	void UpdateBar(ShellSection? section)
@@ -359,6 +360,7 @@ public class ShellHandler : WebElementHandler<Shell, WebElement>, IPageHost
 		handler._backdrop.SetProperty("hidden", handler._docked || !open);
 		handler.UpdateBar(shell.CurrentItem?.CurrentItem);
 		WebLayoutScheduler.Request();
+		WebHistory.Invalidate();
 	}
 
 	public static void MapFlyoutBackground(ShellHandler handler, Shell shell)

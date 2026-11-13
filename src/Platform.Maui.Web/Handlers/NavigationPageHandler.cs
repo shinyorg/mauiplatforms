@@ -135,6 +135,7 @@ public class NavigationPageHandler : WebElementHandler<IStackNavigationView, Web
 		handler.UpdateBar();
 		WebLayoutScheduler.Request();
 		view.NavigationFinished(stack);
+		WebHistory.Invalidate();
 	}
 
 	void UpdateBar()
