@@ -46,11 +46,13 @@ test.describe('Shiny SignaturePad', () => {
     await page.mouse.up();
     await expect.poll(() => pad.evaluate(painted)).toBe(true);
 
-    // The exported PNG is empty on net10.0 (the control has no export path there yet), so this
-    // stops at the hand-off rather than checking the image.
     await expect(sign).toBeEnabled();
     await sign.click();
     await expect(app.label('Signature captured!')).toBeVisible();
+
+    // The PNG is drawn through UseSkiaSharpWeb's IBitmapExportService and shown by the page's Image.
+    const signature = app.content.locator('img.maui-image').filter({ visible: true });
+    await expect.poll(() => signature.evaluate(i => (i as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
   });
 });
 

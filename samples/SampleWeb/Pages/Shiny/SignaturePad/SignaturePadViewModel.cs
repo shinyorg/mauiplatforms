@@ -26,8 +26,9 @@ public partial class SignaturePadViewModel : ObservableObject
     {
         var ms = new MemoryStream();
         args.ImageStream.CopyTo(ms);
-        ms.Position = 0;
-        SignatureImage = ImageSource.FromStream(() => ms);
+        // A fresh stream per read: the image may load the source again (a recycled handler).
+        var png = ms.ToArray();
+        SignatureImage = ImageSource.FromStream(() => new MemoryStream(png));
         OnPropertyChanged(nameof(HasSignature));
         StatusMessage = "Signature captured!";
     }
