@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
-        <TargetFrameworks>$(WebTargetFrameworks)</TargetFrameworks>
+        <TargetFramework>$(BaseTargetFramework)</TargetFramework>
         <IsPackable>false</IsPackable>
         <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
         <GenerateDocumentationFile>false</GenerateDocumentationFile>

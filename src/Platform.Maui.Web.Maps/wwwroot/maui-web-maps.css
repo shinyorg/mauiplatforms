@@ -1,0 +1,39 @@
+/* Styles for Platform.Maui.Web.Maps, loaded with Leaflet's own stylesheet by maui-web-maps.js. */
+
+/* Base tiles overlap by a pixel to hide seams at fractional zoom (see tileLayer in maui-web-maps.js).
+   Leaflet's own fix, plus-lighter, would add the overlapping pixels together into a bright line. */
+.leaflet-container .maui-map-seamless img.leaflet-tile { mix-blend-mode: normal; }
+
+.maui-map-pin {
+    background: none;
+    border: none;
+}
+
+.maui-map-pin svg {
+    display: block;
+    filter: drop-shadow(0 1px 1px rgb(0 0 0 / 0.35));
+}
+
+/* Image icons have no size up front, so the image anchors itself: bottom centre on the pin's location,
+   the image's centre on a cluster's. */
+.maui-map-pin-image img,
+.maui-map-cluster-image img {
+    position: absolute;
+    max-width: none;
+}
+
+.maui-map-pin-image img { transform: translate(-50%, -100%); }
+
+.maui-map-cluster-image img { transform: translate(-50%, -50%); }
+
+.maui-map-info {
+    cursor: pointer;
+    min-width: 96px;
+}
+
+.maui-map-info-label { font-weight: 600; }
+
+.maui-map-info-address {
+    margin-top: 2px;
+    opacity: 0.75;
+}

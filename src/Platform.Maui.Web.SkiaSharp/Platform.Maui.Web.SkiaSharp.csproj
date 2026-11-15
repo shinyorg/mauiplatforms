@@ -3,7 +3,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 
     <PropertyGroup>
-        <TargetFrameworks>$(WebTargetFrameworks)</TargetFrameworks>
+        <TargetFramework>$(BaseTargetFramework)</TargetFramework>
         <RootNamespace>Microsoft.Maui.Platform.Web.Skia</RootNamespace>
         <PackageId>Platform.Maui.Web.SkiaSharp</PackageId>
         <PackageVersion>$(WebPackageVersion)</PackageVersion>

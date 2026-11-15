@@ -1,12 +1,7 @@
 <Project>
     <PropertyGroup>
-        <BaseTargetFramework>net10.0</BaseTargetFramework>
-        <!-- The web packages multitarget so apps on MAUI 10 (net10.0) and MAUI 11 (net11.0) are both supported. -->
-        <WebTargetFrameworks>net10.0;net11.0</WebTargetFrameworks>
-        <MauiVersion>10.0.120</MauiVersion>
-        <!-- Each inner build/restore gets the matching MAUI major; TargetFramework is a global property
-             during the per-TFM inner build, so this override applies only to the net11.0 pass. -->
-        <MauiVersion Condition="'$(TargetFramework)' == 'net11.0'">11.0.0</MauiVersion>
+        <BaseTargetFramework>net11.0</BaseTargetFramework>
+        <MauiVersion>11.0.0</MauiVersion>
         <ShinyControlsVersion>2.5.0-beta-0010</ShinyControlsVersion>
         <SkiaSharpVersion>4.151.1</SkiaSharpVersion>
         <Nullable>enable</Nullable>

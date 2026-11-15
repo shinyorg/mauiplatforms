@@ -1,0 +1,38 @@
+<!-- The Razor SDK is used only for its static web asset pipeline, which ships wwwroot/ (the map script and
+     the bundled Leaflet) to consumers under _content/Platform.Maui.Web.Maps/. No Razor components or Blazor are involved. -->
+<Project Sdk="Microsoft.NET.Sdk.Razor">
+
+    <PropertyGroup>
+        <TargetFramework>$(BaseTargetFramework)</TargetFramework>
+        <RootNamespace>Microsoft.Maui.Platform.Web.Maps</RootNamespace>
+        <PackageId>Platform.Maui.Web.Maps</PackageId>
+        <PackageVersion>$(WebPackageVersion)</PackageVersion>
+        <Description>Maps for Platform.Maui.Web: the .NET MAUI Map control (Microsoft.Maui.Controls.Maps) in the browser, drawn by Leaflet with OpenStreetMap tiles. No API key needed.</Description>
+        <PackageTags>$(PackageTags) web wasm webassembly browser maps map leaflet openstreetmap</PackageTags>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <IsTrimmable>true</IsTrimmable>
+        <AddRazorSupportForMvc>false</AddRazorSupportForMvc>
+        <NoWarn>$(NoWarn);CS1591</NoWarn>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <SupportedPlatform Include="browser" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+        <PackageReference Include="Microsoft.Maui.Controls.Maps" Version="$(MauiVersion)" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Platform.Maui.Web\Platform.Maui.Web.csproj" />
+    </ItemGroup>
+
+    <!-- Same as Platform.Maui.Web: keep this library's dev-server manifests out of referencing apps. -->
+    <Target Name="_MauiWebKeepDevManifestsOutOfReferencers" AfterTargets="AddStaticWebAssetEndpointsBuildManifest">
+        <ItemGroup>
+            <ContentWithTargetPath Remove="$(StaticWebAssetDevelopmentManifestPath);$(StaticWebAssetEndpointsBuildManifestPath)" />
+        </ItemGroup>
+    </Target>
+
+</Project>

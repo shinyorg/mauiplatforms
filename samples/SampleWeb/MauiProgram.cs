@@ -15,6 +15,7 @@ public static class MauiProgram
 		builder
 			.UseMauiAppWeb<App>()
 			.UseWebEssentials()
+			.UseMauiMapsWeb()
 			// The Shiny Controls tab: the core controls plus the browser backends from this repo.
 			.UseShinyControls()
 			.UseShinyCameraWeb()

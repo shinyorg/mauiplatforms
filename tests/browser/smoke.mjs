@@ -115,6 +115,14 @@ try {
     return (await skiaInk(2)) > before + 100;
   });
 
+  // Map tiles come from OpenStreetMap, so these checks leave them out and only look at what the app draws.
+  await navigate('Maps');
+  await check('Map draws pins and shapes through Leaflet', () => waitFor(`document.querySelectorAll('.maui-map .leaflet-marker-icon').length === 4 && document.querySelectorAll('.maui-map .leaflet-overlay-pane path').length === 3`, 10000));
+  await check('map pin click opens its info window', async () => {
+    await click(`document.querySelector('.maui-map .leaflet-marker-icon[title="Big Ben"]')`);
+    return waitFor(`document.querySelector('.leaflet-popup .maui-map-info-label')?.textContent === 'Big Ben'`, 3000);
+  });
+
   await navigate('Alerts & Dialogs');
   await check('DisplayAlert shows a dialog and returns the choice', async () => {
     await click(byText('Confirm Alert (Yes / No)'));

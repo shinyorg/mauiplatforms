@@ -19,6 +19,7 @@ lessons of the backends in [dotnet/maui-labs](https://github.com/dotnet/maui-lab
 | `Platform.Maui.Web` | Handlers, hosting, dispatcher, fonts, dialogs, theming, build targets |
 | `Platform.Maui.Web.Essentials` | MAUI Essentials implemented with browser APIs |
 | `Platform.Maui.Web.SkiaSharp` | SkiaSharp's `SKCanvasView`, drawn by Skia on WebAssembly (`UseSkiaSharpWeb()`; needs the `wasm-tools` workload). See the [main readme](../../readme.md#skiasharp) |
+| `Platform.Maui.Web.Maps` | MAUI's `Map` control (`Microsoft.Maui.Controls.Maps`), drawn by Leaflet with OpenStreetMap tiles; no API key (`UseMauiMapsWeb()`). See the [main readme](../../readme.md#maps) |
 
 ## Getting started
 
@@ -27,7 +28,7 @@ An app is a `Microsoft.NET.Sdk.WebAssembly` project:
 ```xml
 <Project Sdk="Microsoft.NET.Sdk.WebAssembly">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net11.0</TargetFramework>
     <OutputType>Exe</OutputType>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationId>com.example.myapp</ApplicationId>
@@ -172,7 +173,7 @@ focus, VisualStateManager (PointerOver, Focused, Disabled, Selected).
 Browser rules apply: file/media pickers, clipboard reads, sharing and motion-sensor permission
 prompts (iOS) must start from a user gesture. FileSystem directories live in memory and are lost
 on reload. Filter FilePicker with an `<input accept>` string: `FilePicker.Default.PickAsync("image/*")`
-(`WebFilePickerExtensions`). MAUI's `FilePickerFileType` can't be created on `net10.0` (its type
+(`WebFilePickerExtensions`). MAUI's `FilePickerFileType` can't be created on `net11.0` (its type
 initializer throws), so `PickOptions.FileTypes` can't carry a filter there.
 
 ## XAML and existing MAUI apps
@@ -200,7 +201,7 @@ maui-labs Linux heads follow the same pattern.
 ```xml
 <Project Sdk="Microsoft.NET.Sdk.WebAssembly">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net11.0</TargetFramework>
     <OutputType>Exe</OutputType>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
@@ -232,9 +233,9 @@ Then add the web project's own `wwwroot/index.html`, `wwwroot/main.js`, `Program
 defined instead.
 
 **Alternative: a shared UI library.** Move pages, views, view models and resource dictionaries
-into a class library with `UseMaui` that also targets plain `net10.0`, for example
-`<TargetFrameworks>net10.0;net10.0-android;net10.0-ios</TargetFrameworks>`. Both the app and the
-web head reference it; the web head consumes the `net10.0` build. Reference XAML types from
+into a class library with `UseMaui` that also targets plain `net11.0`, for example
+`<TargetFrameworks>net11.0;net11.0-android;net11.0-ios</TargetFrameworks>`. Both the app and the
+web head reference it; the web head consumes the `net11.0` build. Reference XAML types from
 another assembly with `xmlns:ui="clr-namespace:MyApp.UI;assembly=MyApp.UI"`. Use `$(MauiVersion)`
 for its `Microsoft.Maui.Controls` reference, so the app doesn't see a package downgrade.
 
@@ -257,7 +258,7 @@ for its `Microsoft.Maui.Controls` reference, so the app doesn't see a package do
 - **Not yet:** pull-to-refresh and swipe-item gestures, PinchGestureRecognizer, drag & drop,
   MenuBar/ContextFlyout, BlazorWebView, `Application.OpenWindow`, deep links (URLs for
   routes; browser Back and Forward do drive navigation).
-- **GraphicsView images** draw (the browser decodes them), but MAUI's `net10.0` `PlatformImage`
+- **GraphicsView images** draw (the browser decodes them), but MAUI's `net11.0` `PlatformImage`
   can't decode, so its `Width`/`Height` are wrong; code that sizes drawing from them misplaces it.
 - **`Loaded` fires before the first layout pass** (sizes are still -1). That's MAUI Controls' own
   behaviour on platform-agnostic targets (GTK4 matches); use `SizeChanged` for size-dependent work.

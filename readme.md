@@ -11,7 +11,7 @@ the **web** (WebAssembly, rendering real DOM elements, without Blazor).
 **▶ Try the web sample live: [shinyorg.github.io/mauiplatforms](https://shinyorg.github.io/mauiplatforms/)**: the MAUI
 gallery plus a Shiny Controls tab, running entirely in your browser.
 
-Both backends use the platform-agnostic MAUI NuGet packages (`net10.0` fallback assemblies) and provide custom
+Both backends use the platform-agnostic MAUI NuGet packages (`net11.0` fallback assemblies) and provide custom
 handler implementations that bridge MAUI's layout/rendering system to the native UI of each platform.
 
 > **macOS has moved.** The macOS (AppKit) backend that started here was merged into
@@ -45,7 +45,7 @@ On a phone the flyout becomes a popover and tabs move to the bottom:
 
 ### Setting up a web app
 
-You need the [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0). No workload is required
+You need the [.NET 11 SDK](https://dotnet.microsoft.com/download/dotnet/11.0). No workload is required
 (`wasm-tools` is only needed if you opt into AOT compilation). Any modern browser runs the result.
 
 #### 1. Create the project
@@ -55,7 +55,7 @@ Create a folder with this project file (`MyApp.csproj`):
 ```xml
 <Project Sdk="Microsoft.NET.Sdk.WebAssembly">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFramework>net11.0</TargetFramework>
     <OutputType>Exe</OutputType>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -197,7 +197,7 @@ Everything else is standard MAUI: XAML or C# pages, `Shell`, `NavigationPage`, b
 
 > **Already have a MAUI app?** Add a web project beside it that links the app's XAML and C#
 > (leaving `Platforms/` and `MauiProgram.cs` behind), or move the UI into a shared library that also
-> targets plain `net10.0`. XAML needs no web-specific setup. See
+> targets plain `net11.0`. XAML needs no web-specific setup. See
 > [XAML and existing MAUI apps](docs/web/readme.md#xaml-and-existing-maui-apps) for the project file.
 
 #### 7. Add resources (optional)
@@ -263,11 +263,12 @@ maui-labs backends, and known limitations, see **[docs/web](docs/web/readme.md)*
 
 ```
 src/
-  Platform.Maui.TvOS/               # tvOS backend library (net10.0-tvos)
+  Platform.Maui.TvOS/               # tvOS backend library (net11.0-tvos)
   Platform.Maui.Essentials.TvOS/    # tvOS Essentials library
-  Platform.Maui.Web/                # Web backend library (net10.0, browser/WebAssembly)
+  Platform.Maui.Web/                # Web backend library (net11.0, browser/WebAssembly)
   Platform.Maui.Essentials.Web/     # Web Essentials library
   Platform.Maui.Web.SkiaSharp/      # Web handler for SkiaSharp's SKCanvasView (Skia on WebAssembly)
+  Platform.Maui.Web.Maps/           # Web handlers for MAUI's Map control (Leaflet + OpenStreetMap)
   Shiny.Maui.Controls.Camera.Web/   # Web handler for the Shiny CameraView (getUserMedia)
   Shiny.Maui.Controls.MediaElement.Web/ # Web backend for the Shiny MediaElement and VideoText (<video>)
 samples/
@@ -284,7 +285,7 @@ archive/
   macos/                            # The former macOS backend (merged into dotnet/maui-labs)
 ```
 
-> **Note:** `Sample/Sample.csproj` multitargets `net10.0-tvos` and `net10.0-macos` (now referencing the archived
+> **Note:** `Sample/Sample.csproj` multitargets `net11.0-tvos` and `net11.0-macos` (now referencing the archived
 > macOS projects) and is **not yet working**. Use `SampleTv` and `SampleWeb`.
 
 ## Handlers Implemented
@@ -386,16 +387,16 @@ backend unmodified: 71 of its 74 controls render and run without errors, from Ta
 the schedulers and Chat to dialogs, toasts, floating panels and walkthroughs. `CarouselGallery`,
 `StaggeredGrid` and `VirtualizedGrid` use native recycler views and have no web handler. A few
 features fall short: the `ImageEditor` canvas stays blank and `SignaturePad` exports an empty PNG
-(both rely on platform image APIs plain `net10.0` lacks), the indeterminate `ProgressBar` doesn't
-animate (it starts in `Loaded`, which fires before layout on `net10.0`), and DataGrid inline row
+(both rely on platform image APIs plain `net11.0` lacks), the indeterminate `ProgressBar` doesn't
+animate (it starts in `Loaded`, which fires before layout on `net11.0`), and DataGrid inline row
 editing doesn't appear.
 
 SampleWeb's Shiny Controls tab runs these against the published packages with no web handlers:
 floating panels (bottom, top, dual and minimized-header sheets), ChatView, SignaturePad, the scheduler
 (calendar, agenda, list), Gantt, `Shiny.Maui.Controls.Diagram`, `Shiny.Maui.Controls.MermaidDiagrams` and
-ImageViewer, plus the Office viewers below. Two gaps come from the controls' `net10.0` build, not the
+ImageViewer, plus the Office viewers below. Two gaps come from the controls' `net11.0` build, not the
 web backend: SignaturePad's PNG export returns an empty stream (drawing works), and ImageEditor can't show
-an image, because MAUI's `net10.0` `PlatformImage` reads a PNG's size from its signature bytes.
+an image, because MAUI's `net11.0` `PlatformImage` reads a PNG's size from its signature bytes.
 
 #### SkiaSharp
 
@@ -427,7 +428,47 @@ document draws in Skia's monospace fallback. SampleWeb bundles Carlito and Calad
 Calibri and Cambria substitutes, as MauiAssets (`Pages/Shiny/Office/OfficeWebFonts.cs`). `SpreadsheetView`,
 `DocumentView` and `SlideView` work. The editors (`DocumentEditorView`, `SlideEditorView`,
 `NotebookEditorView`) don't yet: building their ribbon creates a MAUI `FilePickerFileType`, whose type
-initializer throws on plain `net10.0`.
+initializer throws on plain `net11.0`.
+
+#### Maps
+
+`Microsoft.Maui.Controls.Maps` ships map handlers only for the native platforms, so `Platform.Maui.Web.Maps`
+provides MAUI's own `Map` control for the web, drawn by [Leaflet](https://leafletjs.com). App code written
+against `Map`, `Pin`, `Polygon`, `Polyline` and `Circle` runs unchanged. Reference the package next to
+`Platform.Maui.Web` and call `UseMauiMapsWeb()` **instead of** `UseMauiMaps()`:
+
+```csharp
+builder
+    .UseMauiAppWeb<App>()
+    .UseMauiMapsWeb();   // Platform.Maui.Web.Maps (namespace Microsoft.Maui.Platform.Web.Hosting)
+```
+
+No API key is needed. Leaflet 1.9.4 and Leaflet.markercluster 1.5.3 are bundled in the package (BSD-2 and MIT;
+their licences ship next to them) and load when the first map appears, so apps without a map don't download
+them. Tiles come from OpenStreetMap (Street) and Esri World Imagery (Satellite, and Hybrid with Esri's labels).
+Both have usage policies; OpenStreetMap's public servers are for
+[light use](https://operations.osmfoundation.org/policies/tiles/), so point a busy app at a commercial or
+self-hosted tile service:
+
+```csharp
+builder.UseMauiMapsWeb(options =>
+{
+    options.StreetTiles = new WebMapTileLayer(
+        "https://tiles.example.com/{z}/{x}/{y}.png",
+        "&copy; Example Maps, &copy; OpenStreetMap contributors") { MaxZoom = 20 };
+});
+```
+
+- **Supported:** `MapType` (Street, Satellite, Hybrid), `IsScrollEnabled` and `IsZoomEnabled`, `MoveToRegion`
+  (animated or not) and `VisibleRegion`, which follows the user's panning and zooming. Pins support `Label`,
+  `Address`, `ImageSource` (URI, file, font and stream images), `MarkerClicked`, `InfoWindowClicked`,
+  `ShowInfoWindow` and `HideInfoWindow`, and live changes to any of these. Also polylines, polygons and circles
+  (stroke, fill, `IsVisible`, `ZIndex` and click events), `MapClicked`, `MapLongClicked` (long press, or right
+  click on desktop), `IsShowingUser` with `UserLocationChanged` (the browser's geolocation), and
+  `IsClusteringEnabled` with `ClusteringIdentifier`, `ClusterClicked` and custom cluster images
+  (`ClusterImageSource`/`ClusterImageProvider`, URI and file images).
+- **Not supported:** `IsTrafficEnabled` (there is no keyless traffic layer) and `MapStyle` (Google Maps style
+  JSON). The browser asks before sharing the user's location, and only on HTTPS or localhost.
 
 #### Shiny CameraView and MediaElement
 
@@ -456,7 +497,7 @@ Their JavaScript ships as static web assets and loads on first use, so nothing g
   buffering progress, picture-in-picture, a screen wake lock (`KeepScreenOn`) and Media Session metadata
   and controls. `Uri`, `Resource` (MauiAssets) and `File` sources work; what plays depends on the
   browser's codecs.
-- **VideoText** gets its own web handler (`net10.0` VideoText otherwise falls back to a plain label):
+- **VideoText** gets its own web handler (`net11.0` VideoText otherwise falls back to a plain label):
   a looping, muted video shown through the letters, with the overlay, marquee, auto-fit and fonts
   drawn from the same SVG as Shiny's Blazor VideoText. Without an overlay the text is a CSS mask
   image, which browsers draw with system fonts only.
@@ -538,14 +579,14 @@ var model = DeviceInfo.Model;
 
 ## Prerequisites
 
-> **Important:** JetBrains Rider and Visual Studio will not compile the tvOS projects. The `net10.0-tvos` TFM is not recognized by IDE build systems. Build tvOS **through the CLI** using the `dotnet` command.
+> **Important:** JetBrains Rider and Visual Studio will not compile the tvOS projects. The `net11.0-tvos` TFM is not recognized by IDE build systems. Build tvOS **through the CLI** using the `dotnet` command.
 
-### .NET 10 SDK
+### .NET SDK
 
-Install the latest .NET 10 SDK from [dotnet.microsoft.com](https://dotnet.microsoft.com/download/dotnet/10.0).
+Install the latest [.NET 11 SDK](https://dotnet.microsoft.com/download/dotnet/11.0).
 
-Both backends build against .NET MAUI **10.0.120** (`MauiVersion` in [`Directory.build.props`](Directory.build.props)),
-so apps using the packages get MAUI 10.0.120 or later.
+Both backends build against .NET MAUI **11.0.0** (`MauiVersion` in [`Directory.build.props`](Directory.build.props)),
+so apps using the packages get MAUI 11.0.0 or later.
 
 ### Workloads
 
@@ -602,7 +643,7 @@ To release, push a tag, e.g. `git tag v0.4.0 && git push origin v0.4.0`. A tag w
 
 ## Key Technical Notes
 
-* MAUI NuGet packages resolve to the `net10.0` (platform-agnostic) assembly for unsupported TFMs. `ToPlatform()` returns `object` — custom `ViewExtensions` casts to the native view type.
+* MAUI NuGet packages resolve to the `net11.0` (platform-agnostic) assembly for unsupported TFMs. `ToPlatform()` returns `object` — custom `ViewExtensions` casts to the native view type.
 * The platform-agnostic `ViewHandler` has no-op `PlatformArrange` and returns `Size.Zero`. Custom base handlers (`TvOSViewHandler`, `WebElementHandler`) override these to bridge MAUI layout to native view frames.
 * Controls registers stub handlers (which throw) for every control type on unsupported platforms, so each backend registers its own handler for every concrete type. The web backend has a unit test that fails if any type still resolves to a stub.
 * The tvOS sample uses pure C# pages (no XAML). On the web, XAML needs no backend support: the `Microsoft.Maui.Controls` package compiles `*.xaml` and adds MAUI's implicit usings in any project, `UseMaui` or not. An existing app's XAML can be reused by a web project that links its files; see [XAML and existing MAUI apps](docs/web/readme.md#xaml-and-existing-maui-apps).
@@ -649,7 +690,7 @@ the [handler tables](#handlers-implemented) above is also unsupported.
 **Behaves differently from native**
 * **`Loaded` fires before the first layout pass** (sizes are still -1), which is MAUI Controls' own
   behaviour on platform-agnostic targets. Do size-dependent work in `SizeChanged`.
-* **GraphicsView images** draw, but MAUI's `net10.0` `PlatformImage` can't decode, so an image's
+* **GraphicsView images** draw, but MAUI's `net11.0` `PlatformImage` can't decode, so an image's
   `Width`/`Height` are wrong; code that sizes drawing from them misplaces it.
 * **Essentials:** SecureStorage throws (a browser has nowhere safe to keep secrets), FileSystem
   directories live in memory and are lost on reload, and pickers, clipboard reads, sharing and
