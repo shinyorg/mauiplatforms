@@ -38,6 +38,7 @@ public class FlyoutPageHandler : WebElementHandler<IFlyoutView, WebElement>
 	WebElement? _flyout;
 	WebElement? _detail;
 	bool _split;
+	bool _arranged;
 
 	protected override WebElement CreatePlatformView()
 	{
@@ -63,6 +64,13 @@ public class FlyoutPageHandler : WebElementHandler<IFlyoutView, WebElement>
 	/// <summary>Whether the given FlyoutPage currently shows its flyout beside the detail.</summary>
 	public static bool IsSplit(FlyoutPage page) => page.Handler is FlyoutPageHandler { _split: true };
 
+	/// <summary>
+	/// Whether the given FlyoutPage's flyout is open over its detail. False until the first layout has
+	/// decided between split and popover, when a flyout that will dock may still read as presented.
+	/// </summary>
+	internal static bool IsPopoverOpen(FlyoutPage page)
+		=> page.IsPresented && page.Handler is FlyoutPageHandler { _arranged: true, _split: false };
+
 	bool ComputeSplit(Size size)
 		=> VirtualView is IFlyoutPageController controller
 			? controller.ShouldShowSplitMode
@@ -83,6 +91,11 @@ public class FlyoutPageHandler : WebElementHandler<IFlyoutView, WebElement>
 
 		var split = ComputeSplit(frame.Size);
 		var controller = VirtualView as IFlyoutPageController;
+		if (!_arranged)
+		{
+			_arranged = true;
+			WebHistory.Invalidate();
+		}
 		if (split != _split)
 		{
 			_split = split;
@@ -96,6 +109,8 @@ public class FlyoutPageHandler : WebElementHandler<IFlyoutView, WebElement>
 			// The detail's navigation bar shows a toggle only when the flyout can be dismissed.
 			if (VirtualView.Detail?.Handler is NavigationPageHandler navigation)
 				navigation.RefreshBar();
+			// A docked flyout isn't a step Back can close.
+			WebHistory.Invalidate();
 		}
 
 		// FlyoutPage recomputes CanChangeIsPresented from the device idiom (OnAppearing,
@@ -146,11 +161,13 @@ public class FlyoutPageHandler : WebElementHandler<IFlyoutView, WebElement>
 		if (handler._detail is not null)
 			handler._detailHost.Append(handler._detail);
 		WebLayoutScheduler.Request();
+		WebHistory.Invalidate();
 	}
 
 	public static void MapIsPresented(FlyoutPageHandler handler, IFlyoutView view)
 	{
 		handler.UpdatePresentation();
 		WebLayoutScheduler.Request();
+		WebHistory.Invalidate();
 	}
 }

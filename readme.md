@@ -640,8 +640,9 @@ the [handler tables](#handlers-implemented) above is also unsupported.
   RefreshView shows its spinner and SwipeView its content only.
 * **Not rendered:** ListView and TableView (obsolete; placeholders), HybridWebView (placeholder),
   BlazorWebView, MenuBar and context menus (`ContextFlyout`).
-* **`Application.OpenWindow`** (multi-window) and **browser history
-  integration** (the Back button and deep links don't drive MAUI navigation).
+* **`Application.OpenWindow`** (multi-window) and **deep links** (page URLs don't follow
+  navigation). Browser Back and Forward do drive MAUI navigation (see the
+  [web guide](docs/web/readme.md#whats-supported)).
 * **WebView:** script evaluation and history only work for same-origin content.
 * **Threads:** only the default single-threaded WebAssembly runtime is supported.
 

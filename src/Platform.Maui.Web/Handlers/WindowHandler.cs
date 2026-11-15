@@ -35,6 +35,7 @@ public class WindowHandler : ElementHandler<IWindow, WebWindow>
 		{
 			window.ModalPushed += OnModalPushed;
 			window.ModalPopped += OnModalPopped;
+			WebHistory.Attach(window);
 		}
 	}
 
@@ -44,6 +45,7 @@ public class WindowHandler : ElementHandler<IWindow, WebWindow>
 		{
 			window.ModalPushed -= OnModalPushed;
 			window.ModalPopped -= OnModalPopped;
+			WebHistory.Detach(window);
 		}
 		platformView.VirtualWindow = null;
 		base.DisconnectHandler(platformView);
@@ -55,9 +57,14 @@ public class WindowHandler : ElementHandler<IWindow, WebWindow>
 			return;
 		var platformPage = (WebElement)Microsoft.Maui.Platform.ElementExtensions.ToPlatform(e.Modal, MauiContext);
 		PlatformView.PushModal(e.Modal, platformPage);
+		WebHistory.Invalidate();
 	}
 
-	void OnModalPopped(object? sender, ModalPoppedEventArgs e) => PlatformView.PopModal(e.Modal);
+	void OnModalPopped(object? sender, ModalPoppedEventArgs e)
+	{
+		PlatformView.PopModal(e.Modal);
+		WebHistory.Invalidate();
+	}
 
 	// The document title belongs to Window.Title; an unset title keeps index.html's <title>.
 	public static void MapTitle(WindowHandler handler, IWindow window)
@@ -77,6 +84,8 @@ public class WindowHandler : ElementHandler<IWindow, WebWindow>
 
 		if (window is Window mauiWindow)
 			WebAlertManager.Subscribe(mauiWindow);
+		// A new root page (Window.Page = new Shell()) starts its own history depth.
+		WebHistory.Invalidate();
 	}
 
 	public static void MapFlowDirection(WindowHandler handler, IWindow window)

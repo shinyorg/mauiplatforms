@@ -253,4 +253,10 @@ internal static partial class Dom
 
 	[JSImport("log", Module)]
 	public static partial void Log(string message);
+
+	[JSImport("historyInit", Module)]
+	public static partial void HistoryInit([JSMarshalAs<JSType.Function<JSType.Number>>] Action<int> onBack);
+
+	[JSImport("historySync", Module)]
+	public static partial void HistorySync(int depth);
 }
