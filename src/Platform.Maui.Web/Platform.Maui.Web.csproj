@@ -3,7 +3,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 
     <PropertyGroup>
-        <TargetFramework>$(BaseTargetFramework)</TargetFramework>
+        <TargetFrameworks>$(WebTargetFrameworks)</TargetFrameworks>
         <RootNamespace>Microsoft.Maui.Platform.Web</RootNamespace>
         <PackageVersion>$(WebPackageVersion)</PackageVersion>
         <Description>A .NET MAUI backend for the browser. Runs MAUI apps on WebAssembly, rendering real DOM elements without Blazor.</Description>

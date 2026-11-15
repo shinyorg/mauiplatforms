@@ -3,7 +3,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Razor">
 
     <PropertyGroup>
-        <TargetFramework>$(BaseTargetFramework)</TargetFramework>
+        <TargetFrameworks>$(WebTargetFrameworks)</TargetFrameworks>
         <RootNamespace>Microsoft.Maui.Essentials.Web</RootNamespace>
         <PackageId>Platform.Maui.Web.Essentials</PackageId>
         <PackageVersion>$(WebPackageVersion)</PackageVersion>
