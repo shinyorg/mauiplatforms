@@ -5,6 +5,17 @@ namespace SampleWeb.Pages;
 
 class FormattedTextPage : ContentPage
 {
+	/// <summary>
+	/// An underline colour for a <see cref="Span"/>, which MAUI doesn't model. MauiProgram applies it through
+	/// <c>LabelHandler.SpanCreated</c> as CSS <c>text-decoration-color</c>.
+	/// </summary>
+	public static readonly BindableProperty UnderlineColorProperty =
+		BindableProperty.CreateAttached("UnderlineColor", typeof(Color), typeof(FormattedTextPage), null);
+
+	public static Color? GetUnderlineColor(BindableObject view) => (Color?)view.GetValue(UnderlineColorProperty);
+
+	public static void SetUnderlineColor(BindableObject view, Color? value) => view.SetValue(UnderlineColorProperty, value);
+
 	public FormattedTextPage()
 	{
 		Title = "FormattedText / Spans";
@@ -30,6 +41,9 @@ class FormattedTextPage : ContentPage
 
 					// Colored spans
 					BuildColoredSpans(),
+
+					// CSS that Span doesn't model, through LabelHandler.SpanCreated
+					BuildUnderlineColors(),
 
 					// Paragraph-like formatted text
 					BuildParagraph(),
@@ -97,6 +111,27 @@ class FormattedTextPage : ContentPage
 				new Span { Text = "Green ", TextColor = Colors.MediumSeaGreen, FontAttributes = FontAttributes.Bold },
 				new Span { Text = "Gold ", TextColor = Colors.Gold, BackgroundColor = Colors.DarkSlateGray, FontAttributes = FontAttributes.Bold },
 				new Span { Text = "Purple", TextColor = Colors.Orchid, FontAttributes = FontAttributes.Bold },
+			}
+		};
+		return label;
+	}
+
+	static Label BuildUnderlineColors()
+	{
+		var stabilizer = new Span { Text = "Stabilizer / CYA", TextDecorations = TextDecorations.Underline };
+		SetUnderlineColor(stabilizer, Colors.DarkOrange);
+		var chlorine = new Span { Text = "Free chlorine", TextDecorations = TextDecorations.Underline };
+		SetUnderlineColor(chlorine, Colors.DodgerBlue);
+
+		var label = new Label();
+		label.FormattedText = new FormattedString
+		{
+			Spans =
+			{
+				stabilizer,
+				new Span { Text = " is outside the recommended range, and " },
+				chlorine,
+				new Span { Text = " is low (underline colours set through LabelHandler.SpanCreated)." },
 			}
 		};
 		return label;

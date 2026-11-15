@@ -43,6 +43,17 @@ public static class MauiProgram
 		builder.Services.AddSingleton<Sample.Features.Chat.InMemoryChatSessionProvider>();
 		// The scheduler demos' events, as the controls sample registers them.
 		builder.Services.AddSingleton<Shiny.Maui.Controls.Scheduler.ISchedulerEventProvider, Sample.Features.Scheduler.SampleSchedulerProvider>();
+		// Span has no underline colour; the FormattedText page sets one with an attached property, and
+		// this hook turns it into CSS on each span element.
+		Microsoft.Maui.Platform.Web.Handlers.LabelHandler.SpanCreated += (_, span, element) =>
+		{
+			if (Pages.FormattedTextPage.GetUnderlineColor(span) is { } color)
+			{
+				element.SetStyle("text-decoration-color", color.ToRgbaHex(true));
+				element.SetStyle("text-decoration-thickness", "2px");
+				element.SetStyle("text-underline-offset", "3px");
+			}
+		};
 		return builder.Build();
 	}
 }

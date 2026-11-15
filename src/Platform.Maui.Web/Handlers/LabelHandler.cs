@@ -76,6 +76,14 @@ public class LabelHandler : WebElementHandler<ILabel, WebElement>
 
 	WebFontManager? FontManager => MauiContext?.Services.GetService(typeof(IFontManager)) as WebFontManager;
 
+	/// <summary>
+	/// Runs after the element for each <see cref="Span"/> of <see cref="Label.FormattedText"/> is created
+	/// and styled, so an app can set CSS that <see cref="Span"/> doesn't model (for example
+	/// <c>text-decoration-color</c>, <c>text-underline-offset</c> or a class). Runs again whenever the
+	/// spans are rebuilt.
+	/// </summary>
+	public static Action<LabelHandler, Span, WebElement>? SpanCreated { get; set; }
+
 	public static void MapText(LabelHandler handler, ILabel label)
 	{
 		var span = handler.TextElement;
@@ -83,7 +91,11 @@ public class LabelHandler : WebElementHandler<ILabel, WebElement>
 		{
 			span.Clear();
 			foreach (var s in formatted.Spans)
-				span.Append(CreateSpan(handler, s));
+			{
+				var element = handler.CreateSpan(s);
+				SpanCreated?.Invoke(handler, s, element);
+				span.Append(element);
+			}
 		}
 		else if (label is Label { TextType: TextType.Html })
 		{
@@ -95,8 +107,10 @@ public class LabelHandler : WebElementHandler<ILabel, WebElement>
 		}
 	}
 
-	static WebElement CreateSpan(LabelHandler handler, Span span)
+	/// <summary>Creates the element for one <see cref="Span"/>. Override to change how spans render.</summary>
+	protected virtual WebElement CreateSpan(Span span)
 	{
+		var handler = this;
 		var el = new WebElement("span");
 		el.SetText(span.TextTransform switch
 		{
