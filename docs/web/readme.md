@@ -82,6 +82,19 @@ light/dark switching. It is themed with MAUI implicit styles and dynamic resourc
 served from the site root. SVG images are served as SVG, and `Source="dotnet_bot.png"` resolves
 to `dotnet_bot.svg` exactly as on the other platforms.
 
+They are served by name, not by their path under `Resources/`:
+
+| Item | Default glob | Served at |
+|---|---|---|
+| `MauiImage` | `Resources/Images/**` | `/{name}.{ext}` (a `Link` sets the name) |
+| `MauiFont` | `Resources/Fonts/**` | `/{file}` |
+| `MauiAsset` | `Resources/Raw/**` | `/{LogicalName}`, or its path under `Raw/` |
+| `MauiIcon` | `Resources/AppIcon/appicon.svg` (or `.png`) | `/favicon.{ext}` and `/appicon.{ext}` |
+
+So `Resources/AppIcon/appicon.svg` is linked from `index.html` as `<link rel="icon" href="favicon.svg" />`,
+not `Resources/AppIcon/appicon.svg`. Any other file you want served as-is goes in `Resources/Raw/`
+(or `wwwroot/`).
+
 ## How it works
 
 - **One DOM element per handler.** Every platform view is a `WebElement` wrapping a `JSObject`.
