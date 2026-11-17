@@ -11,9 +11,10 @@ namespace Microsoft.Maui.Platform.Web;
 /// </summary>
 internal sealed class WebGestureManager : IDisposable
 {
-	const BindingFlags Internal = BindingFlags.Instance | BindingFlags.NonPublic;
+	// MAUI 11 made the Send* methods public; MAUI 10 has them internal.
+	const BindingFlags Internal = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
 
-	// MAUI raises gesture events through internal Send* methods; there is no public backend API.
+	// MAUI raises gesture events through Send* methods; there is no backend API for them.
 	[DynamicDependency("SendTapped", typeof(TapGestureRecognizer))]
 	static readonly MethodInfo? SendTapped = typeof(TapGestureRecognizer).GetMethod("SendTapped", Internal);
 

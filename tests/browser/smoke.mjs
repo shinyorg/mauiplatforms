@@ -89,6 +89,17 @@ try {
     return waitFor(`document.querySelector('.maui-navbar .title')?.textContent === 'Layouts'`, 3000);
   });
 
+  // The menu tabs use a Tapped event handler rather than a Command.
+  await check('tapped event switches the menu tab', async () => {
+    const menuTab = name => `[...document.querySelectorAll('.maui-flyout-pane .maui-label span')].find(s => s.textContent === ${JSON.stringify(name)})`;
+    const firstItem = `document.querySelector('.maui-flyout-pane .maui-collection-item')?.textContent`;
+    const before = await evaluate(firstItem);
+    await click(menuTab('Shiny Controls'));
+    const switched = await waitFor(`${firstItem} !== ${JSON.stringify(before)}`, 3000);
+    await click(menuTab('MAUI'));
+    return switched && await waitFor(`${firstItem} === ${JSON.stringify(before)}`, 3000);
+  });
+
   await navigate('Controls');
   await check('button click reaches MAUI', async () => { await click(byText('Click me!')); return (await labels('/^Clicks: 1$/')).length === 1; });
   await check('entry text reaches MAUI', async () => {
