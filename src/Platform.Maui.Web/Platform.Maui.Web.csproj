@@ -25,7 +25,14 @@
         <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
     </ItemGroup>
 
-    <!-- Ship build targets with the NuGet package -->
+    <!-- Ship build targets with the NuGet package. The static web assets SDK would otherwise pack its own
+         build/, buildMultiTargeting/ and buildTransitive/Platform.Maui.Web.targets (from the .NET 11 SDK on),
+         replacing ours, so turn that off; our targets import the static web assets themselves. -->
+    <PropertyGroup>
+        <StaticWebAssetsDisableProjectBuildPropsFileGeneration>true</StaticWebAssetsDisableProjectBuildPropsFileGeneration>
+        <StaticWebAssetsDisableProjectBuildMultiTargetingPropsFileGeneration>true</StaticWebAssetsDisableProjectBuildMultiTargetingPropsFileGeneration>
+        <StaticWebAssetsDisableProjectBuildTransitivePropsFileGeneration>true</StaticWebAssetsDisableProjectBuildTransitivePropsFileGeneration>
+    </PropertyGroup>
     <ItemGroup>
         <None Include="buildTransitive\Platform.Maui.Web.targets" Pack="true" PackagePath="build;buildTransitive" />
     </ItemGroup>

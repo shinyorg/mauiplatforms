@@ -1,10 +1,21 @@
 <Project>
 
   <!--
-    Everything lives in this one .targets file: the static web assets SDK generates its own
-    Platform.Maui.Web.props in the package, so a props file of ours would be dropped when packing.
-    Being a .targets file also means the app's own EnableDefaultMauiResourceItems is respected.
+    Everything lives in this one .targets file. Being a .targets file means the app's own
+    EnableDefaultMauiResourceItems is respected.
+
+    The static web assets SDK would generate a build/Platform.Maui.Web.targets of its own when
+    packing (from the .NET 11 SDK on; earlier SDKs generated a .props), which replaced this file in
+    the package and left consuming apps without the WEB/BROWSER constants or their MAUI resources.
+    Platform.Maui.Web.csproj turns that generation off, as the SDK asks of packages with their own
+    targets, so this file imports the package's static web assets (maui-web.js/.css) itself. With a
+    project reference (SampleWeb) those files don't exist and the static web assets come from the
+    referenced project instead.
   -->
+  <Import Project="$(MSBuildThisFileDirectory)..\build\Microsoft.AspNetCore.StaticWebAssets.targets"
+          Condition="Exists('$(MSBuildThisFileDirectory)..\build\Microsoft.AspNetCore.StaticWebAssets.targets')" />
+  <Import Project="$(MSBuildThisFileDirectory)..\build\StaticWebAssets.Groups.targets"
+          Condition="Exists('$(MSBuildThisFileDirectory)..\build\StaticWebAssets.Groups.targets')" />
   <ItemGroup>
     <AvailableItemName Include="MauiAsset" />
     <AvailableItemName Include="MauiImage" />
