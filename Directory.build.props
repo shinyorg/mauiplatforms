@@ -13,7 +13,7 @@
             - pushing a tag vX.Y.Z publishes exactly X.Y.Z (ReleaseVersion, set by CI from the tag)
             - local builds are $(NextVersion)-dev, so they never look like a release
         -->
-        <NextVersion>0.5.0</NextVersion>
+        <NextVersion>0.5.1</NextVersion>
         <PreviewLabel Condition="'$(PreviewLabel)' == ''">dev</PreviewLabel>
         <PlatformsPackageVersion Condition="'$(ReleaseVersion)' != ''">$(ReleaseVersion)</PlatformsPackageVersion>
         <PlatformsPackageVersion Condition="'$(ReleaseVersion)' == ''">$(NextVersion)-$(PreviewLabel)</PlatformsPackageVersion>
