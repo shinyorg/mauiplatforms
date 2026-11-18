@@ -171,6 +171,13 @@ public class TabbedContainerView : TvOSContainerView
         _toSelectedTab.Enabled = selected != null && !_tabButtons.Any(b => b.Focused);
     }
 
+    // When focus has to be re-established (the focused view went away), land on the selected tab rather
+    // than the first one - tabs select on focus, so the first tab would silently switch pages.
+    public override IUIFocusEnvironment[] PreferredFocusEnvironments =>
+        _selectedIndex >= 0 && _selectedIndex < _tabButtons.Count
+            ? new IUIFocusEnvironment[] { _tabButtons[_selectedIndex] }
+            : base.PreferredFocusEnvironments;
+
     public override void DidUpdateFocus(UIFocusUpdateContext context, UIFocusAnimationCoordinator coordinator)
     {
         base.DidUpdateFocus(context, coordinator);

@@ -323,7 +323,7 @@ archive/
 | TabbedPage | ✅ Custom tab bar | ✅ Tab strip (bottom on phone widths) |
 | FlyoutPage | — | ✅ Docked when split, otherwise an overlay |
 | Shell | — | ✅ Flyout, tabs, routes, push/pop |
-| Modal pages | — | ✅ Full-window or dialog (`WebPage.SetModalPresentationStyle`) |
+| Modal pages | ✅ Full-window, Menu dismisses | ✅ Full-window or dialog (`WebPage.SetModalPresentationStyle`) |
 
 ### Collections
 

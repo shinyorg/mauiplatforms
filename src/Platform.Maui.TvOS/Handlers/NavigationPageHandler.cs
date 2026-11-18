@@ -134,6 +134,7 @@ public partial class NavigationPageHandler : TvOSViewHandler<IStackNavigationVie
         if (page == null || MauiContext == null)
             return;
 
+        var hadFocus = false;
         if (_currentPageView != null)
         {
             // Remember where the remote was, so coming back to this page returns there.
@@ -141,6 +142,7 @@ public partial class NavigationPageHandler : TvOSViewHandler<IStackNavigationVie
                 && focused.IsDescendantOfView(_currentPageView))
             {
                 _lastFocused.AddOrUpdate(_currentPage, new WeakReference<UIView>(focused));
+                hadFocus = true;
             }
 
             _currentPageView.RemoveFromSuperview();
@@ -160,6 +162,13 @@ public partial class NavigationPageHandler : TvOSViewHandler<IStackNavigationVie
             // Restore after layout has placed the page's views.
             platformView.LayoutIfNeeded();
             CoreFoundation.DispatchQueue.MainQueue.DispatchAsync(() => TvOSFocusSystem.RequestFocus(previous));
+        }
+        else if (hadFocus || platformView.Window?.WindowScene?.FocusSystem?.FocusedItem == null)
+        {
+            // The focused view just left the screen. Without this the focus engine falls back to the first
+            // focusable view in the window - on a TabbedPage that is the first tab, which then selects it.
+            platformView.LayoutIfNeeded();
+            CoreFoundation.DispatchQueue.MainQueue.DispatchAsync(() => TvOSFocusSystem.RequestFocus(platformView));
         }
     }
 

@@ -140,7 +140,20 @@ public class TvOSMauiSceneDelegate : UIWindowSceneDelegate
     {
         if (scene is UIWindowScene windowScene)
             Window = TvOSMauiApplication.Current?.CreateWindow(windowScene);
+
+        // cold start from a url
+        foreach (var context in connectionOptions.UrlContexts ?? new Foundation.NSSet<UIOpenUrlContext>())
+            FireOpenUrl(context.Url);
     }
+
+    public override void OpenUrlContexts(UIScene scene, Foundation.NSSet<UIOpenUrlContext> urlContexts)
+    {
+        foreach (var context in urlContexts)
+            FireOpenUrl(context.Url);
+    }
+
+    static void FireOpenUrl(Foundation.NSUrl url) =>
+        TvOSMauiApplication.Current?.FireLifecycleEvents<TvOSLifecycle.OpenUrl>(del => del(UIApplication.SharedApplication, url));
 
     public override void DidBecomeActive(UIScene scene)
     {

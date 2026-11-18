@@ -12,8 +12,45 @@ public partial class LayoutHandler : TvOSViewHandler<ILayout, TvOSContainerView>
             [nameof(ILayout.ClipsToBounds)] = MapClipsToBounds,
         };
 
-    public LayoutHandler() : base(Mapper)
+    // Layout.Add/Insert/Remove/Clear after the first render arrive as handler commands; without these
+    // mappings children added to a live layout were never shown.
+    public static readonly CommandMapper<ILayout, LayoutHandler> CommandMapper = new(ViewCommandMapper)
     {
+        [nameof(ILayoutHandler.Add)] = MapAdd,
+        [nameof(ILayoutHandler.Insert)] = MapInsert,
+        [nameof(ILayoutHandler.Remove)] = MapRemove,
+        [nameof(ILayoutHandler.Clear)] = MapClear,
+        [nameof(ILayoutHandler.Update)] = MapUpdate,
+    };
+
+    public LayoutHandler() : base(Mapper, CommandMapper)
+    {
+    }
+
+    static void MapAdd(LayoutHandler handler, ILayout layout, object? arg)
+    {
+        if (arg is LayoutHandlerUpdate update)
+            handler.Insert(update.Index, update.View);
+    }
+
+    static void MapInsert(LayoutHandler handler, ILayout layout, object? arg)
+    {
+        if (arg is LayoutHandlerUpdate update)
+            handler.Insert(update.Index, update.View);
+    }
+
+    static void MapRemove(LayoutHandler handler, ILayout layout, object? arg)
+    {
+        if (arg is LayoutHandlerUpdate update)
+            handler.Remove(update.View);
+    }
+
+    static void MapClear(LayoutHandler handler, ILayout layout, object? arg) => handler.Clear();
+
+    static void MapUpdate(LayoutHandler handler, ILayout layout, object? arg)
+    {
+        if (arg is LayoutHandlerUpdate update)
+            handler.Update(update.Index, update.View);
     }
 
     protected override TvOSContainerView CreatePlatformView()
@@ -85,7 +122,8 @@ public partial class LayoutHandler : TvOSViewHandler<ILayout, TvOSContainerView>
             return;
 
         var platformView = child.ToTvOSPlatform(MauiContext);
-        PlatformView.InsertSubview(platformView, index);
+        PlatformView.InsertSubview(platformView, Math.Min(index, PlatformView.Subviews.Length));
+        PlatformView.SetNeedsLayout();
     }
 
     public void Update(int index, IView child)
