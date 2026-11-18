@@ -128,15 +128,22 @@ public abstract class TvOSMauiApplication : UIApplicationDelegate, IPlatformAppl
 /// Scene delegate that hosts the MAUI window and forwards scene life cycle changes to it
 /// and to the tvOS life cycle events.
 /// </summary>
+/// <remarks>
+/// A UIResponder implementing IUIWindowSceneDelegate, like MAUI's own MauiUISceneDelegate, rather than a
+/// UIWindowSceneDelegate subclass: that is a model class, which does not declare the protocol to Objective-C,
+/// and tvOS 26 refuses to launch ("delegateClass must conform to UISceneDelegate protocol").
+/// </remarks>
 [Register("TvOSMauiSceneDelegate")]
-public class TvOSMauiSceneDelegate : UIWindowSceneDelegate
+public class TvOSMauiSceneDelegate : UIResponder, IUIWindowSceneDelegate
 {
     bool _active;
     bool _backgrounded;
 
-    public override UIWindow? Window { get; set; }
+    [Export("window")]
+    public virtual UIWindow? Window { get; set; }
 
-    public override void WillConnect(UIScene scene, UISceneSession session, UISceneConnectionOptions connectionOptions)
+    [Export("scene:willConnectToSession:options:")]
+    public virtual void WillConnect(UIScene scene, UISceneSession session, UISceneConnectionOptions connectionOptions)
     {
         if (scene is UIWindowScene windowScene)
             Window = TvOSMauiApplication.Current?.CreateWindow(windowScene);
@@ -146,7 +153,8 @@ public class TvOSMauiSceneDelegate : UIWindowSceneDelegate
             FireOpenUrl(context.Url);
     }
 
-    public override void OpenUrlContexts(UIScene scene, Foundation.NSSet<UIOpenUrlContext> urlContexts)
+    [Export("scene:openURLContexts:")]
+    public virtual void OpenUrlContexts(UIScene scene, Foundation.NSSet<UIOpenUrlContext> urlContexts)
     {
         foreach (var context in urlContexts)
             FireOpenUrl(context.Url);
@@ -155,7 +163,8 @@ public class TvOSMauiSceneDelegate : UIWindowSceneDelegate
     static void FireOpenUrl(Foundation.NSUrl url) =>
         TvOSMauiApplication.Current?.FireLifecycleEvents<TvOSLifecycle.OpenUrl>(del => del(UIApplication.SharedApplication, url));
 
-    public override void DidBecomeActive(UIScene scene)
+    [Export("sceneDidBecomeActive:")]
+    public virtual void DidBecomeActive(UIScene scene)
     {
         if (_active)
             return;
@@ -164,7 +173,8 @@ public class TvOSMauiSceneDelegate : UIWindowSceneDelegate
         Current?.FireLifecycleEvents<TvOSLifecycle.OnActivated>(del => del(UIApplication.SharedApplication));
     }
 
-    public override void WillResignActive(UIScene scene)
+    [Export("sceneWillResignActive:")]
+    public virtual void WillResignActive(UIScene scene)
     {
         if (!_active)
             return;
@@ -173,14 +183,16 @@ public class TvOSMauiSceneDelegate : UIWindowSceneDelegate
         Current?.FireLifecycleEvents<TvOSLifecycle.OnResignActivation>(del => del(UIApplication.SharedApplication));
     }
 
-    public override void DidEnterBackground(UIScene scene)
+    [Export("sceneDidEnterBackground:")]
+    public virtual void DidEnterBackground(UIScene scene)
     {
         _backgrounded = true;
         Current?.VirtualWindow?.Stopped();
         Current?.FireLifecycleEvents<TvOSLifecycle.DidEnterBackground>(del => del(UIApplication.SharedApplication));
     }
 
-    public override void WillEnterForeground(UIScene scene)
+    [Export("sceneWillEnterForeground:")]
+    public virtual void WillEnterForeground(UIScene scene)
     {
         // The first foreground transition is the launch itself, not a resume.
         if (!_backgrounded)
