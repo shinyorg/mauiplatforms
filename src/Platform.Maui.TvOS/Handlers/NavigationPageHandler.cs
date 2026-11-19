@@ -163,7 +163,8 @@ public partial class NavigationPageHandler : TvOSViewHandler<IStackNavigationVie
             platformView.LayoutIfNeeded();
             CoreFoundation.DispatchQueue.MainQueue.DispatchAsync(() => TvOSFocusSystem.RequestFocus(previous));
         }
-        else if (hadFocus || platformView.Window?.WindowScene?.FocusSystem?.FocusedItem == null)
+        // (not yet in a window - a tab shown for the first time - isn't "nothing focused": focus is on the tab bar)
+        else if (hadFocus || (platformView.Window is { } window && window.WindowScene?.FocusSystem?.FocusedItem == null))
         {
             // The focused view just left the screen. Without this the focus engine falls back to the first
             // focusable view in the window - on a TabbedPage that is the first tab, which then selects it.

@@ -196,6 +196,8 @@ public partial class EntryHandler : TvOSViewHandler<IEntry, TvOSTextField>
     {
         if (entry is IPlaceholder placeholder)
             handler.PlatformView.Placeholder = placeholder.Placeholder;
+        // setting the plain placeholder drops the attributed one's color
+        MapPlaceholderColor(handler, entry);
     }
 
     public static void MapPlaceholderColor(EntryHandler handler, IEntry entry)

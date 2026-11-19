@@ -286,7 +286,9 @@ public static class TvOSTransforms
         var layer = view.Layer;
         if (layer.AnchorPoint != state.Anchor)
             layer.AnchorPoint = state.Anchor;
-        view.Bounds = new CGRect(0, 0, rect.Width, rect.Height);
+        // a scroll view's bounds origin is its scroll offset: keep it, or every layout scrolls back to the top
+        var origin = view is UIScrollView ? view.Bounds.Location : CGPoint.Empty;
+        view.Bounds = new CGRect(origin, new CGSize(rect.Width, rect.Height));
         layer.Position = new CGPoint(rect.X + (state.Anchor.X * rect.Width), rect.Y + (state.Anchor.Y * rect.Height));
     }
 
