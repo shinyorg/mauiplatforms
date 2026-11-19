@@ -11,6 +11,12 @@ namespace Microsoft.Maui.Platform.TvOS.Handlers;
 /// </summary>
 public class TvOSTextField : UITextField
 {
+    // UIKit can hand back this view after its managed wrapper is gone (a Superview lookup); recreate the wrapper
+    // rather than throw
+    public TvOSTextField() { }
+
+    protected TvOSTextField(ObjCRuntime.NativeHandle handle) : base(handle) { }
+
     static readonly UIColor FocusedText = UIColor.FromRGB(28, 28, 30);
     UIColor? _customBackground;
     UIColor? _appTextColor;

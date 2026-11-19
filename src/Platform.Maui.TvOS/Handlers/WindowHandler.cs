@@ -202,6 +202,10 @@ public partial class WindowHandler : ElementHandler<IWindow, UIWindow>
 /// <summary>Hosts a modal page; the remote's Menu button dismisses it unless the page handles back itself.</summary>
 class ModalContainerView : UIView
 {
+    // UIKit can hand back this view after its managed wrapper is gone (a Superview lookup); recreate the wrapper
+    // rather than throw
+    protected ModalContainerView(ObjCRuntime.NativeHandle handle) : base(handle) => _page = new WeakReference<Page>(null!);
+
     readonly WeakReference<Page> _page;
     bool _handledMenu;
 

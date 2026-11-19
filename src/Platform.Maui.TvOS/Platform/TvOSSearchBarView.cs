@@ -11,6 +11,10 @@ namespace Microsoft.Maui.Platform.TvOS;
 /// </summary>
 public class TvOSSearchBarView : UIView
 {
+	// UIKit can hand back this view after its managed wrapper is gone (a Superview lookup); recreate the wrapper
+	// rather than throw
+	protected TvOSSearchBarView(ObjCRuntime.NativeHandle handle) : base(handle) { }
+
 	readonly UITextField _textField;
 	readonly UILabel _searchIcon;
 

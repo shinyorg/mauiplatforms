@@ -9,6 +9,10 @@ namespace Microsoft.Maui.Platform.TvOS.Handlers;
 /// <summary>A tab in the tvOS tab bar: dim when idle, bright when selected, white when focused.</summary>
 public class TvOSTabButton : UIButton
 {
+    // UIKit can hand back this view after its managed wrapper is gone (a Superview lookup); recreate the wrapper
+    // rather than throw
+    protected TvOSTabButton(ObjCRuntime.NativeHandle handle) : base(handle) { }
+
     bool _selected;
 
     public TvOSTabButton()

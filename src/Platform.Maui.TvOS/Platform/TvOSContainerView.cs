@@ -7,6 +7,10 @@ namespace Microsoft.Maui.Platform.TvOS;
 
 public class TvOSContainerView : UIView, ITvOSFocusableView
 {
+    // UIKit can hand back this view after its managed wrapper is gone (a Superview lookup); recreate the wrapper
+    // rather than throw
+    protected TvOSContainerView(ObjCRuntime.NativeHandle handle) : base(handle) { }
+
     public Func<double, double, Graphics.Size>? CrossPlatformMeasure { get; set; }
     public Func<Graphics.Rect, Graphics.Size>? CrossPlatformArrange { get; set; }
 

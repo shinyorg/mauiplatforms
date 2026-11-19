@@ -7,6 +7,12 @@ namespace Microsoft.Maui.Platform.TvOS.Handlers;
 /// <summary>UILabel with padding and vertical text alignment.</summary>
 public class TvOSLabel : UILabel
 {
+    // UIKit can hand back this view after its managed wrapper is gone (a Superview lookup); recreate the wrapper
+    // rather than throw
+    public TvOSLabel() { }
+
+    protected TvOSLabel(ObjCRuntime.NativeHandle handle) : base(handle) { }
+
     public UIEdgeInsets TextInsets { get; set; }
     public Microsoft.Maui.TextAlignment VerticalTextAlignment { get; set; } = Microsoft.Maui.TextAlignment.Start;
 

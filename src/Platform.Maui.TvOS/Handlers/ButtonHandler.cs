@@ -11,6 +11,10 @@ namespace Microsoft.Maui.Platform.TvOS.Handlers;
 /// </summary>
 public class TvOSButton : UIButton
 {
+    // UIKit can hand back this view after its managed wrapper is gone (a Superview lookup); recreate the wrapper
+    // rather than throw
+    protected TvOSButton(ObjCRuntime.NativeHandle handle) : base(handle) { }
+
     static readonly UIColor DefaultBackground = UIColor.FromWhiteAlpha(1, 0.14f);
     static readonly UIColor DefaultFocusedText = UIColor.FromRGB(28, 28, 30);
 

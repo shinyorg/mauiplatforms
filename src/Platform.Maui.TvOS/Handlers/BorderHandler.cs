@@ -10,6 +10,12 @@ namespace Microsoft.Maui.Platform.TvOS.Handlers;
 
 public class BorderUIView : UIView, ITvOSFocusableView
 {
+    // UIKit can hand back this view after its managed wrapper is gone (a Superview lookup); recreate the wrapper
+    // rather than throw
+    public BorderUIView() { }
+
+    protected BorderUIView(ObjCRuntime.NativeHandle handle) : base(handle) { }
+
     public Func<double, double, Size>? CrossPlatformMeasure { get; set; }
     public Func<Rect, Size>? CrossPlatformArrange { get; set; }
 

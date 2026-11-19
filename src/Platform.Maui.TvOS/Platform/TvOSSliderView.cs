@@ -12,6 +12,10 @@ namespace Microsoft.Maui.Platform.TvOS;
 /// </summary>
 public class TvOSSliderView : UIControl
 {
+    // UIKit can hand back this view after its managed wrapper is gone (a Superview lookup); recreate the wrapper
+    // rather than throw
+    protected TvOSSliderView(ObjCRuntime.NativeHandle handle) : base(handle) { }
+
     const double DefaultTrackHeight = 4.0;
     const double ThumbDiameter = 30.0;
     const double FocusedThumbDiameter = 36.0;
