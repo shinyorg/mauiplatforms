@@ -87,7 +87,7 @@ public partial class CollectionViewHandler : TvOSViewHandler<CollectionView, UIC
     {
         base.ConnectHandler(platformView);
         platformView.DataSource = new DataSource(this);
-        platformView.Delegate = new FlowDelegate(this);
+        ApplyDelegate();
         VirtualView.ScrollToRequested += OnScrollToRequested;
         VirtualView.SelectionChanged += OnSelectionChanged;
     }
@@ -118,7 +118,9 @@ public partial class CollectionViewHandler : TvOSViewHandler<CollectionView, UIC
     public static void MapItemTemplate(CollectionViewHandler handler, CollectionView view)
     {
         handler.ClearSizing();
+        handler.ApplyDelegate();
         handler.PlatformView.ReloadData();
+        handler.UpdateUniformSize();
     }
 
     public static void MapItemsLayout(CollectionViewHandler handler, CollectionView view)
@@ -159,6 +161,7 @@ public partial class CollectionViewHandler : TvOSViewHandler<CollectionView, UIC
         _thresholdReachedAt = -1;
         ClearSizing();
         PlatformView.ReloadData();
+        UpdateUniformSize();
         UpdateEmptyView();
         VirtualView.InvalidateMeasure();
     }
@@ -177,6 +180,7 @@ public partial class CollectionViewHandler : TvOSViewHandler<CollectionView, UIC
         _thresholdReachedAt = -1;
         ClearSizing();
         PlatformView.ReloadData();
+        UpdateUniformSize();
         UpdateEmptyView();
         VirtualView.InvalidateMeasure();
     }
@@ -235,8 +239,36 @@ public partial class CollectionViewHandler : TvOSViewHandler<CollectionView, UIC
         flow.SectionInset = new UIEdgeInsets((nfloat)inset.Top, (nfloat)inset.Left, (nfloat)inset.Bottom, (nfloat)inset.Right);
 
         ClearSizing();
+        UpdateUniformSize();
         flow.InvalidateLayout();
         VirtualView.InvalidateMeasure();
+    }
+
+    // MeasureFirstItem: every item is the first one's size, so the flow layout gets one fixed ItemSize and no
+    // per-item sizing delegate. Asking the delegate for every item made a 15,000-item list take seconds to lay out.
+    bool Uniform => VirtualView.ItemSizingStrategy == ItemSizingStrategy.MeasureFirstItem;
+
+    void ApplyDelegate()
+    {
+        var uniform = Uniform;
+        if (PlatformView.Delegate is FlowDelegate current && current is MeasuringFlowDelegate != uniform)
+            return;
+
+        PlatformView.Delegate = uniform ? new FlowDelegate(this) : new MeasuringFlowDelegate(this);
+    }
+
+    void UpdateUniformSize()
+    {
+        if (!Uniform || _items.Count == 0)
+            return;
+
+        var bounds = PlatformView.Bounds.Size;
+        if ((IsHorizontal ? bounds.Height : bounds.Width) <= 0)
+            return;
+
+        var size = SizeForItem(0, bounds);
+        if (FlowLayout.ItemSize != size)
+            FlowLayout.ItemSize = size;
     }
 
     void ClearSizing()
@@ -256,6 +288,7 @@ public partial class CollectionViewHandler : TvOSViewHandler<CollectionView, UIC
         if (across > 0 && Math.Abs((double)(across - sizedFor)) > 0.5)
         {
             _sizeCache.Clear();
+            UpdateUniformSize();
             FlowLayout.InvalidateLayout();
         }
 
@@ -561,16 +594,21 @@ public partial class CollectionViewHandler : TvOSViewHandler<CollectionView, UIC
         }
     }
 
-    sealed class FlowDelegate : UICollectionViewDelegateFlowLayout
+    /// <summary>Items of different sizes: the layout asks for each one.</summary>
+    sealed class MeasuringFlowDelegate(CollectionViewHandler handler) : FlowDelegate(handler)
     {
-        readonly WeakReference<CollectionViewHandler> _handler;
-
-        public FlowDelegate(CollectionViewHandler handler) => _handler = new(handler);
-
         public override CGSize GetSizeForItem(UICollectionView collectionView, UICollectionViewLayout layout, NSIndexPath indexPath) =>
             _handler.TryGetTarget(out var handler)
                 ? handler.SizeForItem((int)indexPath.Item, collectionView.Bounds.Size)
                 : new CGSize(1, 1);
+    }
+
+    /// <summary>Uniform items (no GetSizeForItem, so the flow layout uses its ItemSize), and the base for measuring.</summary>
+    class FlowDelegate : UICollectionViewDelegateFlowLayout
+    {
+        protected readonly WeakReference<CollectionViewHandler> _handler;
+
+        public FlowDelegate(CollectionViewHandler handler) => _handler = new(handler);
 
         public override bool CanFocusItem(UICollectionView collectionView, NSIndexPath indexPath) => true;
 
