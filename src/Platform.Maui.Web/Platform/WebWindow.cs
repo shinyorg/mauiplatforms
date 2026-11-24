@@ -9,6 +9,7 @@ namespace Microsoft.Maui.Platform.Web;
 public class WebWindow
 {
 	readonly List<Modal> _modals = new();
+	readonly List<(IView View, WebElement Layer)> _overlays = new();
 
 	sealed record Modal(IView Page, WebElement Layer, WebElement? Panel, IDisposable? BackdropClick);
 	readonly IDisposable _resize;
@@ -83,6 +84,32 @@ public class WebWindow
 		modal.BackdropClick?.Dispose();
 		Root.Remove(modal.Layer);
 		_modals.RemoveAt(index);
+		WebLayoutScheduler.Request();
+	}
+
+	/// <summary>
+	/// Shows a view over the whole window, above the content and any modal pages, for popup
+	/// libraries that draw their own backdrop. The view is measured and arranged to the window
+	/// in every layout pass until <see cref="RemoveOverlay"/>.
+	/// </summary>
+	public WebElement AddOverlay(IView view, WebElement platformView)
+	{
+		var layer = new WebElement("div", "maui-overlay-layer");
+		layer.Append(platformView);
+		Root.Append(layer);
+		_overlays.Add((view, layer));
+		WebLayoutScheduler.Request();
+		return layer;
+	}
+
+	/// <summary>Removes a view shown with <see cref="AddOverlay"/>.</summary>
+	public void RemoveOverlay(IView view)
+	{
+		var index = _overlays.FindLastIndex(o => o.View == view);
+		if (index < 0)
+			return;
+		Root.Remove(_overlays[index].Layer);
+		_overlays.RemoveAt(index);
 		WebLayoutScheduler.Request();
 	}
 
@@ -172,6 +199,12 @@ public class WebWindow
 			modal.Panel.SetFrame((width - size.Width) / 2, (height - size.Height) / 2, size.Width, size.Height);
 			modal.Page.Measure(size.Width, size.Height);
 			modal.Page.Arrange(new Rect(0, 0, size.Width, size.Height));
+		}
+
+		foreach (var (view, _) in _overlays.ToArray())
+		{
+			view.Measure(width, height);
+			view.Arrange(bounds);
 		}
 	}
 }

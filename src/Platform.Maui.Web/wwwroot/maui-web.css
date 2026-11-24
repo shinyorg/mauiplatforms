@@ -141,6 +141,12 @@ html, body {
 .maui-entry::placeholder, .maui-editor::placeholder, .maui-search-bar::placeholder { color: var(--maui-placeholder, var(--maui-muted)); }
 .maui-editor { resize: none; }
 .maui-entry[data-measure], .maui-search-bar[data-measure] { width: 180px; }
+/* A borderless field draws only its text: the control around it (a Border, a chip strip) supplies the
+   frame, background and focus treatment, as Shiny.Maui.Controls' entries do on the native platforms. */
+.maui-entry.maui-borderless, .maui-editor.maui-borderless, .maui-search-bar.maui-borderless {
+    border: 0; border-radius: 0; background: transparent; padding: 0;
+}
+.maui-entry.maui-borderless:focus, .maui-editor.maui-borderless:focus, .maui-search-bar.maui-borderless:focus { box-shadow: none; }
 
 /* Toggles */
 .maui-check-box { margin: 0; width: 20px; height: 20px; accent-color: var(--maui-check, var(--maui-accent)); cursor: pointer; }
@@ -252,6 +258,14 @@ img.maui-image-failed { visibility: hidden; }
 .maui-tabbar button { border-radius: 0; border-bottom: 2px solid transparent; }
 .maui-tabbar.bottom button { border-bottom: 0; border-top: 2px solid transparent; }
 .maui-tabbar button.selected { color: var(--maui-tab-selected, var(--maui-accent)); border-color: currentColor; }
+.maui-tabbar button { position: relative; }
+.maui-tab-badge {
+    min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px;
+    background: #e5484d; color: #fff; font-size: 11px; font-weight: 600; line-height: 18px; text-align: center;
+}
+.maui-tab-badge[hidden] { display: none; }
+.maui-tab-badge.dot { min-width: 8px; width: 8px; height: 8px; padding: 0; }
+.maui-tabbar.bottom .maui-tab-badge { position: absolute; top: 4px; left: calc(50% + 6px); }
 
 .maui-flyout-pane {
     background: var(--maui-flyout-bg, var(--maui-surface));
@@ -289,6 +303,9 @@ img.maui-image-failed { visibility: hidden; }
 /* The layer itself is see-through so a modal page with a transparent Background shows the page
    below it (popup-style pages). Pages without a Background still get the opaque default. */
 .maui-modal-layer { position: absolute; inset: 0; --maui-page-bg: var(--maui-bg); z-index: 10; animation: maui-modal-in 200ms ease-out; }
+/* WebWindow.AddOverlay: full-window views (popup libraries) above pages and modals. The view draws its own
+   backdrop and animations, so the layer is transparent and unanimated. */
+.maui-overlay-layer { position: absolute; inset: 0; z-index: 20; }
 @keyframes maui-modal-in { from { transform: translateY(32px); opacity: 0; } }
 
 /* Collections */

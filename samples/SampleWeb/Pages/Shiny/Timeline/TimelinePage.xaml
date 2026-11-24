@@ -23,7 +23,10 @@
                             NodeTapped="OnNodeTapped">
             <shiny:TimelineView.OppositeTemplate>
                 <DataTemplate>
-                    <Label Text="{Binding At}" FontSize="12" Opacity="0.6" VerticalOptions="Start" />
+                    <!-- Each row sizes its own time column, so a fixed width keeps the rail straight:
+                         with proportional digits "09:02" is wider than "11:20". -->
+                    <Label Text="{Binding At}" FontSize="12" Opacity="0.6" VerticalOptions="Start"
+                           WidthRequest="40" HorizontalTextAlignment="Center" />
                 </DataTemplate>
             </shiny:TimelineView.OppositeTemplate>
 

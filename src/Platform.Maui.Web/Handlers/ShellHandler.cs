@@ -242,12 +242,12 @@ public class ShellHandler : WebElementHandler<Shell, WebElement>, IPageHost
 		foreach (var s in sections)
 		{
 			var captured = s;
-			_bottomTabs.Append(Tab(s.Title, s.Icon, s == section, () => item!.CurrentItem = captured));
+			_bottomTabs.Append(Tab(s, s.Icon, s == section, () => SelectSection(item!, captured)));
 		}
 		foreach (var c in contents)
 		{
 			var captured = c;
-			_topTabs.Append(Tab(c.Title, null, c == section?.CurrentItem, () => section!.CurrentItem = captured));
+			_topTabs.Append(Tab(c, null, c == section?.CurrentItem, () => SelectContent(item!, section!, captured)));
 		}
 
 		_topTabs.ToggleClass("maui-collapsed", !_showTopTabs);
@@ -259,8 +259,24 @@ public class ShellHandler : WebElementHandler<Shell, WebElement>, IPageHost
 		_bottomTabs.SetStyle("--maui-tab-selected", WebCss.Color(Shell.GetTabBarTitleColor(source) ?? Shell.GetTabBarForegroundColor(source)));
 	}
 
-	WebElement Tab(string? title, ImageSource? icon, bool selected, Action select)
+	// Tab taps propose the change to the Shell first, as the native renderers do: that raises
+	// Shell.Navigating, which can cancel it or defer it (an async "leave this page?" check).
+	static void SelectSection(ShellItem item, ShellSection section)
 	{
+		if (item.CurrentItem != section)
+			((IShellItemController)item).ProposeSection(section);
+	}
+
+	void SelectContent(ShellItem item, ShellSection section, ShellContent content)
+	{
+		if (section.CurrentItem != content &&
+			Controller.ProposeNavigation(ShellNavigationSource.ShellContentChanged, item, section, content, section.Stack, true))
+			section.CurrentItem = content;
+	}
+
+	WebElement Tab(BaseShellItem tabItem, ImageSource? icon, bool selected, Action select)
+	{
+		var title = tabItem.Title;
 		var button = new WebElement("button");
 		button.SetAttribute("type", "button");
 		button.SetAttribute("role", "tab");
@@ -276,8 +292,39 @@ public class ShellHandler : WebElementHandler<Shell, WebElement>, IPageHost
 		var text = new WebElement("span");
 		text.SetText(title);
 		button.Append(text);
+
+		// BadgeText: null hides the badge, an empty string shows a dot, anything else is the text.
+		var badge = new WebElement("span", "maui-tab-badge");
+		badge.SetAttribute("aria-hidden", "true");
+		button.Append(badge);
+		UpdateBadge(button, badge, tabItem);
+		tabItem.PropertyChanged += OnBadgeChanged;
+		_itemSubscriptions.Add(new Unsubscribe(() => tabItem.PropertyChanged -= OnBadgeChanged));
 		_itemSubscriptions.Add(button.On("click", select));
 		return button;
+
+		void OnBadgeChanged(object? sender, PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName is nameof(BaseShellItem.BadgeText) or nameof(BaseShellItem.BadgeColor) or nameof(BaseShellItem.BadgeTextColor))
+				UpdateBadge(button, badge, tabItem);
+		}
+	}
+
+	static void UpdateBadge(WebElement button, WebElement badge, BaseShellItem tabItem)
+	{
+		var text = tabItem.BadgeText;
+		badge.SetProperty("hidden", text is null);
+		badge.ToggleClass("dot", text is { Length: 0 });
+		badge.SetText(text);
+		badge.SetStyle("background", WebCss.Color(tabItem.BadgeColor));
+		badge.SetStyle("color", WebCss.Color(tabItem.BadgeTextColor));
+		// The badge is decorative; the tab's name carries the count for screen readers.
+		button.SetAttribute("aria-label", string.IsNullOrEmpty(text) ? null : $"{tabItem.Title} ({text})");
+	}
+
+	sealed class Unsubscribe(Action action) : IDisposable
+	{
+		public void Dispose() => action();
 	}
 
 	async Task LoadIcon(WebElement img, ImageSource source)

@@ -27,11 +27,23 @@
     <PropertyGroup>
         <NoWarn>$(NoWarn);IL2026</NoWarn>
     </PropertyGroup>
+    <!-- Shiny Shell app links: one scheme, so the generator also writes Create{Route}AppLink(). The
+         SHINY10x warnings are the native manifest entries, which a browser app doesn't have. -->
+    <PropertyGroup>
+        <ShinyAppLinkSchemes>shinyweb</ShinyAppLinkSchemes>
+        <!-- AiMauiShellTools is opt-in (Microsoft.Extensions.AI is referenced for the agent demo). -->
+        <ShinyMauiShell_GenerateAiExtensions>true</ShinyMauiShell_GenerateAiExtensions>
+        <NoWarn>$(NoWarn);SHINY101;SHINY102;SHINY103;SHINY104;SHINY105</NoWarn>
+    </PropertyGroup>
     <ItemGroup>
         <TrimmerRootAssembly Include="SampleWeb" />
         <!-- AGUI.Server's JSON options reach AGUI.Abstractions' interrupt content types by reflection;
              trimmed, every "Your key" run fails. The controls sample roots it for the same reason. -->
         <TrimmerRootAssembly Include="AGUI.Abstractions" />
+        <!-- The generated AiMauiShellTools hands Shiny's GeneratedRouteInfo record to AIFunctionFactory,
+             whose reflection-based JSON needs its constructor parameter names; trimmed, they're gone and
+             the Shiny Shell demo's More tab fails to build its view model. -->
+        <TrimmerRootAssembly Include="Shiny.Maui.Shell" />
     </ItemGroup>
 
     <ItemGroup>
@@ -75,6 +87,10 @@
         <PackageReference Include="Microsoft.Extensions.AI.OpenAI" Version="10.8.1" />
         <!-- The Shiny pages are copied from the controls sample, whose view models use the MVVM toolkit. -->
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+        <!-- The Shiny Shell tab: navigation, dialogs and the two dialog add-ons. -->
+        <PackageReference Include="Shiny.Maui.Shell" Version="8.0.0" />
+        <PackageReference Include="Shiny.Maui.Shell.ShinyDialogs" Version="8.0.0" />
+        <PackageReference Include="Shiny.Maui.Shell.UxDiversDialogs" Version="8.0.0" />
     </ItemGroup>
 
     <!-- Package consumers get this from the package's build/ folder; a project reference must import it. -->

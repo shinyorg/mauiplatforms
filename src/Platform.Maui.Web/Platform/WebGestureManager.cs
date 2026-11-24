@@ -7,7 +7,7 @@ using Microsoft.Maui.Graphics;
 namespace Microsoft.Maui.Platform.Web;
 
 /// <summary>
-/// Maps a view's gesture recognizers to DOM pointer events, re-attaching when the collection changes.
+/// Maps a view's gesture recognizers to DOM pointer events, following changes to the collection.
 /// </summary>
 internal sealed class WebGestureManager : IDisposable
 {
@@ -22,8 +22,12 @@ internal sealed class WebGestureManager : IDisposable
 
 	readonly View _view;
 	readonly WebElement _element;
-	readonly List<IDisposable> _subscriptions = new();
-	bool _hasPan;
+	// Each recognizer's DOM subscriptions. A change to the collection only touches the recognizers
+	// that came or went: re-attaching the rest would drop a gesture in progress (a control that adds
+	// a recognizer when a drag starts would otherwise end that very drag).
+	readonly Dictionary<IGestureRecognizer, List<IDisposable>> _attached = new();
+	// The list the Attach* methods add to: the recognizer being attached.
+	List<IDisposable> _subscriptions = new();
 
 	public WebGestureManager(View view, WebElement element)
 	{
@@ -38,9 +42,16 @@ internal sealed class WebGestureManager : IDisposable
 
 	void Attach()
 	{
-		Detach();
-		foreach (var recognizer in _view.GestureRecognizers)
+		var current = _view.GestureRecognizers.ToList();
+		foreach (var removed in _attached.Keys.Where(r => !current.Contains(r)).ToList())
 		{
+			Dispose(_attached[removed]);
+			_attached.Remove(removed);
+		}
+
+		foreach (var recognizer in current.Where(r => !_attached.ContainsKey(r)))
+		{
+			_subscriptions = new List<IDisposable>();
 			switch (recognizer)
 			{
 				case TapGestureRecognizer tap:
@@ -56,19 +67,30 @@ internal sealed class WebGestureManager : IDisposable
 					AttachPointer(pointer);
 					break;
 			}
+			_attached[recognizer] = _subscriptions;
 		}
 
-		_element.SetStyle("touch-action", _hasPan ? "none" : null);
-		if (_view.GestureRecognizers.OfType<TapGestureRecognizer>().Any())
-			_element.SetStyle("cursor", "pointer");
+		_element.SetStyle("touch-action", current.OfType<PanGestureRecognizer>().Any() ? "none" : null);
+		// Only clear a cursor this manager set, never one the view's handler or styles chose.
+		var tappable = current.OfType<TapGestureRecognizer>().Any();
+		if (tappable != _pointerCursor)
+			_element.SetStyle("cursor", tappable ? "pointer" : null);
+		_pointerCursor = tappable;
+	}
+
+	bool _pointerCursor;
+
+	static void Dispose(List<IDisposable> subscriptions)
+	{
+		foreach (var s in subscriptions)
+			s.Dispose();
 	}
 
 	void Detach()
 	{
-		foreach (var s in _subscriptions)
-			s.Dispose();
-		_subscriptions.Clear();
-		_hasPan = false;
+		foreach (var subscriptions in _attached.Values)
+			Dispose(subscriptions);
+		_attached.Clear();
 	}
 
 	void AttachTap(TapGestureRecognizer tap)
@@ -78,10 +100,12 @@ internal sealed class WebGestureManager : IDisposable
 
 		if (primary)
 		{
-			_subscriptions.Add(_element.OnPointer("click", (x, y, flags) =>
+			_subscriptions.Add(_element.OnTap((x, y, count) =>
 			{
-				if (PointerFlags.ClickCount(flags) % Math.Max(1, tap.NumberOfTapsRequired) == 0)
-					RaiseTap(tap, new Point(x, y));
+				if (count % Math.Max(1, tap.NumberOfTapsRequired) != 0 || !_view.IsEnabled)
+					return false;
+				RaiseTap(tap, new Point(x, y));
+				return true;
 			}));
 		}
 
@@ -101,52 +125,39 @@ internal sealed class WebGestureManager : IDisposable
 
 	void AttachPan(PanGestureRecognizer pan)
 	{
-		_hasPan = true;
 		var controller = (IPanGestureController)pan;
 		var gestureId = 0;
-		Point? start = null;
 
-		_subscriptions.Add(_element.OnPointer("pointerdown", (x, y, _) =>
+		// The pan starts after a few pixels of movement, as on the native platforms: capturing the
+		// pointer on press would retarget the click to this view and break taps on views inside it.
+		_subscriptions.Add(_element.OnPan(PanSlop, (kind, dx, dy) =>
 		{
-			start = new Point(x, y);
-			gestureId++;
-			controller.SendPanStarted(_view, gestureId);
-		}, capture: true));
-
-		_subscriptions.Add(_element.OnPointer("pointermove", (x, y, _) =>
-		{
-			if (start is { } s)
-				controller.SendPan(_view, x - s.X, y - s.Y, gestureId);
-		}));
-
-		_subscriptions.Add(_element.OnPointer("pointerup", (_, _, _) =>
-		{
-			if (start is null)
-				return;
-			start = null;
-			controller.SendPanCompleted(_view, gestureId);
-		}));
-
-		_subscriptions.Add(_element.OnPointer("pointercancel", (_, _, _) =>
-		{
-			if (start is null)
-				return;
-			start = null;
-			controller.SendPanCanceled(_view, gestureId);
+			switch (kind)
+			{
+				case 1:
+					gestureId++;
+					controller.SendPanStarted(_view, gestureId);
+					break;
+				case 2:
+					controller.SendPan(_view, dx, dy, gestureId);
+					break;
+				case 3:
+					controller.SendPanCompleted(_view, gestureId);
+					break;
+				case 4:
+					controller.SendPanCanceled(_view, gestureId);
+					break;
+			}
 		}));
 	}
 
+	/// <summary>Pixels the pointer moves before a press becomes a pan.</summary>
+	const double PanSlop = 6;
+
 	void AttachSwipe(SwipeGestureRecognizer swipe)
 	{
-		Point? start = null;
-		_subscriptions.Add(_element.OnPointer("pointerdown", (x, y, _) => start = new Point(x, y), capture: true));
-		_subscriptions.Add(_element.OnPointer("pointerup", (x, y, _) =>
+		_subscriptions.Add(_element.OnSwipe((dx, dy) =>
 		{
-			if (start is not { } s)
-				return;
-			start = null;
-			var dx = x - s.X;
-			var dy = y - s.Y;
 			var threshold = swipe.Threshold;
 			SwipeDirection direction;
 			if (Math.Abs(dx) >= Math.Abs(dy) && Math.Abs(dx) >= threshold)

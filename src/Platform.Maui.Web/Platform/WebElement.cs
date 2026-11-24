@@ -58,6 +58,9 @@ public class WebElement
 
 	public void Remove(WebElement child) => Dom.RemoveChild(Js, child.Js);
 
+	/// <summary>Puts <paramref name="child"/> at <paramref name="index"/> in place of the element there.</summary>
+	public void Replace(int index, WebElement child) => Dom.ReplaceChildAt(Js, child.Js, index);
+
 	public void Detach() => Dom.Detach(Js);
 
 	public void Clear() => Dom.ClearChildren(Js);
@@ -99,6 +102,28 @@ public class WebElement
 	/// <summary>Pointer events report element-relative coordinates and packed flags (see <see cref="PointerFlags"/>).</summary>
 	public IDisposable OnPointer(string type, Action<double, double, int> callback, bool capture = false)
 		=> new Subscription(Dom.ListenPointer(Js, type, Guard(type, callback), capture));
+
+	/// <summary>
+	/// A tap (click) with element-relative coordinates and the click count. Return true when the tap
+	/// was handled: ancestors' tap subscriptions then don't see it, as with nested native gestures.
+	/// </summary>
+	public IDisposable OnTap(Func<double, double, int, bool> callback)
+		=> new Subscription(Dom.ListenTap(Js, (x, y, count) =>
+		{
+			try { return callback(x, y, count); }
+			catch (Exception ex) { Report("click", ex); return true; }
+		}));
+
+	/// <summary>
+	/// A pan that starts once the pointer moves <paramref name="slop"/> pixels; the callback gets the
+	/// kind (1 started, 2 moved, 3 completed, 4 canceled) and the total translation.
+	/// </summary>
+	public IDisposable OnPan(double slop, Action<int, double, double> callback)
+		=> new Subscription(Dom.ListenPan(Js, slop, Guard("pan", callback)));
+
+	/// <summary>A press-to-release travel (dx, dy), without capturing the pointer.</summary>
+	public IDisposable OnSwipe(Action<double, double> callback)
+		=> new Subscription(Dom.ListenSwipe(Js, Guard("swipe", callback)));
 
 	public IDisposable OnScroll(Action<double, double> callback)
 		=> new Subscription(Dom.ListenScroll(Js, Guard("scroll", callback)));

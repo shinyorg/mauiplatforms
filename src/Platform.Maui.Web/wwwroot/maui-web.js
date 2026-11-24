@@ -65,6 +65,14 @@ export function insertChild(parent, child, index) {
     if (ref !== child) parent.insertBefore(child, ref);
 }
 
+// Puts child at index in place of the element there (or appends it past the end).
+export function replaceChildAt(parent, child, index) {
+    const old = parent.children[index] ?? null;
+    if (old === child) return;
+    if (child.parentNode === parent) child.remove();
+    if (old) parent.replaceChild(child, old); else parent.appendChild(child);
+}
+
 export function removeChild(parent, child) { if (child.parentNode === parent) parent.removeChild(child); }
 export function detach(el) { el.remove(); }
 export function clearChildren(el) { el.replaceChildren(); }
@@ -174,6 +182,113 @@ export function listenPointer(el, type, callback, capture) {
     });
 }
 
+// A PanGestureRecognizer. As on the native platforms the pan only starts once the pointer has moved
+// past a small slop: until then the press is an ordinary press, so taps on the view and on views
+// inside it still work. Once it starts, the pointer is captured, and the click the browser fires
+// after the release is swallowed, since a drag is not a tap.
+// callback(kind, dx, dy): 1 started, 2 moved, 3 completed, 4 canceled.
+// Pointers a pan has claimed: a swipe on an ancestor ignores them, as a native child pan consumes the gesture.
+const panningPointers = new Set();
+
+export function listenPan(el, slop, callback) {
+    let start = null, pointerId = null, panning = false;
+    // After the press the gesture follows the pointer on the window, as a native touch keeps
+    // reporting to the view it started on: the pointer may cross a sibling (a resize grip) or
+    // leave the view. The pointer is only captured once the pan starts, so a press that turns
+    // out to be a tap still clicks the view under it.
+    const move = e => {
+        if (e.pointerId !== pointerId) return;
+        const dx = e.clientX - start.x, dy = e.clientY - start.y;
+        if (!panning) {
+            if (Math.hypot(dx, dy) < slop) return;
+            // A pan on a view inside this one started first (inner views registered first on
+            // press): it owns the gesture, as with nested native recognizers.
+            if (panningPointers.has(pointerId)) {
+                stopTracking();
+                start = null; pointerId = null;
+                return;
+            }
+            panning = true;
+            panningPointers.add(pointerId);
+            try { el.setPointerCapture(pointerId); } catch { /* not capturable */ }
+            callback(1, 0, 0);
+        }
+        callback(2, dx, dy);
+    };
+    const stopTracking = () => {
+        window.removeEventListener('pointermove', move, true);
+        window.removeEventListener('pointerup', up, true);
+        window.removeEventListener('pointercancel', cancel, true);
+    };
+    const finish = (e, kind) => {
+        if (e.pointerId !== pointerId) return;
+        stopTracking();
+        const wasPanning = panning, id = pointerId;
+        start = null; pointerId = null; panning = false;
+        if (!wasPanning) return;
+        callback(kind, 0, 0);
+        // Released after the swipe listeners (window, capture phase) have seen this pointer.
+        setTimeout(() => panningPointers.delete(id), 0);
+        if (kind === 3) {
+            const swallow = c => { c.stopPropagation(); c.preventDefault(); };
+            window.addEventListener('click', swallow, { capture: true, once: true });
+            // Not every release produces a click (e.g. released over another element).
+            setTimeout(() => window.removeEventListener('click', swallow, { capture: true }), 0);
+        }
+    };
+    const up = e => finish(e, 3);
+    const cancel = e => finish(e, 4);
+    const down = e => {
+        if (start || (e.pointerType === 'mouse' && e.button !== 0)) return;
+        start = { x: e.clientX, y: e.clientY }; pointerId = e.pointerId; panning = false;
+        window.addEventListener('pointermove', move, true);
+        window.addEventListener('pointerup', up, true);
+        window.addEventListener('pointercancel', cancel, true);
+    };
+    el.addEventListener('pointerdown', down);
+    const id = nextListenerId++;
+    listeners.set(id, { dispose: () => { el.removeEventListener('pointerdown', down); stopTracking(); } });
+    return id;
+}
+
+// A SwipeGestureRecognizer: the travel from press to release. The release is watched on the window
+// rather than by capturing the pointer, since a capture would take every later pointer event (and
+// the click) away from the views inside this one - a pan or tap on a child would never see them.
+export function listenSwipe(el, callback) {
+    let start = null;
+    const down = e => {
+        if (start || (e.pointerType === 'mouse' && e.button !== 0)) return;
+        start = { x: e.clientX, y: e.clientY, id: e.pointerId };
+        const end = u => {
+            if (!start || u.pointerId !== start.id) return;
+            window.removeEventListener('pointerup', end, true);
+            window.removeEventListener('pointercancel', end, true);
+            const s = start; start = null;
+            if (u.type === 'pointerup' && !panningPointers.has(u.pointerId)) callback(u.clientX - s.x, u.clientY - s.y);
+        };
+        window.addEventListener('pointerup', end, true);
+        window.addEventListener('pointercancel', end, true);
+    };
+    el.addEventListener('pointerdown', down);
+    const id = nextListenerId++;
+    listeners.set(id, { dispose: () => el.removeEventListener('pointerdown', down) });
+    return id;
+}
+
+// A TapGestureRecognizer's click. As on the native platforms, the innermost recognizer that handles
+// a tap claims it, so ancestors with their own tap (a row around a chevron, a card around a button)
+// don't also fire; nor does a click that a nested native control (a Button, an Entry) consumed.
+export function listenTap(el, callback) {
+    return addListener(el, 'click', e => {
+        // Recognizers on the same view all see the tap; only an inner view's claim stops it.
+        if (e.__mauiTapClaimedBy && e.__mauiTapClaimedBy !== el) return;
+        const control = e.target instanceof Element ? e.target.closest('button, a[href], input, select, textarea') : null;
+        if (control && control !== el && el.contains(control)) return;
+        const r = el.getBoundingClientRect();
+        if (callback(e.clientX - r.left, e.clientY - r.top, e.detail || 1)) e.__mauiTapClaimedBy = el;
+    });
+}
+
 export function listenScroll(el, callback) {
     return addListener(el, 'scroll', () => callback(el.scrollLeft, el.scrollTop), { passive: true });
 }
@@ -186,7 +301,8 @@ export function unlisten(id) {
     const l = listeners.get(id);
     if (!l) return;
     listeners.delete(id);
-    l.el.removeEventListener(l.type, l.fn, l.options);
+    if (l.dispose) l.dispose();
+    else l.el.removeEventListener(l.type, l.fn, l.options);
 }
 
 export function observeResize(el, callback) {

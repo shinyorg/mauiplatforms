@@ -98,9 +98,11 @@ public class LayoutHandler : WebElementHandler<ILayout, WebElement>, ILayoutHand
 		WebLayoutScheduler.Request();
 	}
 
+	// Layout.Children[index] = view replaces a child: the old view's element has to go, as the
+	// native handlers' RemoveViewAt/AddView do, or it stays on screen beneath the new one.
 	public void Update(int index, IView child)
 	{
-		PlatformView.Insert(index, ToPlatform(child));
+		PlatformView.Replace(index, ToPlatform(child));
 		WebLayoutScheduler.Request();
 	}
 

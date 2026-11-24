@@ -69,6 +69,9 @@ internal static partial class Dom
 	[JSImport("insertChild", Module)]
 	public static partial void InsertChild(JSObject parent, JSObject child, int index);
 
+	[JSImport("replaceChildAt", Module)]
+	public static partial void ReplaceChildAt(JSObject parent, JSObject child, int index);
+
 	[JSImport("removeChild", Module)]
 	public static partial void RemoveChild(JSObject parent, JSObject child);
 
@@ -99,6 +102,18 @@ internal static partial class Dom
 
 	[JSImport("listenKey", Module)]
 	public static partial int ListenKey(JSObject el, string type, [JSMarshalAs<JSType.Function<JSType.String>>] Action<string> callback);
+
+	[JSImport("listenPan", Module)]
+	public static partial int ListenPan(JSObject el, double slop,
+		[JSMarshalAs<JSType.Function<JSType.Number, JSType.Number, JSType.Number>>] Action<int, double, double> callback);
+
+	[JSImport("listenSwipe", Module)]
+	public static partial int ListenSwipe(JSObject el,
+		[JSMarshalAs<JSType.Function<JSType.Number, JSType.Number>>] Action<double, double> callback);
+
+	[JSImport("listenTap", Module)]
+	public static partial int ListenTap(JSObject el,
+		[JSMarshalAs<JSType.Function<JSType.Number, JSType.Number, JSType.Number, JSType.Boolean>>] Func<double, double, int, bool> callback);
 
 	[JSImport("listenPointer", Module)]
 	public static partial int ListenPointer(JSObject el, string type,

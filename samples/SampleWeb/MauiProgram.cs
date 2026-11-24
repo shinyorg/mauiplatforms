@@ -4,6 +4,8 @@ using Microsoft.Maui.Platform.Web.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Shiny;
 using Shiny.Maui.Controls.Office;
+using SampleWeb.Pages.Shiny;
+using SampleWeb.Pages.ShinyShellDemo;
 
 namespace SampleWeb;
 
@@ -18,6 +20,8 @@ public static class MauiProgram
 			.UseMauiMapsWeb()
 			// The Shiny Controls tab: the core controls plus the browser backends from this repo.
 			.UseShinyControls()
+			// Shiny's borderless text fields: no native <input> border inside the control's own.
+			.UseShinyBorderlessWeb()
 			.UseShinyCameraWeb()
 			.UseShinyMediaElementWeb()
 			// Docking, as the controls sample registers its panels. The tray, hot keys and notch
@@ -32,6 +36,8 @@ public static class MauiProgram
 			// so UseSkiaSharpWeb comes after it: the last registration for a view type wins.
 			.UseShinyOffice()
 			.UseSkiaSharpWeb()
+			// The Shiny Shell tab: Shiny.Maui.Shell with its ShinyDialogs and UxDiversDialogs add-ons.
+			.UseShinyShellDemo()
 			.ConfigureFonts(fonts =>
 			{
 				fonts.AddFont("BricolageGrotesque.ttf", Theme.Display);

@@ -62,6 +62,7 @@ public class MainShell : FlyoutPage
 	[
 		("MAUI", Items),
 		("Shiny Controls", ShinyGallery.Items),
+		("Shiny Shell", Pages.ShinyShellDemo.ShinyShellGallery.Items),
 	];
 
 	readonly CollectionView _menu;
