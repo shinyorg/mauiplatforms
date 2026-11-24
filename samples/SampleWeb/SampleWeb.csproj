@@ -40,10 +40,6 @@
         <!-- AGUI.Server's JSON options reach AGUI.Abstractions' interrupt content types by reflection;
              trimmed, every "Your key" run fails. The controls sample roots it for the same reason. -->
         <TrimmerRootAssembly Include="AGUI.Abstractions" />
-        <!-- The generated AiMauiShellTools hands Shiny's GeneratedRouteInfo record to AIFunctionFactory,
-             whose reflection-based JSON needs its constructor parameter names; trimmed, they're gone and
-             the Shiny Shell demo's More tab fails to build its view model. -->
-        <TrimmerRootAssembly Include="Shiny.Maui.Shell" />
     </ItemGroup>
 
     <ItemGroup>
@@ -88,9 +84,9 @@
         <!-- The Shiny pages are copied from the controls sample, whose view models use the MVVM toolkit. -->
         <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
         <!-- The Shiny Shell tab: navigation, dialogs and the two dialog add-ons. -->
-        <PackageReference Include="Shiny.Maui.Shell" Version="8.0.0" />
-        <PackageReference Include="Shiny.Maui.Shell.ShinyDialogs" Version="8.0.0" />
-        <PackageReference Include="Shiny.Maui.Shell.UxDiversDialogs" Version="8.0.0" />
+        <PackageReference Include="Shiny.Maui.Shell" Version="8.0.1" />
+        <PackageReference Include="Shiny.Maui.Shell.ShinyDialogs" Version="8.0.1" />
+        <PackageReference Include="Shiny.Maui.Shell.UxDiversDialogs" Version="8.0.1" />
     </ItemGroup>
 
     <!-- Package consumers get this from the package's build/ folder; a project reference must import it. -->

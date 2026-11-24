@@ -1,5 +1,6 @@
 using Microsoft.Maui;
 using Microsoft.Maui.Controls;
+using Shiny.Controls.Analysis;
 using Shiny.Controls.Camera;
 using Shiny.Maui.Controls.Camera;
 using Shiny.Maui.Controls.Media;

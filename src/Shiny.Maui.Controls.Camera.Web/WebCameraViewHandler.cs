@@ -4,6 +4,7 @@ using Microsoft.Maui;
 using Microsoft.Maui.Graphics;
 using Microsoft.Maui.Platform.Web;
 using Microsoft.Maui.Platform.Web.Handlers;
+using Shiny.Controls.Analysis;
 using Shiny.Controls.Camera;
 using Shiny.Maui.Controls.Camera.Web.Interop;
 
