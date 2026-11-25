@@ -20,6 +20,14 @@
             <Setter Property="Padding" Value="14" />
             <Setter Property="Background" Value="#0B1020" />
         </Style>
+        <!-- The ring round a gallery card; its colour marks the card that is the app background. -->
+        <Style TargetType="Border" x:Key="CardRing">
+            <Setter Property="StrokeThickness" Value="3" />
+            <Setter Property="Stroke" Value="Transparent" />
+            <Setter Property="Padding" Value="3" />
+            <Setter Property="StrokeShape" Value="RoundRectangle 21" />
+            <Setter Property="BackgroundColor" Value="Transparent" />
+        </Style>
     </ContentPage.Resources>
 
     <ScrollView Padding="16">
@@ -60,99 +68,14 @@
 
             <Label Text="Gallery" FontSize="18" FontAttributes="Bold" Margin="0,8,0,0" />
 
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="12" RowSpacing="12"
-                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
-
-                <shiny:AnimatedBackground Style="{StaticResource Card}" AutomationId="AuroraCard">
-                    <shiny:AnimatedBackground.Effect>
-                        <shiny:AuroraEffect />
-                    </shiny:AnimatedBackground.Effect>
-                    <Label Text="Aurora" Style="{StaticResource CardTitle}" />
-                </shiny:AnimatedBackground>
-
-                <shiny:AnimatedBackground Grid.Column="1" Style="{StaticResource Card}" AutomationId="ParticlesCard">
-                    <shiny:AnimatedBackground.Effect>
-                        <shiny:ParticlesEffect LinkDistance="70" />
-                    </shiny:AnimatedBackground.Effect>
-                    <Label Text="Particles" Style="{StaticResource CardTitle}" />
-                </shiny:AnimatedBackground>
-
-                <shiny:AnimatedBackground Grid.Row="1" Style="{StaticResource Card}" AutomationId="SnowCard">
-                    <shiny:AnimatedBackground.Effect>
-                        <shiny:SnowEffect Wind="0.4" />
-                    </shiny:AnimatedBackground.Effect>
-                    <Label Text="Snow" Style="{StaticResource CardTitle}" />
-                </shiny:AnimatedBackground>
-
-                <shiny:AnimatedBackground Grid.Row="1" Grid.Column="1" Style="{StaticResource Card}" Background="#0F172A" AutomationId="RainCard">
-                    <shiny:AnimatedBackground.Effect>
-                        <shiny:RainEffect />
-                    </shiny:AnimatedBackground.Effect>
-                    <Label Text="Rain" Style="{StaticResource CardTitle}" />
-                </shiny:AnimatedBackground>
-
-                <shiny:AnimatedBackground Grid.Row="2" Style="{StaticResource Card}" Background="#020617" AutomationId="MeteorsCard">
-                    <shiny:AnimatedBackground.Effect>
-                        <shiny:MeteorsEffect Density="1.5" MaxDelay="0:0:1.5" Length="60" />
-                    </shiny:AnimatedBackground.Effect>
-                    <Label Text="Meteors" Style="{StaticResource CardTitle}" />
-                </shiny:AnimatedBackground>
-
-                <shiny:AnimatedBackground Grid.Row="2" Grid.Column="1" Style="{StaticResource Card}" Background="#09090B" AutomationId="DotsCard">
-                    <shiny:AnimatedBackground.Effect>
-                        <shiny:DotPatternEffect Spacing="14" SpotlightColor="#A78BFA" SpotlightRadius="70" Glow="0.25" />
-                    </shiny:AnimatedBackground.Effect>
-                    <Label Text="Dot spotlight" Style="{StaticResource CardTitle}" />
-                </shiny:AnimatedBackground>
-
-                <shiny:AnimatedBackground Grid.Row="3" Style="{StaticResource Card}" AutomationId="NoiseCard">
-                    <shiny:AnimatedBackground.Background>
-                        <LinearGradientBrush EndPoint="1,1">
-                            <GradientStop Color="#4F46E5" Offset="0" />
-                            <GradientStop Color="#DB2777" Offset="1" />
-                        </LinearGradientBrush>
-                    </shiny:AnimatedBackground.Background>
-                    <shiny:AnimatedBackground.Effect>
-                        <shiny:NoiseEffect Intensity="0.25" />
-                    </shiny:AnimatedBackground.Effect>
-                    <Label Text="Noise over a gradient" Style="{StaticResource CardTitle}" />
-                </shiny:AnimatedBackground>
-
-                <shiny:AnimatedBackground Grid.Row="3" Grid.Column="1" Style="{StaticResource Card}" Background="#000000" AutomationId="WarpCard">
-                    <shiny:AnimatedBackground.Effect>
-                        <shiny:StarfieldEffect Warp="True" Density="12" />
-                    </shiny:AnimatedBackground.Effect>
-                    <Label Text="Starfield (warp)" Style="{StaticResource CardTitle}" />
-                </shiny:AnimatedBackground>
-
-                <shiny:AnimatedBackground Grid.Row="4" Style="{StaticResource Card}" Background="#052e16" AutomationId="FirefliesCard">
-                    <shiny:AnimatedBackground.Effect>
-                        <shiny:FirefliesEffect Density="1.2" />
-                    </shiny:AnimatedBackground.Effect>
-                    <Label Text="Fireflies" Style="{StaticResource CardTitle}" />
-                </shiny:AnimatedBackground>
-
-                <shiny:AnimatedBackground Grid.Row="4" Grid.Column="1" Style="{StaticResource Card}" Background="#082F49" AutomationId="BubblesCard">
-                    <shiny:AnimatedBackground.Effect>
-                        <shiny:BubblesEffect Density="1.5" MaxSize="12" />
-                    </shiny:AnimatedBackground.Effect>
-                    <Label Text="Bubbles" Style="{StaticResource CardTitle}" />
-                </shiny:AnimatedBackground>
-
-                <shiny:AnimatedBackground Grid.Row="5" Style="{StaticResource Card}" Background="#0C1222" AutomationId="WavesCard">
-                    <shiny:AnimatedBackground.Effect>
-                        <shiny:WavesEffect Level="0.45" Amplitude="10" Wavelength="160" />
-                    </shiny:AnimatedBackground.Effect>
-                    <Label Text="Waves" Style="{StaticResource CardTitle}" VerticalOptions="Start" />
-                </shiny:AnimatedBackground>
-
-                <shiny:AnimatedBackground Grid.Row="5" Grid.Column="1" Style="{StaticResource Card}" Background="#000000" AutomationId="MatrixCard">
-                    <shiny:AnimatedBackground.Effect>
-                        <shiny:MatrixEffect FontSize="12" />
-                    </shiny:AnimatedBackground.Effect>
-                    <Label Text="Matrix" Style="{StaticResource CardTitle}" />
-                </shiny:AnimatedBackground>
+            <!-- Tapping a card makes it the background behind the whole app (AppBackground); None clears it. -->
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                <Label x:Name="AppBackgroundStatus" AutomationId="AppBackgroundStatus" VerticalOptions="Center" FontSize="14" />
+                <Button x:Name="NoneButton" Grid.Column="1" Text="None" StyleClass="secondary" AutomationId="AppBackgroundNone" Clicked="OnNone" />
             </Grid>
+
+            <!-- One card per AppBackground choice, built in code so the cards and the app background share their settings. -->
+            <Grid x:Name="Gallery" ColumnDefinitions="*,*" ColumnSpacing="12" RowSpacing="12" />
 
         </VerticalStackLayout>
     </ScrollView>

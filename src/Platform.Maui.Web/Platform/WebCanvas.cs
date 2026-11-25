@@ -31,7 +31,7 @@ public sealed class WebCanvas : ICanvas
 
 	public float MiterLimit { set => Command("miterLimit", value); }
 
-	public Color StrokeColor { set => Command("strokeStyle", WebCss.Color(value) ?? "transparent"); }
+	public Color StrokeColor { set => ColorCommand("strokeStyle", value, "transparent"); }
 
 	public LineCap StrokeLineCap { set => Command("lineCap", WebCss.LineCap(value)); }
 
@@ -41,7 +41,7 @@ public sealed class WebCanvas : ICanvas
 
 	public float StrokeDashOffset { set => Command("lineDashOffset", value * _state.StrokeSize); }
 
-	public Color FillColor { set => Command("fillStyle", WebCss.Color(value) ?? "transparent"); }
+	public Color FillColor { set => ColorCommand("fillStyle", value, "transparent"); }
 
 	public Color FontColor { set => _state.FontColor = value ?? Colors.Black; }
 
@@ -89,6 +89,14 @@ public sealed class WebCanvas : ICanvas
 	/// <summary>Returns the recorded commands as JSON and resets the buffer.</summary>
 	public string Flush()
 	{
+		// Paths the page holds for PathFs that have since changed, been disposed or collected.
+		if (!s_freedPaths.IsEmpty)
+		{
+			Begin("pathFree");
+			while (s_freedPaths.TryDequeue(out var id))
+				Arg(id);
+			End();
+		}
 		_commands.Append(']');
 		var json = _commands.ToString();
 		_commands.Clear().Append('[');
@@ -302,7 +310,7 @@ public sealed class WebCanvas : ICanvas
 
 	void ApplyFont() => Command("font", CssFont(_state.Font, _state.FontSize));
 
-	void ApplyFontColor() => Command("fillStyle", WebCss.Color(_state.FontColor) ?? "#000");
+	void ApplyFontColor() => ColorCommand("fillStyle", _state.FontColor, "#000");
 
 	static string CssFont(IFont? font, float size)
 	{
@@ -322,7 +330,83 @@ public sealed class WebCanvas : ICanvas
 		_ => "left",
 	};
 
-	void Path(string op, PathF path) => Command(op, PathData(path));
+	/// <summary>
+	/// Writes a path operation. The path's SVG data is kept on the PathF (in
+	/// <see cref="PathF.PlatformPath"/>, which PathF clears whenever the path changes), so a path
+	/// drawn again is not serialized again. Drawn a second time, it is also handed to the page once
+	/// as a Path2D and referred to by id from then on: drawables that cache their geometry (a grid
+	/// of dots, a noise tile, a chart's series) then cost a few bytes a frame instead of the whole
+	/// path, and the browser does not re-parse it every frame either.
+	/// </summary>
+	void Path(string op, PathF path)
+	{
+		if (path.PlatformPath is not WebPath cached)
+		{
+			// A path drawn once (a temporary built every frame) is written inline, as before.
+			cached = new WebPath(PathData(path));
+			path.PlatformPath = cached;
+			Command(op, cached.Data);
+			return;
+		}
+
+		if (cached.Id == 0)
+		{
+			Begin("pathDef");
+			Arg(cached.Define());
+			Arg(cached.Data);
+			End();
+		}
+		Begin(op);
+		Arg(cached.Id);
+		End();
+	}
+
+	static int s_nextPathId;
+	static readonly System.Collections.Concurrent.ConcurrentQueue<int> s_freedPaths = new();
+
+	/// <summary>
+	/// A PathF's serialized data, and the id of the Path2D the page holds for it once it has been
+	/// sent. PathF disposes it when the path changes or is disposed; a path that is just dropped
+	/// releases it from the finalizer. Either way the page is told to forget the Path2D on the next
+	/// draw.
+	/// </summary>
+	sealed class WebPath : IDisposable
+	{
+		public WebPath(string data)
+		{
+			Data = data;
+			// Most paths are temporaries drawn once; only one the page holds needs finalizing.
+			GC.SuppressFinalize(this);
+		}
+
+		public string Data { get; }
+
+		public int Id { get; private set; }
+
+		/// <summary>Gives the path an id for the page to keep its Path2D under.</summary>
+		public int Define()
+		{
+			Id = ++s_nextPathId;
+			GC.ReRegisterForFinalize(this);
+			return Id;
+		}
+
+		public void Dispose()
+		{
+			Release();
+			GC.SuppressFinalize(this);
+		}
+
+		~WebPath() => Release();
+
+		void Release()
+		{
+			if (Id == 0)
+				return;
+			s_freedPaths.Enqueue(Id);
+			Id = 0;
+		}
+	}
 
 	/// <summary>
 	/// SVG path data for a PathF. PathF.ToDefinitionString() drops arc segments, which would leave
@@ -330,27 +414,39 @@ public sealed class WebCanvas : ICanvas
 	/// </summary>
 	internal static string PathData(PathF path)
 	{
-		var data = new StringBuilder();
+		var data = new StringBuilder(path.Count * 12 + path.OperationCount * 2);
 		var hasCurrentPoint = false;
-		for (var i = 0; i < path.OperationCount; i++)
+		// Walked in one pass, keeping the point and arc indexes as it goes: PathF.GetSegmentInfo counts
+		// them up from the first segment on every call, which made serializing a path quadratic.
+		var point = 0;
+		var angle = 0;
+		var clockwise = 0;
+		foreach (var operation in path.SegmentTypes)
 		{
-			switch (path.GetSegmentInfo(i, out var point, out var angle, out var clockwise))
+			switch (operation)
 			{
 				case PathOperation.Move:
 					Append(data, 'M', path[point]);
+					point += 1;
 					hasCurrentPoint = true;
 					break;
 				case PathOperation.Line:
 					Append(data, 'L', path[point]);
+					point += 1;
 					break;
 				case PathOperation.Quad:
 					Append(data, 'Q', path[point], path[point + 1]);
+					point += 2;
 					break;
 				case PathOperation.Cubic:
 					Append(data, 'C', path[point], path[point + 1], path[point + 2]);
+					point += 3;
 					break;
 				case PathOperation.Arc:
 					AppendArc(data, path[point], path[point + 1], path.GetArcAngle(angle), path.GetArcAngle(angle + 1), path.GetArcClockwise(clockwise), hasCurrentPoint);
+					point += 2;
+					angle += 2;
+					clockwise += 1;
 					hasCurrentPoint = true;
 					break;
 				case PathOperation.Close:
@@ -358,14 +454,39 @@ public sealed class WebCanvas : ICanvas
 					break;
 			}
 		}
-		return data.ToString().Trim();
+		// Every segment ends with a separator; drop the last one rather than copying the string to trim it.
+		if (data.Length > 0 && data[^1] == ' ')
+			data.Length--;
+		return data.ToString();
 	}
 
-	static void Append(StringBuilder data, char command, params PointF[] points)
+	static void Append(StringBuilder data, char command, PointF p1)
 	{
 		data.Append(command);
-		foreach (var p in points)
-			data.Append(Num(p.X)).Append(' ').Append(Num(p.Y)).Append(' ');
+		AppendPoint(data, p1);
+	}
+
+	static void Append(StringBuilder data, char command, PointF p1, PointF p2)
+	{
+		data.Append(command);
+		AppendPoint(data, p1);
+		AppendPoint(data, p2);
+	}
+
+	static void Append(StringBuilder data, char command, PointF p1, PointF p2, PointF p3)
+	{
+		data.Append(command);
+		AppendPoint(data, p1);
+		AppendPoint(data, p2);
+		AppendPoint(data, p3);
+	}
+
+	static void AppendPoint(StringBuilder data, PointF p)
+	{
+		AppendNum(data, p.X);
+		data.Append(' ');
+		AppendNum(data, p.Y);
+		data.Append(' ');
 	}
 
 	// Follows the Skia backend: angles are degrees, counterclockwise from 3 o'clock in a y-up sense,
@@ -413,42 +534,176 @@ public sealed class WebCanvas : ICanvas
 		}
 	}
 
-	void Command(string name, params object?[] args)
+	// Commands are written straight into the JSON buffer. Drawables issue thousands a frame, and on the
+	// WebAssembly interpreter boxing each argument into a params array and formatting each number through
+	// double.ToString was most of the cost of a frame; the typed overloads below avoid both.
+
+	void Begin(string name)
 	{
 		if (!_first)
 			_commands.Append(',');
 		_first = false;
 		_commands.Append("[\"").Append(name).Append('"');
+	}
+
+	void Arg(double value)
+	{
+		_commands.Append(',');
+		AppendNum(_commands, value);
+	}
+
+	void Arg(string? value)
+	{
+		_commands.Append(',');
+		if (value is null)
+			_commands.Append("null");
+		else
+			AppendString(_commands, value);
+	}
+
+	void End() => _commands.Append(']');
+
+	void Command(string name)
+	{
+		Begin(name);
+		End();
+	}
+
+	void Command(string name, double a)
+	{
+		Begin(name);
+		Arg(a);
+		End();
+	}
+
+	void Command(string name, double a, double b)
+	{
+		Begin(name);
+		Arg(a);
+		Arg(b);
+		End();
+	}
+
+	void Command(string name, double a, double b, double c, double d)
+	{
+		Begin(name);
+		Arg(a);
+		Arg(b);
+		Arg(c);
+		Arg(d);
+		End();
+	}
+
+	void Command(string name, string? value)
+	{
+		Begin(name);
+		Arg(value);
+		End();
+	}
+
+	void Command(string name, params object?[] args)
+	{
+		Begin(name);
 		foreach (var arg in args)
 		{
-			_commands.Append(',');
 			switch (arg)
 			{
 				case null:
-					_commands.Append("null");
+					Arg((string?)null);
 					break;
 				case string s:
-					_commands.Append('"').Append(JsonEscape(s)).Append('"');
+					Arg(s);
 					break;
 				case float f:
-					_commands.Append(Num(f));
+					Arg(f);
 					break;
 				case double d:
-					_commands.Append(Num(d));
+					Arg(d);
+					break;
+				case int i:
+					Arg(i);
 					break;
 				default:
-					_commands.Append(Convert.ToString(arg, CultureInfo.InvariantCulture));
+					_commands.Append(',').Append(Convert.ToString(arg, CultureInfo.InvariantCulture));
 					break;
 			}
 		}
-		_commands.Append(']');
+		End();
 	}
 
-	static string Num(double value) => double.IsFinite(value) ? Math.Round(value, 3).ToString(CultureInfo.InvariantCulture) : "0";
-
-	static string JsonEscape(string value)
+	/// <summary>A CSS colour, written as WebCss.Color would format it, without the intermediate strings.</summary>
+	void ColorCommand(string name, Color? color, string fallback)
 	{
-		var sb = new StringBuilder(value.Length);
+		Begin(name);
+		_commands.Append(',');
+		if (color is null)
+		{
+			AppendString(_commands, fallback);
+		}
+		else
+		{
+			_commands.Append("\"rgba(")
+				.Append((int)Math.Round(color.Red * 255)).Append(',')
+				.Append((int)Math.Round(color.Green * 255)).Append(',')
+				.Append((int)Math.Round(color.Blue * 255)).Append(',');
+			AppendNum(_commands, color.Alpha);
+			_commands.Append(")\"");
+		}
+		End();
+	}
+
+	static string Num(double value)
+	{
+		var sb = new StringBuilder(12);
+		AppendNum(sb, value);
+		return sb.ToString();
+	}
+
+	/// <summary>
+	/// Appends a number rounded to 3 decimals with no exponent and no trailing zeros ("12", "-0.5",
+	/// "3.142"), as Math.Round(value, 3).ToString(InvariantCulture) would, using integer arithmetic.
+	/// </summary>
+	internal static void AppendNum(StringBuilder sb, double value)
+	{
+		if (!double.IsFinite(value))
+		{
+			sb.Append('0');
+			return;
+		}
+
+		var scaled = Math.Round(value * 1000, MidpointRounding.AwayFromZero);
+		if (Math.Abs(scaled) >= 1e15)
+		{
+			// Too large for the integer path (and far outside any canvas); let the runtime format it.
+			sb.Append(Math.Round(value, 3).ToString(CultureInfo.InvariantCulture));
+			return;
+		}
+
+		var units = (long)scaled;
+		if (units < 0)
+		{
+			sb.Append('-');
+			units = -units;
+		}
+		sb.Append(units / 1000);
+
+		var fraction = (int)(units % 1000);
+		if (fraction == 0)
+			return;
+
+		sb.Append('.');
+		if (fraction < 100)
+			sb.Append('0');
+		if (fraction < 10)
+			sb.Append('0');
+		while (fraction % 10 == 0)
+			fraction /= 10;
+		sb.Append(fraction);
+	}
+
+	static void AppendString(StringBuilder sb, string value)
+	{
+		sb.Append('"');
 		foreach (var c in value)
 		{
 			switch (c)
@@ -466,6 +721,6 @@ public sealed class WebCanvas : ICanvas
 					break;
 			}
 		}
-		return sb.ToString();
+		sb.Append('"');
 	}
 }

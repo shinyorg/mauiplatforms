@@ -114,4 +114,66 @@ public class WebCanvasTests
 		path.CurveTo(9, 10, 11, 12, 13, 14);
 		Assert.Equal("M1 2 L3 4 Q5 6 7 8 C9 10 11 12 13 14", WebCanvas.PathData(path));
 	}
+
+	[Fact]
+	public void APathDrawnAgainIsSentOnceThenReferencedById()
+	{
+		var canvas = new WebCanvas();
+		var path = new PathF();
+		path.MoveTo(0, 0);
+		path.LineTo(10, 10);
+
+		canvas.FillPath(path);
+		var first = Commands(canvas).Single();
+		Assert.Equal("fill", first[0].GetString());
+		Assert.Equal("M0 0 L10 10", first[1].GetString());
+
+		canvas.FillPath(path);
+		var second = Commands(canvas);
+		Assert.Equal("pathDef", second[0][0].GetString());
+		var id = second[0][1].GetInt32();
+		Assert.Equal("M0 0 L10 10", second[0][2].GetString());
+		Assert.Equal("fill", second[1][0].GetString());
+		Assert.Equal(id, second[1][1].GetInt32());
+
+		canvas.FillPath(path);
+		var third = Commands(canvas).Single();
+		Assert.Equal(id, third[1].GetInt32());
+	}
+
+	[Fact]
+	public void AChangedPathIsWrittenAgainAndTheOldOneFreed()
+	{
+		var canvas = new WebCanvas();
+		var path = new PathF();
+		path.MoveTo(0, 0);
+		path.LineTo(10, 10);
+		canvas.DrawPath(path);
+		canvas.DrawPath(path);
+		var id = Commands(canvas).Single(c => c[0].GetString() == "pathDef")[1].GetInt32();
+
+		path.LineTo(20, 0);
+		canvas.DrawPath(path);
+		var commands = Commands(canvas);
+		Assert.Equal("M0 0 L10 10 L20 0", commands[0][1].GetString());
+		var freed = commands.Single(c => c[0].GetString() == "pathFree");
+		Assert.Contains(id, freed.EnumerateArray().Skip(1).Select(e => e.GetInt32()));
+	}
+
+	[Theory]
+	[InlineData(0d, "0")]
+	[InlineData(12d, "12")]
+	[InlineData(-1.5d, "-1.5")]
+	[InlineData(0.05d, "0.05")]
+	[InlineData(3.14159d, "3.142")]
+	[InlineData(-0.0001d, "0")]
+	[InlineData(1e-7d, "0")]
+	[InlineData(123456.0009d, "123456.001")]
+	[InlineData(double.NaN, "0")]
+	public void NumbersAreRoundedToThreeDecimals(double value, string expected)
+	{
+		var sb = new System.Text.StringBuilder();
+		WebCanvas.AppendNum(sb, value);
+		Assert.Equal(expected, sb.ToString());
+	}
 }

@@ -53,7 +53,12 @@ public static class Theme
 			resources[token.Key] = color;
 			resources[token.BrushKey] = new SolidColorBrush(color);
 		}
+		// Paper, or a translucent paper while an app background (AppBackground) shows behind the pages.
+		resources[PageBackground] = AppBackground.PageColor(dark ? Paper.Dark : Paper.Light, dark);
 	}
+
+	/// <summary>The resource key of the gallery pages' background colour.</summary>
+	public const string PageBackground = "PageBackground";
 
 	public static Color Current(Token pair)
 		=> Application.Current?.RequestedTheme == Microsoft.Maui.ApplicationModel.AppTheme.Dark ? pair.Dark : pair.Light;
@@ -69,7 +74,7 @@ public static class Theme
 		var resources = new ResourceDictionary();
 
 		resources.Add(Style<ContentPage>(
-			(VisualElement.BackgroundColorProperty, Pick(Paper))));
+			(VisualElement.BackgroundColorProperty, new DynamicResource(PageBackground))));
 
 		resources.Add(Style<Label>(
 			(Label.FontFamilyProperty, Body),

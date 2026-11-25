@@ -10,6 +10,15 @@ namespace SampleWeb;
 /// <summary>One gallery entry: an emoji icon, a title and how to create the page.</summary>
 public sealed record GalleryItem(string Icon, string Title, Func<Page> Create);
 
+/// <summary>A titled section of the gallery menu; the CollectionView shows <see cref="Name"/> as its group header.</summary>
+public sealed class GalleryGroup(string name, IEnumerable<GalleryItem> items) : List<GalleryItem>(items)
+{
+	public string Name { get; } = name;
+
+	/// <summary>Every entry of <paramref name="groups"/>, in menu order.</summary>
+	public static IReadOnlyList<GalleryItem> Flatten(IEnumerable<GalleryGroup> groups) => groups.SelectMany(g => g).ToList();
+}
+
 /// <summary>
 /// The gallery shell, modeled on the maui-labs Linux GTK4 sample: a FlyoutPage whose flyout is a
 /// CollectionView menu and whose detail is the selected page in a NavigationPage. The flyout docks
@@ -17,55 +26,89 @@ public sealed record GalleryItem(string Icon, string Title, Func<Page> Create);
 /// </summary>
 public class MainShell : FlyoutPage
 {
-	public static IReadOnlyList<GalleryItem> Items { get; } =
+	public static IReadOnlyList<GalleryGroup> Groups { get; } =
 	[
-		new("🏠", "Home", () => new HomePage()),
-		new("🧩", "XAML Runtime", () => new XamlRuntimePage()),
-		new("🖼️", "Image / Font / Icon", () => new ResourceAssetsPage()),
-		new("🌅", "Image Showcase", () => new ImagePage()),
-		new("🎛️", "Controls", () => new ControlsPage()),
-		new("📅", "Pickers & Search", () => new PickersPage()),
-		new("📐", "Layouts", () => new LayoutsPage()),
-		new("🧱", "Flex & Absolute", () => new LayoutsAdvancedPage()),
-		new("🔤", "FormattedText", () => new FormattedTextPage()),
-		new("🔷", "Shapes", () => new ShapesPage()),
-		new("🔄", "Transforms & Effects", () => new TransformsPage()),
-		new("💬", "Alerts & Dialogs", () => new AlertsPage()),
-		new("📋", "Collection View", () => new CollectionViewPage()),
-		new("📜", "Scrolling", () => new ScrollingPage()),
-		new("✏️", "Text Input Styling", () => new TextInputStylingPage()),
-		new("♻️", "Refresh & Swipe", () => new RefreshSwipePage()),
-		new("🎠", "Carousel & Indicators", () => new CarouselIndicatorPage()),
-		new("🎨", "Graphics (Canvas)", () => new GraphicsPage()),
-		new("🧪", "Graphics Features", () => new GraphicsFeaturePage()),
-		new("🖌️", "SkiaSharp", () => new SkiaSharpPage()),
-		new("🗺️", "Maps", () => new MapsPage()),
-		new("📱", "Device & App Info", () => new DeviceInfoPage()),
-		new("🔋", "Battery & Network", () => new BatteryNetworkPage()),
-		new("🗂️", "Clipboard & Storage", () => new ClipboardPrefsPage()),
-		new("📧", "Communication", () => new CommunicationPage()),
-		new("🚀", "Launch & Share", () => new LaunchSharePage()),
-		new("🛰️", "Location, Sensors & Speech", () => new EssentialsPage()),
-		new("🌐", "WebView", () => new WebViewPage()),
-		new("🧭", "Navigation", () => new NavigationPage(new NavigationDemoPage())),
-		new("📑", "TabbedPage", () => new TabbedPageDemo()),
-		new("📂", "FlyoutPage", () => new FlyoutPageDemo()),
-		new("🐚", "Shell Navigation", () => new ShellDemoPage()),
-		new("🧬", "ControlTemplate", () => new ControlTemplatePage()),
-		new("🪟", "Modal Pages", () => new ModalDemoPage()),
-		new("🌗", "Theme", () => new ThemePage()),
-		new("♿", "Accessibility", () => new AccessibilityPage()),
+		new("Getting Started",
+		[
+			new("🏠", "Home", () => new HomePage()),
+			new("🧩", "XAML Runtime", () => new XamlRuntimePage()),
+		]),
+		new("Controls & Input",
+		[
+			new("🎛️", "Controls", () => new ControlsPage()),
+			new("✏️", "Text Input Styling", () => new TextInputStylingPage()),
+			new("📅", "Pickers & Search", () => new PickersPage()),
+			new("🧬", "ControlTemplate", () => new ControlTemplatePage()),
+		]),
+		new("Layout",
+		[
+			new("📐", "Layouts", () => new LayoutsPage()),
+			new("🧱", "Flex & Absolute", () => new LayoutsAdvancedPage()),
+		]),
+		new("Text & Images",
+		[
+			new("🔤", "FormattedText", () => new FormattedTextPage()),
+			new("🖼️", "Image / Font / Icon", () => new ResourceAssetsPage()),
+			new("🌅", "Image Showcase", () => new ImagePage()),
+		]),
+		new("Graphics",
+		[
+			new("🔷", "Shapes", () => new ShapesPage()),
+			new("🔄", "Transforms & Effects", () => new TransformsPage()),
+			new("🎨", "Graphics (Canvas)", () => new GraphicsPage()),
+			new("🧪", "Graphics Features", () => new GraphicsFeaturePage()),
+			new("🖌️", "SkiaSharp", () => new SkiaSharpPage()),
+		]),
+		new("Collections & Scrolling",
+		[
+			new("📋", "Collection View", () => new CollectionViewPage()),
+			new("🎠", "Carousel & Indicators", () => new CarouselIndicatorPage()),
+			new("📜", "Scrolling", () => new ScrollingPage()),
+			new("♻️", "Refresh & Swipe", () => new RefreshSwipePage()),
+		]),
+		new("Navigation & Pages",
+		[
+			new("🧭", "Navigation", () => new NavigationPage(new NavigationDemoPage())),
+			new("🪟", "Modal Pages", () => new ModalDemoPage()),
+			new("💬", "Alerts & Dialogs", () => new AlertsPage()),
+			new("📑", "TabbedPage", () => new TabbedPageDemo()),
+			new("📂", "FlyoutPage", () => new FlyoutPageDemo()),
+			new("🐚", "Shell Navigation", () => new ShellDemoPage()),
+		]),
+		new("Web & Maps",
+		[
+			new("🌐", "WebView", () => new WebViewPage()),
+			new("🗺️", "Maps", () => new MapsPage()),
+		]),
+		new("Platform & Essentials",
+		[
+			new("📱", "Device & App Info", () => new DeviceInfoPage()),
+			new("🔋", "Battery & Network", () => new BatteryNetworkPage()),
+			new("🗂️", "Clipboard & Storage", () => new ClipboardPrefsPage()),
+			new("📧", "Communication", () => new CommunicationPage()),
+			new("🚀", "Launch & Share", () => new LaunchSharePage()),
+			new("🛰️", "Location, Sensors & Speech", () => new EssentialsPage()),
+		]),
+		new("Theming & Accessibility",
+		[
+			new("🌗", "Theme", () => new ThemePage()),
+			new("♿", "Accessibility", () => new AccessibilityPage()),
+		]),
 	];
 
-	/// <summary>The menu's tabs: the MAUI gallery and the Shiny Controls gallery.</summary>
-	public static IReadOnlyList<(string Name, IReadOnlyList<GalleryItem> Items)> Tabs { get; } =
+	/// <summary>Every MAUI entry, in menu order.</summary>
+	public static IReadOnlyList<GalleryItem> Items { get; } = GalleryGroup.Flatten(Groups);
+
+	/// <summary>The menu's tabs: the MAUI, Shiny Controls and Shiny Shell galleries, each in sections.</summary>
+	public static IReadOnlyList<(string Name, IReadOnlyList<GalleryGroup> Groups, IReadOnlyList<GalleryItem> Items)> Tabs { get; } =
 	[
-		("MAUI", Items),
-		("Shiny Controls", ShinyGallery.Items),
-		("Shiny Shell", Pages.ShinyShellDemo.ShinyShellGallery.Items),
+		("MAUI", Groups, Items),
+		("Shiny Controls", ShinyGallery.Groups, ShinyGallery.Items),
+		("Shiny Shell", Pages.ShinyShellDemo.ShinyShellGallery.Groups, Pages.ShinyShellDemo.ShinyShellGallery.Items),
 	];
 
 	readonly CollectionView _menu;
+	readonly Entry _search;
 	readonly Label _count = SpecimenPage.Muted(string.Empty, 13);
 	readonly List<(Border Tab, Label Text)> _tabs = new();
 	int _tab = -1;
@@ -80,12 +123,25 @@ public class MainShell : FlyoutPage
 
 		_menu = new CollectionView
 		{
-			ItemsSource = Items,
+			IsGrouped = true,
+			ItemsSource = Groups,
 			SelectionMode = SelectionMode.Single,
 			ItemsLayout = new LinearItemsLayout(ItemsLayoutOrientation.Vertical) { ItemSpacing = 2 },
 			ItemTemplate = new DataTemplate(CreateMenuItem),
+			GroupHeaderTemplate = new DataTemplate(CreateGroupHeader),
+			EmptyView = SpecimenPage.Muted("No demos match the filter.", 13),
 			Margin = new Thickness(10, 0),
 		};
+		((Label)_menu.EmptyView).Padding = new Thickness(10, 8);
+		_search = new Entry
+		{
+			Placeholder = "Filter demos",
+			ClearButtonVisibility = ClearButtonVisibility.WhileEditing,
+			Margin = new Thickness(18, 0, 18, 8),
+			AutomationId = "MenuFilter",
+		};
+		SemanticProperties.SetDescription(_search, "Filter the demos in this tab");
+		_search.TextChanged += (_, _) => ShowItems();
 		_menu.SelectionChanged += (_, e) =>
 		{
 			// Switching tabs re-selects the open page in its list; that must not rebuild it.
@@ -95,12 +151,13 @@ public class MainShell : FlyoutPage
 
 		var flyout = new Grid
 		{
-			RowDefinitions = { new(GridLength.Auto), new(GridLength.Auto), new(GridLength.Star), new(GridLength.Auto) },
+			RowDefinitions = { new(GridLength.Auto), new(GridLength.Auto), new(GridLength.Auto), new(GridLength.Star), new(GridLength.Auto) },
 		};
 		flyout.Add(CreateHeader(), 0, 0);
 		flyout.Add(CreateTabs(), 0, 1);
-		flyout.Add(_menu, 0, 2);
-		flyout.Add(CreateFooter(), 0, 3);
+		flyout.Add(_search, 0, 2);
+		flyout.Add(_menu, 0, 3);
+		flyout.Add(CreateFooter(), 0, 4);
 
 		var flyoutPage = new ContentPage { Title = "Menu", Content = flyout };
 		Theme.Bind(flyoutPage, BackgroundColorProperty, Theme.Paper);
@@ -130,15 +187,17 @@ public class MainShell : FlyoutPage
 	/// <summary>Selects a gallery page by title, as the menu does, switching tabs if needed.</summary>
 	public void Navigate(string title)
 	{
-		for (var i = 0; i < Tabs.Count; i++)
-		{
-			var item = Tabs[i].Items.FirstOrDefault(x => x.Title == title);
-			if (item is null)
-				continue;
-			SelectTab(i);
-			_menu.SelectedItem = item;
+		var match = Enumerable.Range(0, Tabs.Count)
+			.Select(i => (Tab: i, Item: Tabs[i].Items.FirstOrDefault(x => x.Title == title)))
+			.FirstOrDefault(x => x.Item is not null);
+		if (match.Item is null)
 			return;
-		}
+
+		// A filter that hides the page would leave nothing to highlight.
+		if (!string.IsNullOrEmpty(_search.Text) && !Matches(match.Item, _search.Text.Trim()))
+			_search.Text = string.Empty;
+		SelectTab(match.Tab);
+		_menu.SelectedItem = match.Item;
 	}
 
 	/// <summary>Shows one tab's list in the menu. The open page stays until another is picked.</summary>
@@ -147,11 +206,7 @@ public class MainShell : FlyoutPage
 		if (index == _tab || index < 0 || index >= Tabs.Count)
 			return;
 		_tab = index;
-
-		var items = Tabs[index].Items;
-		_menu.ItemsSource = items;
-		_menu.SelectedItem = _current is not null && items.Contains(_current) ? _current : null;
-		_count.Text = $"{items.Count} demos";
+		ShowItems();
 
 		for (var i = 0; i < _tabs.Count; i++)
 		{
@@ -171,6 +226,42 @@ public class MainShell : FlyoutPage
 			text.FontAttributes = selected ? FontAttributes.Bold : FontAttributes.None;
 			SemanticProperties.SetDescription(tab, selected ? $"{Tabs[i].Name} demos, selected" : $"{Tabs[i].Name} demos");
 		}
+	}
+
+	/// <summary>Fills the menu with the current tab's sections, narrowed by the filter text.</summary>
+	void ShowItems()
+	{
+		var (_, groups, items) = Tabs[_tab];
+		var filter = _search.Text?.Trim() ?? string.Empty;
+		var shown = filter.Length == 0
+			? groups
+			: groups
+				.Select(g => g.Name.Contains(filter, StringComparison.OrdinalIgnoreCase) ? g : new GalleryGroup(g.Name, g.Where(i => Matches(i, filter))))
+				.Where(g => g.Count > 0)
+				.ToList();
+
+		_menu.ItemsSource = shown;
+		_menu.SelectedItem = _current is not null && shown.Any(g => g.Contains(_current)) ? _current : null;
+		var count = shown.Sum(g => g.Count);
+		_count.Text = filter.Length == 0 ? $"{items.Count} demos" : $"{count} of {items.Count} demos";
+	}
+
+	static bool Matches(GalleryItem item, string filter) => item.Title.Contains(filter, StringComparison.OrdinalIgnoreCase);
+
+	static View CreateGroupHeader()
+	{
+		var label = new Label
+		{
+			FontSize = 11,
+			FontAttributes = FontAttributes.Bold,
+			CharacterSpacing = 1,
+			TextTransform = TextTransform.Uppercase,
+			Padding = new Thickness(10, 14, 10, 4),
+		};
+		label.SetBinding(Label.TextProperty, static (GalleryGroup g) => g.Name);
+		Theme.Bind(label, Label.TextColorProperty, Theme.Muted);
+		SemanticProperties.SetHeadingLevel(label, SemanticHeadingLevel.Level2);
+		return label;
 	}
 
 	View CreateTabs()

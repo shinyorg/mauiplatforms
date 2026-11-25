@@ -190,6 +190,17 @@ export function listenPointer(el, type, callback, capture) {
 // Pointers a pan has claimed: a swipe on an ancestor ignores them, as a native child pan consumes the gesture.
 const panningPointers = new Set();
 
+// A press on a drag view that lands inside a text selection (the hour labels a missed drag selected,
+// say) is also the browser's drag of that text: it fires dragstart and then pointercancel, so the pan
+// or swipe dies before it starts. The view's own gesture is the drag, never the browser's.
+const preventNativeDrag = e => e.preventDefault();
+
+// A stale selection would otherwise stay highlighted (and keep growing) under a drag.
+function clearSelection() {
+    const selection = window.getSelection();
+    if (selection && !selection.isCollapsed) selection.removeAllRanges();
+}
+
 export function listenPan(el, slop, callback) {
     let start = null, pointerId = null, panning = false;
     // After the press the gesture follows the pointer on the window, as a native touch keeps
@@ -211,6 +222,7 @@ export function listenPan(el, slop, callback) {
             panning = true;
             panningPointers.add(pointerId);
             try { el.setPointerCapture(pointerId); } catch { /* not capturable */ }
+            clearSelection();
             callback(1, 0, 0);
         }
         callback(2, dx, dy);
@@ -246,8 +258,18 @@ export function listenPan(el, slop, callback) {
         window.addEventListener('pointercancel', cancel, true);
     };
     el.addEventListener('pointerdown', down);
+    el.addEventListener('dragstart', preventNativeDrag);
     const id = nextListenerId++;
-    listeners.set(id, { dispose: () => { el.removeEventListener('pointerdown', down); stopTracking(); } });
+    listeners.set(id, {
+        dispose: () => {
+            el.removeEventListener('pointerdown', down);
+            el.removeEventListener('dragstart', preventNativeDrag);
+            stopTracking();
+            // Disposed mid-pan (the view was disconnected): don't leave the pointer claimed, or every
+            // later pan with it (a mouse is always the same pointer) would yield to a pan that's gone.
+            if (panning) panningPointers.delete(pointerId);
+        }
+    });
     return id;
 }
 
@@ -270,8 +292,14 @@ export function listenSwipe(el, callback) {
         window.addEventListener('pointercancel', end, true);
     };
     el.addEventListener('pointerdown', down);
+    el.addEventListener('dragstart', preventNativeDrag);
     const id = nextListenerId++;
-    listeners.set(id, { dispose: () => el.removeEventListener('pointerdown', down) });
+    listeners.set(id, {
+        dispose: () => {
+            el.removeEventListener('pointerdown', down);
+            el.removeEventListener('dragstart', preventNativeDrag);
+        }
+    });
     return id;
 }
 
@@ -565,6 +593,11 @@ export function registerCanvasImage(id, bytes) {
     img.src = URL.createObjectURL(new Blob([bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes)]));
 }
 
+// Paths WebCanvas.cs has handed over once ('pathDef') and now refers to by id: a drawable that keeps its
+// geometry between frames is neither re-sent nor re-parsed. 'pathFree' drops the ones C# let go of.
+const canvasPaths = new Map();
+const path2d = p => typeof p === 'number' ? canvasPaths.get(p) : new Path2D(p);
+
 // Replays the command list recorded by WebCanvas.cs onto a 2D context sized for the device pixel ratio.
 export function drawCommands(canvas, width, height, json) {
     const dpr = window.devicePixelRatio || 1;
@@ -594,11 +627,13 @@ export function drawCommands(canvas, width, height, json) {
             case 'fillRoundRect': ctx.beginPath(); ctx.roundRect(a[0], a[1], a[2], a[3], a[4]); ctx.fill(); break;
             case 'strokeEllipse': ctx.beginPath(); ctx.ellipse(a[0] + a[2] / 2, a[1] + a[3] / 2, a[2] / 2, a[3] / 2, 0, 0, Math.PI * 2); ctx.stroke(); break;
             case 'fillEllipse': ctx.beginPath(); ctx.ellipse(a[0] + a[2] / 2, a[1] + a[3] / 2, a[2] / 2, a[3] / 2, 0, 0, Math.PI * 2); ctx.fill(); break;
-            case 'stroke': ctx.stroke(new Path2D(a[0])); break;
-            case 'fill': ctx.fill(new Path2D(a[0])); break;
-            case 'fillEvenOdd': ctx.fill(new Path2D(a[0]), 'evenodd'); break;
-            case 'clip': ctx.clip(new Path2D(a[0])); break;
-            case 'clipEvenOdd': ctx.clip(new Path2D(a[0]), 'evenodd'); break;
+            case 'pathDef': canvasPaths.set(a[0], new Path2D(a[1])); break;
+            case 'pathFree': for (const id of a) canvasPaths.delete(id); break;
+            case 'stroke': { const p = path2d(a[0]); if (p) ctx.stroke(p); break; }
+            case 'fill': { const p = path2d(a[0]); if (p) ctx.fill(p); break; }
+            case 'fillEvenOdd': { const p = path2d(a[0]); if (p) ctx.fill(p, 'evenodd'); break; }
+            case 'clip': { const p = path2d(a[0]); if (p) ctx.clip(p); break; }
+            case 'clipEvenOdd': { const p = path2d(a[0]); if (p) ctx.clip(p, 'evenodd'); break; }
             case 'clipRect': ctx.beginPath(); ctx.rect(...a); ctx.clip(); break;
             case 'subtractClip': {
                 const p = new Path2D();

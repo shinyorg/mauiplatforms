@@ -15,5 +15,10 @@ public class App : Application
 	}
 
 	protected override Window CreateWindow(Microsoft.Maui.IActivationState? activationState)
-		=> new(new MainShell()) { Title = "MAUI Web Gallery" };
+	{
+		var window = new Window(new MainShell()) { Title = "MAUI Web Gallery" };
+		// The animated app background picked on the Animated Backgrounds page, behind every page.
+		AppBackground.Attach(window);
+		return window;
+	}
 }

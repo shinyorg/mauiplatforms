@@ -151,18 +151,23 @@ html, body {
 /* Toggles */
 .maui-check-box { margin: 0; width: 20px; height: 20px; accent-color: var(--maui-check, var(--maui-accent)); cursor: pointer; }
 
-.maui-switch { display: inline-block; width: 46px; height: 28px; cursor: pointer; }
-.maui-switch > input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+/* The switch draws at a fixed 46x28, pinned to the start edge and centred vertically, like a
+   native switch: a layout that hands it a wider/taller (Fill) or squeezed frame moves it, never
+   stretches the track or pushes the thumb out of it. */
+.maui-switch { display: inline-block; width: 46px; height: 28px; pointer-events: none; }
+.maui-switch > input,
+.maui-switch > .track,
+.maui-switch > .thumb { position: absolute; top: 50%; }
+.maui-switch > input { left: 0; width: 46px; height: 28px; margin: -14px 0 0 0; opacity: 0; cursor: pointer; pointer-events: auto; }
 .maui-switch > .track {
-    position: absolute; inset: 2px 0;
+    left: 0; width: 46px; height: 24px; margin-top: -12px;
     border-radius: 999px;
     background: var(--maui-switch-off, var(--maui-border));
     transition: background 150ms ease;
     pointer-events: none;
 }
 .maui-switch > .thumb {
-    position: absolute; top: 4px; left: 3px;
-    width: 20px; height: 20px; border-radius: 50%;
+    left: 3px; width: 20px; height: 20px; margin-top: -10px; border-radius: 50%;
     background: var(--maui-switch-thumb, #ffffff);
     box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
     transition: transform 150ms ease;
@@ -309,6 +314,9 @@ img.maui-image-failed { visibility: hidden; }
 /* WebWindow.AddOverlay: full-window views (popup libraries) above pages and modals. The view draws its own
    backdrop and animations, so the layer is transparent and unanimated. */
 .maui-overlay-layer { position: absolute; inset: 0; z-index: 20; }
+/* WebWindow.AddUnderlay: a full-window view behind the content (an app-wide backdrop). The window is a
+   stacking context, so -1 puts it above the window's own background and below everything else. */
+.maui-underlay-layer { position: absolute; inset: 0; z-index: -1; pointer-events: none; }
 @keyframes maui-modal-in { from { transform: translateY(32px); opacity: 0; } }
 
 /* Collections */

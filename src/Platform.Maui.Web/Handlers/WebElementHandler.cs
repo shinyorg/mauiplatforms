@@ -265,13 +265,13 @@ public abstract class WebElementHandler<TVirtualView, TPlatformView> : ViewHandl
 
 	void OnPointerEnter()
 	{
-		if (VirtualView is Controls.VisualElement { IsEnabled: true } ve)
+		if (VirtualView is Controls.VisualElement { IsEnabled: true } ve && !IsSelected(ve))
 			Controls.VisualStateManager.GoToState(ve, Controls.VisualStateManager.CommonStates.PointerOver);
 	}
 
 	void OnPointerLeave()
 	{
-		if (VirtualView is Controls.VisualElement ve)
+		if (VirtualView is Controls.VisualElement ve && !IsSelected(ve))
 		{
 			Controls.VisualStateManager.GoToState(ve,
 				!ve.IsEnabled ? Controls.VisualStateManager.CommonStates.Disabled
@@ -279,6 +279,13 @@ public abstract class WebElementHandler<TVirtualView, TPlatformView> : ViewHandl
 				: Controls.VisualStateManager.CommonStates.Normal);
 		}
 	}
+
+	// A selected CollectionView/CarouselView item owns its CommonStates state: hovering in and out
+	// must not drop it back to Normal (the items view moves it out of Selected when deselected).
+	static bool IsSelected(Controls.VisualElement ve)
+		=> Controls.VisualStateManager.HasVisualStateGroups(ve)
+			&& Controls.VisualStateManager.GetVisualStateGroups(ve).Any(g =>
+				g.CurrentState?.Name == Controls.VisualStateManager.CommonStates.Selected);
 
 	void OnFocusIn()
 	{

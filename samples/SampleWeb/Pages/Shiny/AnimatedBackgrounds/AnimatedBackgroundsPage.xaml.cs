@@ -1,3 +1,5 @@
+using Microsoft.Maui.Controls.Shapes;
+using SampleWeb;
 using Shiny.Maui.Controls;
 
 namespace Sample.Features.AnimatedBackgrounds;
@@ -30,6 +32,110 @@ public partial class AnimatedBackgroundsPage : ContentPage
         foreach (var (name, _) in Effects)
             this.EffectPicker.Items.Add(name);
         this.EffectPicker.SelectedIndex = 0;
+
+        this.BuildGallery();
+        this.UpdateSelection();
+    }
+
+
+    // ---------------------------------------------------------------------------------------------
+    // Gallery: each card is one AppBackground choice; tapping it makes it the app background.
+    // ---------------------------------------------------------------------------------------------
+
+    readonly List<(AppBackground.Choice Choice, Border Ring, View Badge)> cards = [];
+
+    void BuildGallery()
+    {
+        var cardStyle = (Style)this.Resources["Card"];
+        var ringStyle = (Style)this.Resources["CardRing"];
+        var titleStyle = (Style)this.Resources["CardTitle"];
+        var choices = AppBackground.Choices;
+
+        for (var i = 0; i < choices.Count; i++)
+        {
+            if (i % 2 == 0)
+                this.Gallery.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+            this.Gallery.Add(this.CreateCard(choices[i], cardStyle, ringStyle, titleStyle), i % 2, i / 2);
+        }
+    }
+
+
+    Border CreateCard(AppBackground.Choice choice, Style cardStyle, Style ringStyle, Style titleStyle)
+    {
+        // The cards are always dark, so the badge is a light pill in either theme.
+        var badge = new Border
+        {
+            IsVisible = false,
+            StrokeThickness = 0,
+            StrokeShape = new RoundRectangle { CornerRadius = 10 },
+            Padding = new Thickness(8, 3),
+            BackgroundColor = Colors.White,
+            HorizontalOptions = LayoutOptions.End,
+            VerticalOptions = LayoutOptions.Start,
+            Content = new Label { Text = "✓ App background", FontSize = 11, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#1B1530") },
+        };
+
+        var card = new AnimatedBackground
+        {
+            Style = cardStyle,
+            Effect = choice.CreateEffect(),
+            Background = choice.CreateBackground(),
+            AutomationId = $"{choice.Key}Card",
+            Content = new Grid { Children = { new Label { Text = choice.Name, Style = titleStyle }, badge } },
+        };
+
+        var ring = new Border { Style = ringStyle, Content = card, AutomationId = $"{choice.Key}Choice" };
+        var tap = new TapGestureRecognizer();
+        tap.Tapped += (_, _) => AppBackground.Select(choice);
+        ring.GestureRecognizers.Add(tap);
+
+        this.cards.Add((choice, ring, badge));
+        return ring;
+    }
+
+
+    void UpdateSelection()
+    {
+        var current = AppBackground.Current;
+        foreach (var (choice, ring, badge) in this.cards)
+        {
+            var selected = choice == current;
+            // Plain values rather than a theme binding: a binding's value outlives RemoveBinding/ClearValue.
+            // The page re-runs this when the theme changes, so the ring follows the theme's violet.
+            ring.Stroke = selected ? new SolidColorBrush(Theme.Current(Theme.Violet)) : Brush.Transparent;
+            badge.IsVisible = selected;
+            SemanticProperties.SetDescription(ring, selected ? $"{choice.Name}, the app background" : $"Use {choice.Name} as the app background");
+        }
+
+        this.AppBackgroundStatus.Text = current is null
+            ? "Tap a card to make it the app background."
+            : $"App background: {current.Name}";
+        this.NoneButton.IsEnabled = current is not null;
+    }
+
+
+    void OnAppBackgroundChanged(object? sender, EventArgs e) => this.UpdateSelection();
+
+    void OnThemeChanged(object? sender, AppThemeChangedEventArgs e) => this.UpdateSelection();
+
+    void OnNone(object? sender, EventArgs e) => AppBackground.Select(null);
+
+    // Static and app-wide events: subscribed only while the page is showing, so they do not keep it alive.
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        AppBackground.Changed += this.OnAppBackgroundChanged;
+        if (Application.Current is { } app)
+            app.RequestedThemeChanged += this.OnThemeChanged;
+        this.UpdateSelection();
+    }
+
+    protected override void OnDisappearing()
+    {
+        AppBackground.Changed -= this.OnAppBackgroundChanged;
+        if (Application.Current is { } app)
+            app.RequestedThemeChanged -= this.OnThemeChanged;
+        base.OnDisappearing();
     }
 
 

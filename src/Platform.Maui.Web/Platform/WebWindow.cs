@@ -102,7 +102,23 @@ public class WebWindow
 		return layer;
 	}
 
-	/// <summary>Removes a view shown with <see cref="AddOverlay"/>.</summary>
+	/// <summary>
+	/// Shows a view behind the window's content, for app-wide backdrops (an animated or image
+	/// background that pages with a transparent or translucent Background let through). It takes no
+	/// input, and is measured and arranged to the window in every layout pass until
+	/// <see cref="RemoveOverlay"/>.
+	/// </summary>
+	public WebElement AddUnderlay(IView view, WebElement platformView)
+	{
+		var layer = new WebElement("div", "maui-underlay-layer");
+		layer.Append(platformView);
+		Root.Insert(0, layer);
+		_overlays.Add((view, layer));
+		WebLayoutScheduler.Request();
+		return layer;
+	}
+
+	/// <summary>Removes a view shown with <see cref="AddOverlay"/> or <see cref="AddUnderlay"/>.</summary>
 	public void RemoveOverlay(IView view)
 	{
 		var index = _overlays.FindLastIndex(o => o.View == view);
