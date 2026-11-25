@@ -55,9 +55,12 @@ public class ShapeViewHandler : WebElementHandler<IShapeView, WebElement>
 		return root;
 	}
 
-	// BoxView defaults to 40x40; other shapes size themselves in Shape.MeasureOverride.
+	// No natural size, as on the native heads: an unsized BoxView takes its size from the layout.
+	// BoxView's 40x40 is Xamarin.Forms' legacy OnMeasure, which MAUI layouts never call; reporting
+	// it here made a colour bar in an auto-height Grid row stretch the row to 40px (the scheduler's
+	// month-cell events). Other shapes size themselves in Shape.MeasureOverride.
 	protected override Size MeasureNative(double widthConstraint, double heightConstraint)
-		=> VirtualView is Microsoft.Maui.Controls.BoxView ? new Size(40, 40) : Size.Zero;
+		=> Size.Zero;
 
 	public override void PlatformArrange(Rect frame)
 	{
