@@ -76,9 +76,22 @@ internal sealed class WebGestureManager : IDisposable
 		if (tappable != _pointerCursor)
 			_element.SetStyle("cursor", tappable ? "pointer" : null);
 		_pointerCursor = tappable;
+
+		// A view you drag: a press held on it is the start of the drag, not the browser's long press, which on
+		// iOS selects the text around it and opens the Copy/Look Up menu. Like the cursor, only clear what we set.
+		var draggable = current.Any(r => r is PanGestureRecognizer or SwipeGestureRecognizer);
+		if (draggable != _noSelect)
+		{
+			var value = draggable ? "none" : null;
+			_element.SetStyle("user-select", value);
+			_element.SetStyle("-webkit-user-select", value);
+			_element.SetStyle("-webkit-touch-callout", value);
+		}
+		_noSelect = draggable;
 	}
 
 	bool _pointerCursor;
+	bool _noSelect;
 
 	static void Dispose(List<IDisposable> subscriptions)
 	{
